@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="BigFloat" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="Abs">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="BigFloat" />
+			<description>
+			</description>
+		</method>
+		<method name="Acc" qualifiers="const">
+			<return type="int" enum="BigFloat.Accuracy" />
+			<description>
+			</description>
+		</method>
+		<method name="Add">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="BigFloat" />
+			<param index="1" name="y" type="BigFloat" />
+			<description>
+			</description>
+		</method>
+		<method name="Cmp" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="y" type="BigFloat" />
+			<description>
+			</description>
+		</method>
+		<method name="Copy">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="BigFloat" />
+			<description>
+			</description>
+		</method>
+		<method name="Float64" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="Float64Accuracy" qualifiers="const">
+			<return type="int" enum="BigFloat.Accuracy" />
+			<description>
+			</description>
+		</method>
+		<method name="Int" qualifiers="const">
+			<return type="int" enum="BigFloat.Accuracy" />
+			<param index="0" name="z" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Int64" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Int64Accuracy" qualifiers="const">
+			<return type="int" enum="BigFloat.Accuracy" />
+			<description>
+			</description>
+		</method>
+		<method name="IsInf" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="IsInt" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="MantExp" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="mant" type="BigFloat" />
+			<description>
+			</description>
+		</method>
+		<method name="MinPrec" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Mul">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="BigFloat" />
+			<param index="1" name="y" type="BigFloat" />
+			<description>
+			</description>
+		</method>
+		<method name="Neg">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="BigFloat" />
+			<description>
+			</description>
+		</method>
+		<method name="Quo">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="BigFloat" />
+			<param index="1" name="y" type="BigFloat" />
+			<description>
+			</description>
+		</method>
+		<method name="Rat" qualifiers="const">
+			<return type="int" enum="BigFloat.Accuracy" />
+			<param index="0" name="z" type="BigRat" />
+			<description>
+			</description>
+		</method>
+		<method name="Set">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="BigFloat" />
+			<description>
+			</description>
+		</method>
+		<method name="SetFloat64">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="SetInf">
+			<return type="BigFloat" />
+			<param index="0" name="signbit" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="SetInt">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="SetInt64">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="SetMantExp">
+			<return type="BigFloat" />
+			<param index="0" name="mant" type="BigFloat" />
+			<param index="1" name="exp" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="SetMode">
+			<return type="BigFloat" />
+			<param index="0" name="mode" type="int" enum="BigFloat.RoundingMode" />
+			<description>
+			</description>
+		</method>
+		<method name="SetPrec">
+			<return type="BigFloat" />
+			<param index="0" name="prec" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="SetRat">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="BigRat" />
+			<description>
+			</description>
+		</method>
+		<method name="SetString">
+			<return type="BigFloat" />
+			<param index="0" name="s" type="String" />
+			<param index="1" name="base" type="int" default="0" />
+			<description>
+			</description>
+		</method>
+		<method name="SetUint64">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Sign" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Signbit" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="Sqrt">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="BigFloat" />
+			<description>
+			</description>
+		</method>
+		<method name="Sub">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="BigFloat" />
+			<param index="1" name="y" type="BigFloat" />
+			<description>
+			</description>
+		</method>
+		<method name="Text" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="fmt" type="int" enum="BigFloat.Format" />
+			<param index="1" name="prec" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Uint64" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Uint64Accuracy" qualifiers="const">
+			<return type="int" enum="BigFloat.Accuracy" />
+			<description>
+			</description>
+		</method>
+		<method name="make" qualifiers="static">
+			<return type="BigFloat" />
+			<param index="0" name="x" type="float" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="_acc" type="int" setter="_set_acc" getter="_get_acc" enum="BigFloat.Accuracy" default="0">
+		</member>
+		<member name="_exp" type="int" setter="_set_exp" getter="_get_exp" default="0">
+		</member>
+		<member name="_form" type="int" setter="_set_form" getter="_get_form" enum="BigFloat.Form" default="0">
+		</member>
+		<member name="_mant" type="PackedInt64Array" setter="_set_mant" getter="_get_mant" default="PackedInt64Array()">
+		</member>
+		<member name="_mode" type="int" setter="_set_mode" getter="_get_mode" enum="BigFloat.RoundingMode" default="0">
+		</member>
+		<member name="_neg" type="bool" setter="_set_neg" getter="_is_neg" default="false">
+		</member>
+		<member name="_prec" type="int" setter="_set_prec" getter="_get_prec" default="0">
+		</member>
+		<member name="precision" type="int" setter="SetPrec" getter="Prec" default="0">
+		</member>
+		<member name="rounding_mode" type="int" setter="SetMode" getter="Mode" enum="BigFloat.RoundingMode" default="0">
+		</member>
+	</members>
+	<constants>
+		<constant name="MAX_EXP" value="2147483647">
+		</constant>
+		<constant name="MIN_EXP" value="-2147483648">
+		</constant>
+		<constant name="MAX_PREC" value="4294967295">
+		</constant>
+		<constant name="ACCURACY_BELOW" value="-1" enum="Accuracy">
+		</constant>
+		<constant name="ACCURACY_EXACT" value="0" enum="Accuracy">
+		</constant>
+		<constant name="ACCURACY_ABOVE" value="1" enum="Accuracy">
+		</constant>
+		<constant name="TO_NEAREST_EVEN" value="0" enum="RoundingMode">
+		</constant>
+		<constant name="TO_NEAREST_AWAY" value="1" enum="RoundingMode">
+		</constant>
+		<constant name="TO_ZERO" value="2" enum="RoundingMode">
+		</constant>
+		<constant name="AWAY_FROM_ZERO" value="3" enum="RoundingMode">
+		</constant>
+		<constant name="TO_NEGATIVE_INF" value="4" enum="RoundingMode">
+		</constant>
+		<constant name="TO_POSITIVE_INF" value="5" enum="RoundingMode">
+		</constant>
+		<constant name="FORM_ZERO" value="0" enum="Form">
+		</constant>
+		<constant name="FORM_FINITE" value="1" enum="Form">
+		</constant>
+		<constant name="FORM_INF" value="2" enum="Form">
+		</constant>
+		<constant name="FORMAT_SCIENTIFIC" value="101" enum="Format">
+		</constant>
+		<constant name="FORMAT_SCIENTIFIC_CAPS" value="69" enum="Format">
+		</constant>
+		<constant name="FORMAT_NUMBER" value="102" enum="Format">
+		</constant>
+		<constant name="FORMAT_AUTO" value="103" enum="Format">
+		</constant>
+		<constant name="FORMAT_AUTO_CAPS" value="71" enum="Format">
+		</constant>
+		<constant name="FORMAT_HEX" value="120" enum="Format">
+		</constant>
+		<constant name="FORMAT_HEX_NORM" value="112" enum="Format">
+		</constant>
+		<constant name="FORMAT_DECIMAL" value="98" enum="Format">
+		</constant>
+	</constants>
+</class>

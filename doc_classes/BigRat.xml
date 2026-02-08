@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="BigRat" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="Abs">
+			<return type="BigRat" />
+			<param index="0" name="x" type="BigRat" />
+			<description>
+			</description>
+		</method>
+		<method name="Add">
+			<return type="BigRat" />
+			<param index="0" name="x" type="BigRat" />
+			<param index="1" name="y" type="BigRat" />
+			<description>
+			</description>
+		</method>
+		<method name="Cmp" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="y" type="BigRat" />
+			<description>
+			</description>
+		</method>
+		<method name="Denom" qualifiers="const">
+			<return type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Float32" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="Float32Exact" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="Float64" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="Float64Exact" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="FloatString" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="prec" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Inv">
+			<return type="BigRat" />
+			<param index="0" name="x" type="BigRat" />
+			<description>
+			</description>
+		</method>
+		<method name="IsInt" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="Mul">
+			<return type="BigRat" />
+			<param index="0" name="x" type="BigRat" />
+			<param index="1" name="y" type="BigRat" />
+			<description>
+			</description>
+		</method>
+		<method name="Neg">
+			<return type="BigRat" />
+			<param index="0" name="x" type="BigRat" />
+			<description>
+			</description>
+		</method>
+		<method name="Num" qualifiers="const">
+			<return type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Quo">
+			<return type="BigRat" />
+			<param index="0" name="x" type="BigRat" />
+			<param index="1" name="y" type="BigRat" />
+			<description>
+			</description>
+		</method>
+		<method name="RatString" qualifiers="const">
+			<return type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="Set">
+			<return type="BigRat" />
+			<param index="0" name="x" type="BigRat" />
+			<description>
+			</description>
+		</method>
+		<method name="SetFloat64">
+			<return type="BigRat" />
+			<param index="0" name="f" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="SetFrac">
+			<return type="BigRat" />
+			<param index="0" name="a" type="BigInt" />
+			<param index="1" name="b" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="SetFrac64">
+			<return type="BigRat" />
+			<param index="0" name="a" type="int" />
+			<param index="1" name="b" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="SetInt">
+			<return type="BigRat" />
+			<param index="0" name="x" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="SetInt64">
+			<return type="BigRat" />
+			<param index="0" name="x" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="SetString">
+			<return type="BigRat" />
+			<param index="0" name="s" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="SetUint64">
+			<return type="BigRat" />
+			<param index="0" name="x" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Sign" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="String" qualifiers="const">
+			<return type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="Sub">
+			<return type="BigRat" />
+			<param index="0" name="x" type="BigRat" />
+			<param index="1" name="y" type="BigRat" />
+			<description>
+			</description>
+		</method>
+		<method name="make" qualifiers="static">
+			<return type="BigRat" />
+			<param index="0" name="a" type="int" />
+			<param index="1" name="b" type="int" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="_a" type="PackedInt64Array" setter="_set_a" getter="_get_a" default="PackedInt64Array()">
+		</member>
+		<member name="_b" type="PackedInt64Array" setter="_set_b" getter="_get_b" default="PackedInt64Array()">
+		</member>
+		<member name="_neg" type="bool" setter="_set_neg" getter="_is_neg" default="false">
+		</member>
+	</members>
+</class>

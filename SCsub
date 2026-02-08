@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+
+Import("env")
+
+# give parent environment access to godot-cpp bindings for types
+env.Append(CPPPATH=[env.Dir("src/")])
+
+env_big = env.Clone()
+
+# we need C++20 for #include <bit> to give us any useful functions
+if env_big.get("is_msvc", False):
+	env_big.Append(CXXFLAGS=["/std:c++20"])
+else:
+	env_big.Append(CXXFLAGS=["-std=c++20"])
+
+sources = [
+	"src/godot_big_arith.cpp",
+	"src/godot_big_bind.cpp",
+	"src/godot_big_decimal.cpp",
+	"src/godot_big_float.cpp",
+	"src/godot_big_floatconv.cpp",
+	"src/godot_big_ftoa.cpp",
+	"src/godot_big_int.cpp",
+	"src/godot_big_intconv.cpp",
+	"src/godot_big_prime.cpp",
+	"src/godot_big_nat.cpp",
+	"src/godot_big_natconv.cpp",
+	"src/godot_big_natdiv.cpp",
+	"src/godot_big_natmul.cpp",
+	"src/godot_big_rat.cpp",
+	"src/godot_big_ratconv.cpp",
+	"src/godot_big_register_types.cpp",
+	"src/godot_big_sqrt.cpp",
+]
+
+big_objects = [env_big.SharedObject(file) for file in sources]
+
+Return("big_objects")

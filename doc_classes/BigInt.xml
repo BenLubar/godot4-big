@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="BigInt" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="Abs">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Add">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="And">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="AndNot">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Binomial">
+			<return type="BigInt" />
+			<param index="0" name="n" type="int" />
+			<param index="1" name="k" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Bit" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="i" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="BitLen" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Bytes" qualifiers="const">
+			<return type="PackedByteArray" />
+			<description>
+			</description>
+		</method>
+		<method name="Cmp" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="CmpAbs" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Div">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="DivMod">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<param index="2" name="_unnamed_arg2" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Exp">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<param index="2" name="m" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Float64" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="Float64Accuracy" qualifiers="const">
+			<return type="int" enum="BigFloat.Accuracy" />
+			<description>
+			</description>
+		</method>
+		<method name="GCD">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<param index="2" name="a" type="BigInt" />
+			<param index="3" name="b" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Int64" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="IsInt64" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="IsUint64" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="Jacobi" qualifiers="static">
+			<return type="int" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Lsh">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="n" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Mod">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="ModInverse">
+			<return type="BigInt" />
+			<param index="0" name="g" type="BigInt" />
+			<param index="1" name="n" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="ModSqrt">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="p" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Mul">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="MulRange">
+			<return type="BigInt" />
+			<param index="0" name="a" type="int" />
+			<param index="1" name="b" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Neg">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Not">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Or">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="ProbablyPrime" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="n" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Quo">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="QuoRem">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<param index="2" name="_unnamed_arg2" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Rand">
+			<return type="BigInt" />
+			<param index="0" name="rnd" type="Callable" />
+			<param index="1" name="n" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Rem">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Rsh">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="n" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Set">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="SetBit">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="i" type="int" />
+			<param index="2" name="b" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="SetBytes">
+			<return type="BigInt" />
+			<param index="0" name="buf" type="PackedByteArray" />
+			<description>
+			</description>
+		</method>
+		<method name="SetInt64">
+			<return type="BigInt" />
+			<param index="0" name="x" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="SetString">
+			<return type="BigInt" />
+			<param index="0" name="s" type="String" />
+			<param index="1" name="base" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="SetUint64">
+			<return type="BigInt" />
+			<param index="0" name="x" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Sign" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Sqrt">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Sub">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="Text" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="base" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="TrailingZeroBits" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Uint64" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Xor">
+			<return type="BigInt" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<description>
+			</description>
+		</method>
+		<method name="make" qualifiers="static">
+			<return type="BigInt" />
+			<param index="0" name="x" type="int" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="_abs" type="PackedInt64Array" setter="_set_abs" getter="_get_abs" default="PackedInt64Array()">
+		</member>
+		<member name="_neg" type="bool" setter="_set_neg" getter="_is_neg" default="false">
+		</member>
+	</members>
+	<constants>
+		<constant name="MAX_BASE" value="62">
+		</constant>
+	</constants>
+</class>

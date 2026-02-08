@@ -1,0 +1,56 @@
+[configuration]
+
+entry_symbol = "big_library_init"
+compatibility_minimum = "4.6"
+reloadable = true
+
+[libraries]
+macos.single.debug = "./libgdbig.macos.template_debug.dylib"
+macos.double.debug = "./libgdbig.macos.template_debug.double.dylib"
+macos.single.release = "./libgdbig.macos.template_release.dylib"
+macos.double.release = "./libgdbig.macos.template_debug.double.dylib"
+
+ios.arm64.single.debug = "./libgdbig.ios.template_debug.arm64.dylib"
+ios.arm64.double.debug = "./libgdbig.ios.template_debug.arm64.double.dylib"
+ios.arm64.single.release = "./libgdbig.ios.template_release.arm64.dylib"
+ios.arm64.double.release = "./libgdbig.ios.template_release.arm64.double.dylib"
+
+windows.x86_32.single.debug = "./gdbig.windows.template_debug.x86_32.dll"
+windows.x86_32.double.debug = "./gdbig.windows.template_debug.x86_32.double.dll"
+windows.x86_32.single.release = "./gdbig.windows.template_release.x86_32.dll"
+windows.x86_32.double.release = "./gdbig.windows.template_release.x86_32.double.dll"
+
+windows.x86_64.single.debug = "./gdbig.windows.template_debug.x86_64.dll"
+windows.x86_64.double.debug = "./gdbig.windows.template_debug.x86_64.double.dll"
+windows.x86_64.single.release = "./gdbig.windows.template_release.x86_64.dll"
+windows.x86_64.double.release = "./gdbig.windows.template_release.x86_64.double.dll"
+
+linux.x86_64.single.debug = "./libgdbig.linux.template_debug.x86_64.so"
+linux.x86_64.double.debug = "./libgdbig.linux.template_debug.x86_64.double.so"
+linux.x86_64.single.release = "./libgdbig.linux.template_release.x86_64.so"
+linux.x86_64.double.release = "./libgdbig.linux.template_release.x86_64.double.so"
+
+linux.arm64.single.debug = "./libgdbig.linux.template_debug.arm64.so"
+linux.arm64.double.debug = "./libgdbig.linux.template_debug.arm64.double.so"
+linux.arm64.single.release = "./libgdbig.linux.template_release.arm64.so"
+linux.arm64.double.release = "./libgdbig.linux.template_release.arm64.double.so"
+
+linux.rv64.single.debug = "./libgdbig.linux.template_debug.rv64.so"
+linux.rv64.double.debug = "./libgdbig.linux.template_debug.rv64.double.so"
+linux.rv64.single.release = "./libgdbig.linux.template_release.rv64.so"
+linux.rv64.double.release = "./libgdbig.linux.template_release.rv64.double.so"
+
+android.x86_64.single.debug = "./libgdbig.android.template_debug.x86_64.so"
+android.x86_64.double.debug = "./libgdbig.android.template_debug.x86_64.double.so"
+android.x86_64.single.release = "./libgdbig.android.template_release.x86_64.so"
+android.x86_64.double.release = "./libgdbig.android.template_release.x86_64.double.so"
+
+android.arm64.single.debug = "./libgdbig.android.template_debug.arm64.so"
+android.arm64.double.debug = "./libgdbig.android.template_debug.arm64.double.so"
+android.arm64.single.release = "./libgdbig.android.template_release.arm64.so"
+android.arm64.double.release = "./libgdbig.android.template_release.arm64.double.so"
+
+web.wasm32.single.debug = "./libgdbig.web.template_debug.wasm32.nothreads.wasm"
+web.wasm32.double.debug = "./libgdbig.web.template_release.wasm32.double.nothreads.wasm"
+web.wasm32.single.release = "./libgdbig.web.template_release.wasm32.nothreads.wasm"
+web.wasm32.double.release = "./libgdbig.web.template_release.wasm32.double.nothreads.wasm"
