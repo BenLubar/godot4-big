@@ -16,7 +16,6 @@ else:
 sources = [
 	"src/godot_big_arith.cpp",
 	"src/godot_big_bind.cpp",
-	"src/godot_big_decimal.cpp",
 	"src/godot_big_float.cpp",
 	"src/godot_big_floatconv.cpp",
 	"src/godot_big_ftoa.cpp",
@@ -31,6 +30,7 @@ sources = [
 	"src/godot_big_ratconv.cpp",
 	"src/godot_big_register_types.cpp",
 	"src/godot_big_sqrt.cpp",
+	"src/godot_big_varint.cpp",
 ]
 
 big_objects = [env_big.SharedObject(file) for file in sources]

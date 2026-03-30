@@ -1,10 +1,13 @@
-// This file was ported from Go 1.25.7. Original copyright notice follows:
+// This file is ported from src/math/big/natdiv.go in Go 1.26.1.
+// Original copyright notice follows:
 
 // Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 #include "godot_big_naturals.h"
+
+using namespace godot;
 
 /*
 
@@ -506,86 +509,80 @@ static constexpr int64_t divRecursiveThreshold = 40; // see calibrate_test.go
 
 // rem returns r such that r = u%v.
 // It uses z as the storage for r.
-bool nat_rem(PackedInt64Array u, PackedInt64Array v, PackedInt64Array &r) {
-	PackedInt64Array q;
-	return nat_div(u, v, q, r);
+void BigNat::rem(BigNat u, BigNat v) {
+	BigNat q;
+	q.array.resize(MAX(1, u.array.size() - (v.array.size() - 1)));
+	q.div(*this, u, v);
 }
 
 // div returns q, r such that q = ⌊u/v⌋ and r = u%v = u - q·v.
 // It uses z and z2 as the storage for q and r.
 // The caller may pass stk == nil to request that div obtain and release one itself.
-bool nat_div(PackedInt64Array u, PackedInt64Array v, PackedInt64Array &q, PackedInt64Array &r) {
-	ERR_FAIL_COND_V_MSG(v.is_empty(), false, "division by zero");
+void BigNat::div(BigNat &r, BigNat u, BigNat v) {
+	CRASH_COND_MSG(v.array.is_empty(), "division by zero");
 
-	if (v.size() == 1) {
+	if (v.array.size() == 1) {
 		// Short division: long optimized for a single-word divisor.
 		// In that case, the 2-by-1 guess is all we need at each step.
-		uint64_t r2 = nat_divW(u, uint64_t(v[0]), q);
-		nat_setWord(r, r2);
-		return true;
+		const BigWord r2 = divW(u, v[0]);
+		r.setUint64(r2);
+		return;
 	}
 
-	if (nat_cmp(u, v) < 0) {
-		q.clear();
-		nat_set(r, u);
-		return true;
+	if (u.cmp(v) < 0) {
+		array.clear();
+		r.set(u);
+		return;
 	}
 
-	nat_divLarge(u, v, q, r);
-	return true;
+	divLarge(r, u, v);
 }
 
 // divW returns q, r such that q = ⌊x/y⌋ and r = x%y = x - q·y.
 // It uses z as the storage for q.
 // Note that y is a single digit (Word), not a big number.
-uint64_t nat_divW(PackedInt64Array x, uint64_t y, PackedInt64Array &q) {
-	const int64_t m = x.size();
+BigWord BigNat::divW(BigNat x, BigWord y) {
+	const int64_t m = x.array.size();
 	CRASH_COND_MSG(y == 0, "division by zero");
 
 	if (y == 1) {
-		nat_set(q, x); // result is x
+		set(x); // result is x
 		return 0;
 	}
 
 	if (m == 0) {
-		q.clear(); // result is 0
+		array.clear(); // result is 0
 		return 0;
 	}
 
 	// m > 0
-	q.resize(m);
-	const uint64_t r = nat_divWVW(q, 0, x, y);
-	nat_norm(q);
-
+	array.resize(m);
+	const BigWord r = divWVW(*this, 0, x, y);
+	norm();
 	return r;
 }
 
 // modW returns x % d.
-uint64_t nat_modW(PackedInt64Array x, uint64_t d) {
+BigWord BigNat::modW(BigWord d) const {
 	// TODO(agl): we don't actually need to store the q value.
-	PackedInt64Array q;
-	q.resize(x.size());
-	return nat_divWVW(q, 0, x, d);
+	BigNat q;
+	q.array.resize(array.size());
+	return divWVW(q, 0, *this, d);
 }
 
 // divWVW overwrites z with ⌊x/y⌋, returning the remainder r.
 // The caller must ensure that len(z) = len(x).
-uint64_t nat_divWVW(PackedInt64Array &z, uint64_t xn, PackedInt64Array x, uint64_t y) {
-	uint64_t r = xn;
-
-	if (x.size() == 1) {
-		uint64_t qq, rr;
-		nat_div64(r, x[0], y, qq, rr);
-		z[0] = qq;
-
+BigWord BigNat::divWVW(BigNat &z, BigWord xn, BigNat x, BigWord y) {
+	BigWord r = xn;
+	if (x.array.size() == 1) {
+		BigWord rr;
+		BigNat::divWW_basic(r, x[0], y, z[0], rr);
 		return rr;
 	}
 
-	const uint64_t rec = nat_reciprocalWord(y);
-	for (int64_t i = z.size() - 1; i >= 0; i--) {
-		uint64_t zi;
-		nat_divWW(r, x[i], y, rec, zi, r);
-		z[i] = zi;
+	const BigWord rec = reciprocalWord(y);
+	for (int64_t i = z.array.size() - 1; i >= 0; i--) {
+		divWW(r, x[i], y, rec, z[i], r);
 	}
 
 	return r;
@@ -595,116 +592,123 @@ uint64_t nat_divWVW(PackedInt64Array &z, uint64_t xn, PackedInt64Array x, uint64
 // It uses z and u as the storage for q and r.
 // The caller must ensure that len(vIn) ≥ 2 (use divW otherwise)
 // and that len(uIn) ≥ len(vIn) (the answer is 0, uIn otherwise).
-void nat_divLarge(PackedInt64Array u, PackedInt64Array v, PackedInt64Array &q, PackedInt64Array &r) {
-	const int64_t n = v.size();
-	const int64_t m = u.size() - n;
+void BigNat::divLarge(BigNat &r, BigNat uIn, BigNat vIn) {
+	const int64_t n = vIn.array.size();
+	const int64_t m = uIn.array.size() - n;
 
 	// Scale the inputs so vIn's top bit is 1 (see “Scaling Inputs” above).
 	// vIn is treated as a read-only input (it may be in use by another
 	// goroutine), so we must make a copy.
 	// uIn is copied to u.
-	const uint64_t shift = nat_nlz(v[n - 1]);
-	PackedInt64Array v2;
-	r.resize(u.size() + 1);
+	uint64_t shift = std::countl_zero(vIn[n - 1]);
+	BigNat v;
 	if (shift == 0) {
-		v2 = v;
-		nat_copy(r, 0, u, 0, u.size());
-		r[u.size()] = 0;
+		v = vIn;
+		r = uIn;
+		r.array.append(0);
 	} else {
-		v2.resize(n);
-		nat_lshVU(v2, 0, v, 0, shift, n);
-		r[u.size()] = nat_lshVU(r, 0, u, 0, shift, u.size());
+		v.array.resize(n);
+		lshVU(v, vIn, shift);
+		r.array.resize(uIn.array.size());
+		r.array.append(lshVU(r, uIn, shift));
 	}
 
-	q.resize(m + 1);
+	// The caller should not pass aliased z and u, since those are
+	// the two different outputs, but correct just in case.
+	array.resize(m + 1);
 
 	// Use basic or recursive long division depending on size.
 	if (n < divRecursiveThreshold) {
-		nat_divBasic(q, r, v2);
+		divBasic(r, v);
 	} else {
-		nat_divRecursive(q, r, v2);
+		divRecursive(r, v);
 	}
 
-	nat_norm(q);
+	norm();
 
 	// Undo scaling of remainder.
 	if (shift != 0) {
-		nat_rshVU(r, 0, r, 0, shift, n);
+		rshVU(r, r, shift);
 	}
-
-	nat_norm(r);
+	r.norm();
 }
 
 // divBasic implements long division as described above.
 // It overwrites q with ⌊u/v⌋ and overwrites u with the remainder r.
 // q must be large enough to hold ⌊u/v⌋.
-void nat_divBasic(PackedInt64Array &q, PackedInt64Array &u, PackedInt64Array v) {
-	const int64_t n = v.size();
-	const int64_t m = u.size() - n;
+void BigNat::divBasic(BigNat &u, BigNat v) {
+	const int64_t n = v.array.size();
+	const int64_t m = u.array.size() - n;
 
-	PackedInt64Array qhatv;
-	qhatv.resize(n + 1);
+	BigNat qhatv;
 
 	// Set up for divWW below, precomputing reciprocal argument.
-	uint64_t vn1 = v[n - 1];
-	uint64_t rec = nat_reciprocalWord(vn1);
+	BigWord vn1 = v[n - 1];
+	BigWord rec = reciprocalWord(vn1);
 
 	// Invent a leading 0 for u, for the first iteration.
 	// Invariant: ujn == u[j+n] in each iteration.
-	uint64_t ujn = 0;
+	BigWord ujn = 0;
 
 	// Compute each digit of quotient.
 	for (int64_t j = m; j >= 0; j--) {
 		// Compute the 2-by-1 guess q̂.
-		uint64_t qhat = ~uint64_t(0);
+		BigWord qhat = UINT64_MAX;
 
 		// ujn ≤ vn1, or else q̂ would be more than one digit.
 		// For ujn == vn1, we set q̂ to the max digit M above.
 		// Otherwise, we compute the 2-by-1 guess.
 		if (ujn != vn1) {
-			uint64_t rhat = 0;
-			nat_divWW(ujn, u[j + n - 1], vn1, rec, qhat, rhat);
+			BigWord rhat = 0;
+			divWW(ujn, u[j + n - 1], vn1, rec, qhat, rhat);
 
 			// Refine q̂ to a 3-by-2 guess. See “Refining Guesses” above.
-			uint64_t vn2 = v[n - 2];
-			uint64_t x1, x0;
-			nat_mulWW(qhat, vn2, x1, x0);
-			uint64_t ujn2 = u[j + n - 2];
-			while (nat_greaterThan(x1, x0, rhat, ujn2)) { // x1x2 > r̂ u[j+n-2]
+			const BigWord vn2 = v[n-2];
+			BigWord x1 = 0, x0 = 0;
+			mulWW(qhat, vn2, x1, x0);
+			const BigWord ujn2 = u[j + n - 2];
+			while (greaterThan(x1, x0, rhat, ujn2)) { // x1x0 > r̂ u[j+n-2]
 				qhat--;
-				const uint64_t prevRhat = rhat;
+				const BigWord prevRhat = rhat;
 				rhat += vn1;
 				// If r̂  overflows, then
-				// r̂ u[j+n-2]v[n-1] is now definitely > x1 x2.
+				// r̂ u[j+n-2]v[n-1] is now definitely > x1 x0.
 				if (rhat < prevRhat) {
 					break;
 				}
 				// TODO(rsc): No need for a full mulWW.
-				// x2 += vn2; if x2 overflows, x1++
-				nat_mulWW(qhat, vn2, x1, x0);
+				// x0 += vn2; if x0 overflows, x1++
+				mulWW(qhat, vn2, x1, x0);
 			}
 		}
 
 		// Compute q̂·v.
-		qhatv[n] = nat_mulAddVWW(qhatv, 0, v, 0, qhat, 0, n);
-		int64_t qhl = qhatv.size();
-		if (j + qhl > u.size() && qhatv[n] == 0) {
+		qhatv.array.resize(n);
+		qhatv.array.append(mulAddVWW(qhatv, v, qhat, 0));
+		int64_t qhl = qhatv.array.size();
+		if (j + qhl > u.array.size() && qhatv[n] == 0) {
 			qhl--;
 		}
 
 		// Subtract q̂·v from the current section of u.
 		// If it underflows, q̂·v > u, which we fix up
 		// by decrementing q̂ and adding v back.
-		uint64_t c = nat_subVV(u, j, u, j, qhatv, 0, qhl);
+		BigNat tempu{u.array.slice(j, j + qhl)};
+		BigWord c = subVV(tempu, tempu, BigNat{qhatv.array.slice(0, qhl)});
+		for (int64_t i = 0; i < qhl; i++) {
+			u[j + i] = tempu[i];
+		}
 		if (c != 0) {
-			c = nat_addVV(u, j, u, j, v, 0, n);
-
+			tempu = BigNat{u.array.slice(j, j + n)};
+			c = addVV(tempu, tempu, v);
+			for (int64_t i = 0; i < n; i++) {
+				u[j + i] = tempu[i];
+			}
 			// If n == qhl, the carry from subVV and the carry from addVV
 			// cancel out and don't affect u[j+n].
 			if (n < qhl) {
 				u[j + n] += c;
 			}
-
 			qhat--;
 		}
 
@@ -712,18 +716,17 @@ void nat_divBasic(PackedInt64Array &q, PackedInt64Array &u, PackedInt64Array v) 
 
 		// Save quotient digit.
 		// Caller may know the top digit is zero and not leave room for it.
-		if (j == m && m == q.size() && qhat == 0) {
+		if (j == m && m == array.size() && qhat == 0) {
 			continue;
 		}
-
-		q[j] = qhat;
+		(*this)[j] = qhat;
 	}
 }
 
 // greaterThan reports whether the two digit numbers x1 x2 > y1 y2.
 // TODO(rsc): In contradiction to most of this file, x1 is the high
 // digit and x2 is the low digit. This should be fixed.
-bool nat_greaterThan(uint64_t x1, uint64_t x0, uint64_t y1, uint64_t y0) {
+bool BigNat::greaterThan(BigWord x1, BigWord x0, BigWord y1, BigWord y0) {
 	return x1 > y1 || (x1 == y1 && x0 > y0);
 }
 
@@ -732,9 +735,9 @@ bool nat_greaterThan(uint64_t x1, uint64_t x0, uint64_t y1, uint64_t y0) {
 // z must be large enough to hold ⌊u/v⌋.
 // This function is just for allocating and freeing temporaries
 // around divRecursiveStep, the real implementation.
-void nat_divRecursive(PackedInt64Array &q, PackedInt64Array &u, PackedInt64Array v) {
-	q.fill(0);
-	u = nat_divRecursiveStep(q, u, v, 0);
+void BigNat::divRecursive(BigNat &u, BigNat v) {
+	array.fill(0);
+	divRecursiveStep(u, v, 0);
 }
 
 // divRecursiveStep is the actual implementation of recursive division.
@@ -742,28 +745,28 @@ void nat_divRecursive(PackedInt64Array &q, PackedInt64Array &u, PackedInt64Array
 // z must be large enough to hold ⌊u/v⌋.
 // It uses temps[depth] (allocating if needed) as a temporary live across
 // the recursive call. It also uses tmp, but not live across the recursion.
-PackedInt64Array nat_divRecursiveStep(PackedInt64Array &q, PackedInt64Array u, PackedInt64Array v, int64_t depth) {
+void BigNat::divRecursiveStep(BigNat &u, BigNat v, int64_t depth) {
 	// u is a subsection of the original and may have leading zeros.
 	// TODO(rsc): The v = v.norm() is useless and should be removed.
 	// We know (and require) that v's top digit is ≥ B/2.
-	nat_norm(u);
-	nat_norm(v);
-	if (u.is_empty()) {
-		q.fill(0);
-		return u;
+	u.norm();
+	v.norm();
+	if (u.array.is_empty()) {
+		array.fill(0);
+		return;
 	}
 
 	// Fall back to basic division if the problem is now small enough.
-	const int64_t n = v.size();
+	const int64_t n = v.array.size();
 	if (n < divRecursiveThreshold) {
-		nat_divBasic(q, u, v);
-		return u;
+		divBasic(u, v);
+		return;
 	}
 
 	// Nothing to do if u is shorter than v (implies u < v).
-	const int64_t m = u.size() - n;
+	const int64_t m = u.array.size() - n;
 	if (m < 0) {
-		return u;
+		return;
 	}
 
 	// We consider B digits in a row as a single wide digit.
@@ -774,9 +777,8 @@ PackedInt64Array nat_divRecursiveStep(PackedInt64Array &q, PackedInt64Array u, P
 	// TODO(rsc): Look into whether using ⌈n/2⌉ is better than ⌊n/2⌋.
 	const int64_t B = n / 2;
 
-	// Allocate a nat for qhat below.
-	PackedInt64Array qhat0;
-	qhat0.resize(B + 1);
+	const BigNat vtos{v.array.slice(0, B - 1)};
+	const BigNat vfroms{v.array.slice(B - 1)};
 
 	// Compute each wide digit of the quotient.
 	//
@@ -800,16 +802,17 @@ PackedInt64Array nat_divRecursiveStep(PackedInt64Array &q, PackedInt64Array u, P
 		const int64_t s = B - 1;
 
 		// uu is the up-to-3B-digit section of u we are working on.
-		const int64_t uu0 = j - B; // uu := u[j-B:]
+		//uu := u[j-B:]
 
 		// Compute the 2-by-1 guess q̂, leaving r̂ in uu[s:B+n].
-		PackedInt64Array qhat = qhat0;
-		qhat.fill(0);
-		const PackedInt64Array uout = nat_divRecursiveStep(qhat, u.slice(uu0 + s, uu0 + B + n), v.slice(s), depth + 1);
-		for (int64_t i = 0; i < uout.size(); i++) {
-			u[uu0 + s + i] = uout[i];
+		BigNat qhat;
+		qhat.array.resize(B + 1);
+		BigNat uu{u.array.slice(j - 1, j + n)};
+		qhat.divRecursiveStep(u, vfroms, depth + 1);
+		for (int64_t i = 0; i < n + 1; i++) {
+			u[j - 1 + i] = i < uu.array.size() ? uu[i] : 0;
 		}
-		nat_norm(qhat);
+		qhat.norm();
 
 		// Extend to a 3-by-2 quotient and remainder.
 		// Because divRecursiveStep overwrote the top part of uu with
@@ -823,35 +826,29 @@ PackedInt64Array nat_divRecursiveStep(PackedInt64Array &q, PackedInt64Array u, P
 		// q̂·vₙ₋₂ and decrementing q̂ until that product is ≤ u.
 		// But we can do the subtraction directly, as in the comment above
 		// and in long division, because we know that q̂ is wrong by at most one.
-		PackedInt64Array qhatv;
-		nat_mul(qhatv, qhat, v.slice(0, s));
+		BigNat qhatv;
+		qhatv.mul(qhat, vtos);
 		for (int64_t i = 0; i < 2; i++) {
-			PackedInt64Array uunorm = u.slice(uu0);
-			nat_norm(uunorm);
-			if (nat_cmp(qhatv, uunorm) <= 0) {
+			if (qhatv.cmpnorm(BigNat{u.array.slice(j - B)}) <= 0) {
 				break;
 			}
-
-			nat_subVW(qhat, 0, qhat, 0, 1, qhat.size());
-			uint64_t c = nat_subVV(qhatv, 0, qhatv, 0, v, 0, s);
-			if (qhatv.size() > s) {
-				nat_subVW(qhatv, s, qhatv, s, c, qhatv.size() - s);
-			}
-
-			nat_addTo(u, uu0 + s, v.slice(s));
+			subVW(qhat, qhat, 1);
+			BigNat qhatvs{qhatv.array.slice(s)};
+			qhatv.array.resize(s);
+			BigWord c = subVV(qhatv, qhatv, vtos);
+			subVW(qhatvs, qhatvs, c);
+			qhatv.array.append_array(qhatvs.array);
+			addTo(u, j-B+s, vfroms);
 		}
-
-		PackedInt64Array uunorm = u.slice(uu0);
-		nat_norm(uunorm);
-		CRASH_COND(nat_cmp(qhatv, uunorm) > 0);
-
-		uint64_t c = nat_subVV(u, uu0, u, uu0, qhatv, 0, qhatv.size());
-		if (c > 0) {
-			nat_subVW(u, uu0 + qhatv.size(), u, uu0 + qhatv.size(), c, u.size() - uu0 - qhatv.size());
-		}
-
-		nat_addTo(q, j - B, qhat);
-
+		CRASH_COND(qhatv.cmpnorm(BigNat{u.array.slice(j - B)}) > 0);
+		BigNat uu0{u.array.slice(j - B, j - B + qhatv.array.size())};
+		BigNat uu1{u.array.slice(j - B + qhatv.array.size())};
+		u.array.resize(j - B);
+		BigWord c = subVV(uu0, uu0, qhatv);
+		u.array.append_array(uu0.array);
+		subVW(uu1, uu1, c);
+		u.array.append_array(uu1.array);
+		addTo(*this, j - B, qhat);
 		j -= B;
 	}
 
@@ -860,47 +857,40 @@ PackedInt64Array nat_divRecursiveStep(PackedInt64Array &q, PackedInt64Array u, P
 	// Now u < (v<<B), compute lower bits in the same way.
 	// Choose shift = B-1 again.
 	const int64_t s = B - 1;
-	PackedInt64Array qhat = qhat0;
-	qhat.fill(0);
-	const PackedInt64Array uout = nat_divRecursiveStep(qhat, u.slice(s), v.slice(s), depth + 1);
-	for (int64_t i = 0; i < uout.size(); i++) {
-		u[s + i] = uout[i];
+	BigNat qhat;
+	qhat.array.resize(B + 1);
+	BigNat us{u.array.slice(s)};
+	us.norm();
+	qhat.divRecursiveStep(us, vfroms, depth + 1);
+	for (int64_t i = 0; s + i < u.array.size(); i++) {
+		u[s + i] = i < us.array.size() ? us[i] : 0;
 	}
-	nat_norm(qhat);
-
-	PackedInt64Array qhatv;
-	nat_mul(qhatv, qhat, v.slice(0, s));
-
+	qhat.norm();
+	BigNat qhatv;
+	qhatv.mul(qhat, vtos);
 	// Set the correct remainder as before.
 	for (int64_t i = 0; i < 2; i++) {
-		PackedInt64Array unorm = u;
-		nat_norm(unorm);
-
-		if (nat_cmp(qhatv, unorm) > 0) {
-			nat_subVW(qhat, 0, qhat, 0, 1, qhat.size());
-
-			uint64_t c = nat_subVV(qhatv, 0, qhatv, 0, v, 0, s);
-			if (qhatv.size() > s) {
-				nat_subVW(qhatv, s, qhatv, s, c, qhatv.size() - s);
-			}
-
-			nat_addTo(u, s, v.slice(s));
+		if (qhatv.cmpnorm(u) > 0) {
+			subVW(qhat, qhat, 1);
+			BigNat qhatvs{qhatv.array.slice(s)};
+			qhatv.array.resize(s);
+			BigWord c = subVV(qhatv, qhatv, vtos);
+			subVW(qhatvs, qhatvs, c);
+			qhatv.array.append_array(qhatvs.array);
+			addTo(u, s, vfroms);
 		}
 	}
-
-	PackedInt64Array unorm = u;
-	nat_norm(unorm);
-	CRASH_COND(nat_cmp(qhatv, unorm) > 0);
-
-	uint64_t c = nat_subVV(u, 0, u, 0, qhatv, 0, qhatv.size());
+	CRASH_COND(qhatv.cmpnorm(u) > 0);
+	BigNat uqhatv{u.array.slice(qhatv.array.size())};
+	u.array.resize(qhatv.array.size());
+	BigWord c = subVV(u, u, qhatv);
 	if (c > 0) {
-		c = nat_subVW(u, qhatv.size(), u, qhatv.size(), c, u.size() - qhatv.size());
+		c = subVW(uqhatv, uqhatv, c);
 	}
+	u.array.append_array(uqhatv.array);
 	CRASH_COND(c > 0);
 
 	// Done!
-	nat_norm(qhat);
-	nat_addTo(q, 0, qhat);
-
-	return u;
+	qhat.norm();
+	addTo(*this, 0, qhat);
 }

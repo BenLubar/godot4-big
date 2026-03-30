@@ -1,11 +1,13 @@
-// This file was ported from Go 1.25.7. Original copyright notice follows:
+// This file is ported from src/math/big/floatconv.go in Go 1.26.1.
+// Original copyright notice follows:
 
 // Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 #include "godot_big_float.h"
-#include "godot_big_naturals.h"
+
+using namespace godot;
 
 // This file implements string-to-Float conversion functions.
 
@@ -13,9 +15,7 @@
 // floating point number from an io.ByteScanner rather than a string. It serves
 // as the implementation of Parse. It does not recognize ±Inf and does not expect
 // EOF at the end.
-Ref<BigFloat> BigFloat::scan(const PackedByteArray &buf, int64_t &i, int64_t &base) {
-	const int64_t orig_base = base;
-
+Error BigFloat::_scan(const godot::String &s, int64_t &off, int64_t &base) {
 	uint32_t prec = _prec;
 	if (prec == 0) {
 		prec = 64;
@@ -25,24 +25,33 @@ Ref<BigFloat> BigFloat::scan(const PackedByteArray &buf, int64_t &i, int64_t &ba
 	_form = FORM_ZERO;
 
 	// sign
-	ERR_FAIL_COND_V(!nat_scanSign(buf, i, _neg), nullptr);
+	Error err = BigNat::scanSign(s, off, _neg);
+	if (err != OK) {
+		return err;
+	}
 
 	// mantissa
+	const int64_t orig_base = base;
 	int64_t fcount = 0; // fractional digit count; valid if <= 0
-	ERR_FAIL_COND_V(!nat_scan(_mant, buf, i, base, fcount, true), nullptr);
+	err = _mant.scan(s, off, base, true, base, fcount);
+	if (err != OK) {
+		return err;
+	}
 
 	// exponent
 	int64_t exp = 0, ebase = 0;
-	ERR_FAIL_COND_V(!nat_scanExponent(buf, i, true, orig_base == 0, exp, ebase), nullptr);
-
-	// special-case 0
-	if (_mant.is_empty()) {
-		_prec = prec;
-		_acc = ACCURACY_EXACT;
-		_form = FORM_ZERO;
-		return this;
+	err = BigNat::scanExponent(s, off, true, orig_base == 0, exp, ebase);
+	if (err != OK) {
+		return err;
 	}
 
+	// special-case 0
+	if (_mant.array.is_empty()) {
+		_prec = prec;
+		_acc = ACC_EXACT;
+		_form = FORM_ZERO;
+		return OK;
+	}
 	// len(z.mant) > 0
 
 	// The mantissa may have a radix point (fcount <= 0) and there
@@ -57,7 +66,7 @@ Ref<BigFloat> BigFloat::scan(const PackedByteArray &buf, int64_t &i, int64_t &ba
 	// needed for base-10 exponents.
 
 	// normalize mantissa and determine initial exponent contributions
-	int64_t exp2 = int64_t(_mant.size()) * 64 - nat_fnorm(_mant);
+	int64_t exp2 = _mant.array.size() * 64 - _mant.fnorm();
 	int64_t exp5 = 0;
 
 	// determine binary or decimal exponent contribution of radix point
@@ -79,9 +88,8 @@ Ref<BigFloat> BigFloat::scan(const PackedByteArray &buf, int64_t &i, int64_t &ba
 			exp2 += fcount * 4; // hexadecimal digits are 4 bits each
 			break;
 		default:
-			ERR_FAIL_V_MSG(nullptr, "unexpected mantissa base");
+			CRASH_NOW_MSG("unexpected mantissa base");
 		}
-
 		// fcount consumed - not needed anymore
 	}
 
@@ -94,23 +102,24 @@ Ref<BigFloat> BigFloat::scan(const PackedByteArray &buf, int64_t &i, int64_t &ba
 		exp2 += exp;
 		break;
 	default:
-		ERR_FAIL_V_MSG(nullptr, "unexpected exponent base");
+		CRASH_NOW_MSG("unexpected exponent base");
 	}
 	// exp consumed - not needed anymore
 
-	ERR_FAIL_COND_V_MSG(MIN_EXP > exp2 || exp2 > MAX_EXP, nullptr, "exponent overflow");
-
 	// apply 2**exp2
-	_prec = prec;
-	_form = FORM_FINITE;
-	_exp = int32_t(exp2);
+	if (MIN_EXP <= exp2 && exp2 <= MAX_EXP) {
+		_prec = prec;
+		_form = FORM_FINITE;
+		_exp = int32_t(exp2);
+	} else {
+		ERR_FAIL_V_MSG(ERR_INVALID_DATA, "exponent overflow");
+	}
 
 	if (exp5 == 0) {
 		// no decimal exponent contribution
-		round(0);
-		return this;
+		_round(0);
+		return OK;
 	}
-
 	// exp5 != 0
 
 	// apply 5**exp5
@@ -118,12 +127,14 @@ Ref<BigFloat> BigFloat::scan(const PackedByteArray &buf, int64_t &i, int64_t &ba
 	p.instantiate();
 	p->SetPrec(Prec() + 64); // use more bits for p -- TODO(gri) what is the right number?
 	if (exp5 < 0) {
-		Quo(this, p->pow5(uint64_t(-exp5)));
+		p->_pow5(uint64_t(-exp5));
+		Quo(this, p);
 	} else {
-		Mul(this, p->pow5(uint64_t(exp5)));
+		p->_pow5(uint64_t(exp5));
+		Mul(this, p);
 	}
 
-	return this;
+	return OK;
 }
 
 // These powers of 5 fit into a uint64.
@@ -132,67 +143,70 @@ Ref<BigFloat> BigFloat::scan(const PackedByteArray &buf, int64_t &i, int64_t &ba
 //		fmt.Println(q)
 //	}
 static constexpr uint64_t pow5tab[] = {
-	1LLU,
-	5LLU,
-	25LLU,
-	125LLU,
-	625LLU,
-	3125LLU,
-	15625LLU,
-	78125LLU,
-	390625LLU,
-	1953125LLU,
-	9765625LLU,
-	48828125LLU,
-	244140625LLU,
-	1220703125LLU,
-	6103515625LLU,
-	30517578125LLU,
-	152587890625LLU,
-	762939453125LLU,
-	3814697265625LLU,
-	19073486328125LLU,
-	95367431640625LLU,
-	476837158203125LLU,
-	2384185791015625LLU,
-	11920928955078125LLU,
-	59604644775390625LLU,
-	298023223876953125LLU,
-	1490116119384765625LLU,
-	7450580596923828125LLU,
+	1,
+	5,
+	25,
+	125,
+	625,
+	3125,
+	15625,
+	78125,
+	390625,
+	1953125,
+	9765625,
+	48828125,
+	244140625,
+	1220703125,
+	6103515625,
+	30517578125,
+	152587890625,
+	762939453125,
+	3814697265625,
+	19073486328125,
+	95367431640625,
+	476837158203125,
+	2384185791015625,
+	11920928955078125,
+	59604644775390625,
+	298023223876953125,
+	1490116119384765625,
+	7450580596923828125,
 };
 
 // pow5 sets z to 5**n and returns z.
 // n must not be negative.
-Ref<BigFloat> BigFloat::pow5(uint64_t n) {
-	static constexpr uint64_t m = (sizeof(pow5tab) / sizeof(pow5tab[0])) - 1;
-	if (n <= m) {
-		return SetUint64(pow5tab[n]);
+void BigFloat::_pow5(uint64_t p_n) {
+	constexpr uint64_t m = (sizeof(pow5tab) / sizeof(pow5tab[0])) - 1;
+	if (p_n <= m) {
+		SetUint64(pow5tab[p_n]);
+		return;
 	}
-
 	// n > m
 
 	SetUint64(pow5tab[m]);
-	n -= m;
+	p_n -= m;
 
 	// use more bits for f than for z
 	// TODO(gri) what is the right number?
 	Ref<BigFloat> f;
-	f.instantiate();
 	f->SetPrec(Prec() + 64);
 	f->SetUint64(5);
 
-	while (n > 0) {
-		if ((n & 1) != 0) {
+	while (p_n > 0) {
+		if ((p_n & 1) != 0) {
 			Mul(this, f);
 		}
 		f->Mul(f, f);
-		n >>= 1;
+		p_n >>= 1;
 	}
-
-	return this;
 }
 
+// SetString sets z to the value of s and returns z and a boolean indicating
+// success. s must be a floating-point number of the same format as accepted
+// by [Float.Parse], with base argument 0. The entire string (not just a prefix) must
+// be valid for success. If the operation failed, the value of z is undefined
+// but the returned value is nil.
+//
 // Parse parses s which must contain a text representation of a floating-
 // point number with a mantissa in the given conversion base (the exponent
 // is always a decimal number), or a string representing an infinite value.
@@ -238,21 +252,25 @@ Ref<BigFloat> BigFloat::pow5(uint64_t n) {
 //
 // The returned *Float f is nil and the value of z is valid but not
 // defined if an error is reported.
-Ref<BigFloat> BigFloat::SetString(const godot::String &s, int64_t base) {
+Error BigFloat::SetString(const godot::String &p_s, int64_t p_base) {
 	// scan doesn't handle ±Inf
-	if (s.length() == 3 && (s == "Inf" || s == "inf")) {
-		return SetInf(false);
+	if (p_s.length() == 3 && (p_s == "Inf" || p_s == "inf")) {
+		SetInf(false);
+		return OK;
+	}
+	if (p_s.length() == 4 && (p_s[0] == '+' || p_s[0] == '-') && (p_s[1] == 'I' || p_s[1] == 'i') && p_s[2] == 'n' && p_s[3] == 'f') {
+		SetInf(p_s[0] == '-');
+		return OK;
 	}
 
-	if (s.length() == 4 && (s[0] == '+' || s[0] == '-') && (s.substr(1) == "Inf" || s.substr(1) == "inf")) {
-		return SetInf(s[0] == '-');
+	int64_t off = 0;
+	const Error err = _scan(p_s, off, p_base);
+	if (err != OK) {
+		return err;
 	}
 
-	PackedByteArray buf = s.to_ascii_buffer();
+	// entire string must have been consumed
+	ERR_FAIL_COND_V(off != p_s.length(), ERR_INVALID_PARAMETER);
 
-	int64_t i = 0;
-	ERR_FAIL_COND_V(scan(buf, i, base).is_null(), nullptr);
-	ERR_FAIL_COND_V_MSG(i != buf.size(), nullptr, "expected end of string");
-
-	return this;
+	return OK;
 }

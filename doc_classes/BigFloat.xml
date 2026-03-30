@@ -8,7 +8,7 @@
 	</tutorials>
 	<methods>
 		<method name="Abs">
-			<return type="BigFloat" />
+			<return type="void" />
 			<param index="0" name="x" type="BigFloat" />
 			<description>
 			</description>
@@ -19,7 +19,7 @@
 			</description>
 		</method>
 		<method name="Add">
-			<return type="BigFloat" />
+			<return type="int" enum="Error" />
 			<param index="0" name="x" type="BigFloat" />
 			<param index="1" name="y" type="BigFloat" />
 			<description>
@@ -32,8 +32,18 @@
 			</description>
 		</method>
 		<method name="Copy">
-			<return type="BigFloat" />
+			<return type="void" />
 			<param index="0" name="x" type="BigFloat" />
+			<description>
+			</description>
+		</method>
+		<method name="Float32" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="Float32Accuracy" qualifiers="const">
+			<return type="int" enum="BigFloat.Accuracy" />
 			<description>
 			</description>
 		</method>
@@ -84,21 +94,37 @@
 			<description>
 			</description>
 		</method>
+		<method name="Mode" qualifiers="const">
+			<return type="int" enum="BigFloat.RoundingMode" />
+			<description>
+			</description>
+		</method>
 		<method name="Mul">
-			<return type="BigFloat" />
+			<return type="int" enum="Error" />
 			<param index="0" name="x" type="BigFloat" />
 			<param index="1" name="y" type="BigFloat" />
 			<description>
 			</description>
 		</method>
 		<method name="Neg">
-			<return type="BigFloat" />
+			<return type="void" />
 			<param index="0" name="x" type="BigFloat" />
 			<description>
 			</description>
 		</method>
-		<method name="Quo">
+		<method name="NewFloat" qualifiers="static">
 			<return type="BigFloat" />
+			<param index="0" name="x" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="Prec" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="Quo">
+			<return type="int" enum="Error" />
 			<param index="0" name="x" type="BigFloat" />
 			<param index="1" name="y" type="BigFloat" />
 			<description>
@@ -111,69 +137,69 @@
 			</description>
 		</method>
 		<method name="Set">
-			<return type="BigFloat" />
+			<return type="void" />
 			<param index="0" name="x" type="BigFloat" />
 			<description>
 			</description>
 		</method>
 		<method name="SetFloat64">
-			<return type="BigFloat" />
+			<return type="int" enum="Error" />
 			<param index="0" name="x" type="float" />
 			<description>
 			</description>
 		</method>
 		<method name="SetInf">
-			<return type="BigFloat" />
+			<return type="void" />
 			<param index="0" name="signbit" type="bool" />
 			<description>
 			</description>
 		</method>
 		<method name="SetInt">
-			<return type="BigFloat" />
+			<return type="void" />
 			<param index="0" name="x" type="BigInt" />
 			<description>
 			</description>
 		</method>
 		<method name="SetInt64">
-			<return type="BigFloat" />
+			<return type="void" />
 			<param index="0" name="x" type="int" />
 			<description>
 			</description>
 		</method>
 		<method name="SetMantExp">
-			<return type="BigFloat" />
+			<return type="void" />
 			<param index="0" name="mant" type="BigFloat" />
 			<param index="1" name="exp" type="int" />
 			<description>
 			</description>
 		</method>
 		<method name="SetMode">
-			<return type="BigFloat" />
+			<return type="void" />
 			<param index="0" name="mode" type="int" enum="BigFloat.RoundingMode" />
 			<description>
 			</description>
 		</method>
 		<method name="SetPrec">
-			<return type="BigFloat" />
+			<return type="void" />
 			<param index="0" name="prec" type="int" />
 			<description>
 			</description>
 		</method>
 		<method name="SetRat">
-			<return type="BigFloat" />
+			<return type="void" />
 			<param index="0" name="x" type="BigRat" />
 			<description>
 			</description>
 		</method>
 		<method name="SetString">
-			<return type="BigFloat" />
+			<return type="int" enum="Error" />
 			<param index="0" name="s" type="String" />
 			<param index="1" name="base" type="int" default="0" />
 			<description>
 			</description>
 		</method>
 		<method name="SetUint64">
-			<return type="BigFloat" />
+			<return type="void" />
 			<param index="0" name="x" type="int" />
 			<description>
 			</description>
@@ -189,22 +215,22 @@
 			</description>
 		</method>
 		<method name="Sqrt">
-			<return type="BigFloat" />
+			<return type="int" enum="Error" />
 			<param index="0" name="x" type="BigFloat" />
+			<description>
+			</description>
+		</method>
+		<method name="String" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="format" type="int" enum="BigFloat.Format" default="103" />
+			<param index="1" name="prec" type="int" default="10" />
 			<description>
 			</description>
 		</method>
 		<method name="Sub">
-			<return type="BigFloat" />
+			<return type="int" enum="Error" />
 			<param index="0" name="x" type="BigFloat" />
 			<param index="1" name="y" type="BigFloat" />
-			<description>
-			</description>
-		</method>
-		<method name="Text" qualifiers="const">
-			<return type="String" />
-			<param index="0" name="fmt" type="int" enum="BigFloat.Format" />
-			<param index="1" name="prec" type="int" />
 			<description>
 			</description>
 		</method>
@@ -218,9 +244,15 @@
 			<description>
 			</description>
 		</method>
-		<method name="make" qualifiers="static">
-			<return type="BigFloat" />
-			<param index="0" name="x" type="float" />
+		<method name="from_bytes">
+			<return type="int" />
+			<param index="0" name="bytes" type="PackedByteArray" />
+			<param index="1" name="offset" type="int" default="0" />
+			<description>
+			</description>
+		</method>
+		<method name="to_bytes" qualifiers="const">
+			<return type="PackedByteArray" />
 			<description>
 			</description>
 		</method>
@@ -240,23 +272,13 @@
 		</member>
 		<member name="_prec" type="int" setter="_set_prec" getter="_get_prec" default="0">
 		</member>
-		<member name="precision" type="int" setter="SetPrec" getter="Prec" default="0">
-		</member>
-		<member name="rounding_mode" type="int" setter="SetMode" getter="Mode" enum="BigFloat.RoundingMode" default="0">
-		</member>
 	</members>
 	<constants>
-		<constant name="MAX_EXP" value="2147483647">
+		<constant name="ACC_BELOW" value="-1" enum="Accuracy">
 		</constant>
-		<constant name="MIN_EXP" value="-2147483648">
+		<constant name="ACC_EXACT" value="0" enum="Accuracy">
 		</constant>
-		<constant name="MAX_PREC" value="4294967295">
-		</constant>
-		<constant name="ACCURACY_BELOW" value="-1" enum="Accuracy">
-		</constant>
-		<constant name="ACCURACY_EXACT" value="0" enum="Accuracy">
-		</constant>
-		<constant name="ACCURACY_ABOVE" value="1" enum="Accuracy">
+		<constant name="ACC_ABOVE" value="1" enum="Accuracy">
 		</constant>
 		<constant name="TO_NEAREST_EVEN" value="0" enum="RoundingMode">
 		</constant>
@@ -276,19 +298,25 @@
 		</constant>
 		<constant name="FORM_INF" value="2" enum="Form">
 		</constant>
+		<constant name="MAX_EXP" value="2147483647">
+		</constant>
+		<constant name="MIN_EXP" value="-2147483648">
+		</constant>
+		<constant name="MAX_PREC" value="4294967295">
+		</constant>
 		<constant name="FORMAT_SCIENTIFIC" value="101" enum="Format">
 		</constant>
-		<constant name="FORMAT_SCIENTIFIC_CAPS" value="69" enum="Format">
+		<constant name="FORMAT_SCIENTIFIC_UPPER" value="69" enum="Format">
 		</constant>
-		<constant name="FORMAT_NUMBER" value="102" enum="Format">
+		<constant name="FORMAT_PLAIN" value="102" enum="Format">
 		</constant>
 		<constant name="FORMAT_AUTO" value="103" enum="Format">
 		</constant>
-		<constant name="FORMAT_AUTO_CAPS" value="71" enum="Format">
+		<constant name="FORMAT_AUTO_UPPER" value="71" enum="Format">
 		</constant>
 		<constant name="FORMAT_HEX" value="120" enum="Format">
 		</constant>
-		<constant name="FORMAT_HEX_NORM" value="112" enum="Format">
+		<constant name="FORMAT_HEX_NORMAL" value="112" enum="Format">
 		</constant>
 		<constant name="FORMAT_DECIMAL" value="98" enum="Format">
 		</constant>

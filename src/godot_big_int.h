@@ -1,91 +1,103 @@
 #pragma once
 
-#include "godot_big_shared.h"
+#include "godot_big_naturals.h"
 
-class BigInt : public GODOT_BIG_BASE_CLASS {
-	GDCLASS(BigInt, GODOT_BIG_BASE_CLASS);
+class BigInt : public godot::Resource {
+	GDCLASS(BigInt, godot::Resource);
 
 protected:
 	static void _bind_methods();
 
-private:
-	bool _neg = false; // sign
-	godot::PackedInt64Array _abs; // absolute value of the integer
-	friend class BigRat;
-	friend class BigFloat;
-
 public:
-	static constexpr int64_t MAX_BASE = 10 + ('z' - 'a' + 1) + ('Z' - 'A' + 1);
+	bool _neg = false; // sign
+	BigNat _abs; // absolute value of the integer
+	void _set_neg(bool p_neg);
+	bool _is_neg() const;
+	void _set_abs(const godot::PackedInt64Array &p_abs);
+	godot::PackedInt64Array _get_abs() const;
 
-	static godot::Ref<BigInt> make(int64_t p_x);
-
-	// raw getters/setters for serialization
-	inline bool _is_neg() const { return _neg; }
-	inline void _set_neg(bool p_neg) { _neg = p_neg; }
-	inline godot::PackedInt64Array _get_abs() const { return _abs; }
-	inline void _set_abs(const godot::PackedInt64Array &p_abs) { _abs = p_abs; }
+	godot::PackedByteArray to_uvarint() const;
+	int64_t from_uvarint(const godot::PackedByteArray &p_bytes, int64_t p_offset = 0);
+	godot::PackedByteArray to_svarint() const;
+	int64_t from_svarint(const godot::PackedByteArray &p_bytes, int64_t p_offset = 0);
 
 	int Sign() const;
-	godot::Ref<BigInt> SetInt64(int64_t x);
-	godot::Ref<BigInt> SetUint64(uint64_t x);
-	godot::Ref<BigInt> Set(const godot::Ref<BigInt> &x);
-	godot::Ref<BigInt> Abs(const godot::Ref<BigInt> &x);
-	godot::Ref<BigInt> Neg(const godot::Ref<BigInt> &x);
-	godot::Ref<BigInt> Add(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y);
-	godot::Ref<BigInt> Sub(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y);
-	godot::Ref<BigInt> Mul(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y);
-	godot::Ref<BigInt> MulRange(int64_t a, int64_t b);
-	godot::Ref<BigInt> Binomial(int64_t n, int64_t k);
-	godot::Ref<BigInt> Quo(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y);
-	godot::Ref<BigInt> Rem(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y);
-	godot::Ref<BigInt> QuoRem(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y, const godot::Ref<BigInt> &r);
-	godot::Ref<BigInt> Div(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y);
-	godot::Ref<BigInt> Mod(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y);
-	godot::Ref<BigInt> DivMod(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y, const godot::Ref<BigInt> &m);
-	int Cmp(const godot::Ref<BigInt> &y) const;
-	int CmpAbs(const godot::Ref<BigInt> &y) const;
+
+	void SetInt64(int64_t p_x);
+	void SetUint64(uint64_t p_x);
+	static godot::Ref<BigInt> NewInt(int64_t p_x);
+	void Set(const godot::Ref<BigInt> &p_x);
+
+	void Abs(const godot::Ref<BigInt> &p_x);
+	void Neg(const godot::Ref<BigInt> &p_x);
+	void Add(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
+	void Sub(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
+	void Mul(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
+	void MulRange(int64_t p_a, int64_t p_b);
+	void Binomial(int64_t p_n, int64_t p_k);
+	godot::Error Quo(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
+	godot::Error Rem(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
+	godot::Error QuoRem(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &r_r);
+	godot::Error Div(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
+	godot::Error Mod(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
+	godot::Error DivMod(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &r_m);
+
+	int Cmp(const godot::Ref<BigInt> &p_y) const;
+	int CmpAbs(const godot::Ref<BigInt> &p_y) const;
+
 	int64_t Int64() const;
 	uint64_t Uint64() const;
 	bool IsInt64() const;
 	bool IsUint64() const;
-	double Float64() const;
-	BigAccuracy Float64Accuracy() const;
-	godot::Ref<BigInt> SetString(const godot::String &s, int64_t base);
-	godot::Ref<BigInt> SetBytes(const godot::PackedByteArray &buf);
+
+	godot::Pair<double, BigAccuracy> Float64() const;
+	_FORCE_INLINE_ double _Float64_bind() const { return Float64().first; }
+	_FORCE_INLINE_ BigAccuracy _Float64Accuracy_bind() const { return Float64().second; }
+
+	void SetBytes(const godot::PackedByteArray &p_bytes);
 	godot::PackedByteArray Bytes() const;
+	void FillBytes(godot::PackedByteArray &r_bytes) const; // not exposed to gdscript
 	int64_t BitLen() const;
 	uint64_t TrailingZeroBits() const;
-	godot::Ref<BigInt> Exp(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y, const godot::Ref<BigInt> &m);
-	godot::Ref<BigInt> expSlow(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y, const godot::Ref<BigInt> &m);
-	godot::Ref<BigInt> exp(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y, const godot::Ref<BigInt> &m, bool slow);
-	godot::Ref<BigInt> GCD(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y, const godot::Ref<BigInt> &a, const godot::Ref<BigInt> &b);
-	static void lehmerSimulate(const godot::Ref<BigInt> &A, const godot::Ref<BigInt>&B, uint64_t &u0, uint64_t &u1, uint64_t &v0, uint64_t &v1, bool &even);
-	static void lehmerUpdate(const godot::Ref<BigInt> &A, const godot::Ref<BigInt> &B, const godot::Ref<BigInt> &q, const godot::Ref<BigInt> &r, uint64_t u0, uint64_t u1, uint64_t v0, uint64_t v1, bool even);
-	void mulW(const godot::Ref<BigInt> &x, bool neg, uint64_t w);
-	static void euclidUpdate(godot::Ref<BigInt> &A, godot::Ref<BigInt> &B, godot::Ref<BigInt> &Ua, godot::Ref<BigInt> &Ub, const godot::Ref<BigInt> &q, godot::Ref<BigInt> &r, bool extended);
-	godot::Ref<BigInt> lehmerGCD(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y, const godot::Ref<BigInt> &a, const godot::Ref<BigInt> &b);
-	godot::Ref<BigInt> Rand(const godot::Callable &rnd, const godot::Ref<BigInt> &n);
-	godot::Ref<BigInt> ModInverse(const godot::Ref<BigInt> &g, const godot::Ref<BigInt> &n);
-	static int Jacobi(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y);
-	godot::Ref<BigInt> modSqrt3Mod4Prime(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &p);
-	godot::Ref<BigInt> modSqrt5Mod8Prime(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &p);
-	godot::Ref<BigInt> modSqrtTonelliShanks(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &p);
-	godot::Ref<BigInt> ModSqrt(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &p);
-	godot::Ref<BigInt> Lsh(const godot::Ref<BigInt> &x, uint64_t n);
-	godot::Ref<BigInt> Rsh(const godot::Ref<BigInt> &x, uint64_t n);
-	uint64_t Bit(int64_t i) const;
-	godot::Ref<BigInt> SetBit(const godot::Ref<BigInt> &x, int64_t i, uint64_t b);
-	godot::Ref<BigInt> And(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y);
-	godot::Ref<BigInt> AndNot(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y);
-	godot::Ref<BigInt> Or(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y);
-	godot::Ref<BigInt> Xor(const godot::Ref<BigInt> &x, const godot::Ref<BigInt> &y);
-	godot::Ref<BigInt> Not(const godot::Ref<BigInt> &x);
-	godot::Ref<BigInt> Sqrt(const godot::Ref<BigInt> &x);
+
+	godot::Error Exp(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &p_m = nullptr);
+	godot::Error expSlow(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &p_m);
+	godot::Error _exp(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &p_m, bool p_slow);
+	void GCD(const godot::Ref<BigInt> &r_x, const godot::Ref<BigInt> &r_y, const godot::Ref<BigInt> &p_a, const godot::Ref<BigInt> &p_b);
+
+	static void _lehmerSimulate(const godot::Ref<BigInt> &A, const godot::Ref<BigInt> &B, BigWord &u0, BigWord &u1, BigWord &v0, BigWord &v1, bool &even);
+	static void _lehmerUpdate(const godot::Ref<BigInt> &A, const godot::Ref<BigInt> &B, const godot::Ref<BigInt> &q, const godot::Ref<BigInt> &r, BigWord u0, BigWord u1, BigWord v0, BigWord v1, bool even);
+	void _mulW(const godot::Ref<BigInt> &x, bool neg, BigWord w);
+	static void _euclidUpdate(godot::Ref<BigInt> &A, godot::Ref<BigInt> &B, godot::Ref<BigInt> &Ua, godot::Ref<BigInt> &Ub, const godot::Ref<BigInt> &q, godot::Ref<BigInt> &r, bool extended);
+	void _lehmerGCD(const godot::Ref<BigInt> &r_x, const godot::Ref<BigInt> &r_y, const godot::Ref<BigInt> &p_a, const godot::Ref<BigInt> &p_b);
+
+	void Rand(const std::function<uint32_t()> &p_rnd, const godot::Ref<BigInt> &p_n);
+	void _Rand_bind(const godot::Callable &p_rnd, const godot::Ref<BigInt> &p_n);
+
+	godot::Error ModInverse(const godot::Ref<BigInt> &p_g, const godot::Ref<BigInt> &p_n);
+	static int Jacobi(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
+	void _modSqrt3Mod4Prime(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_p);
+	void _modSqrt5Mod8Prime(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_p);
+	void _modSqrtTonelliShanks(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_p);
+	godot::Error ModSqrt(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_p);
+
+	void Lsh(const godot::Ref<BigInt> &p_x, uint64_t p_n);
+	void Rsh(const godot::Ref<BigInt> &p_x, uint64_t p_n);
+	uint64_t Bit(int64_t p_i) const;
+	void SetBit(const godot::Ref<BigInt> &p_x, int64_t p_i, uint64_t p_b);
+	void And(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
+	void AndNot(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
+	void Or(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
+	void Xor(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
+	void Not(const godot::Ref<BigInt> &p_x);
+
+	godot::Error Sqrt(const godot::Ref<BigInt> &p_x);
+
+	static constexpr int64_t MAX_BASE = 10 + ('z' - 'a' + 1) + ('Z' - 'A' + 1);
+	godot::Error _scan(const godot::String &s, int64_t &off, int64_t &base);
+	godot::Error SetString(const godot::String &p_s, int64_t p_base = 0);
+	godot::String String(int64_t p_base = 10) const;
+	_FORCE_INLINE_ godot::String _to_string() const { return String(); }
 
 	bool ProbablyPrime(int64_t n) const;
-	godot::String Text(int64_t base) const;
-	inline godot::String _to_string() const { return Text(10); }
-	void scaleDenom(const godot::Ref<BigInt> &x, godot::PackedInt64Array f);
-
-	godot::Ref<BigInt> scan(const godot::PackedByteArray &buf, int64_t &i, int64_t &base);
 };

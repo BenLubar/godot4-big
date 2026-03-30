@@ -8,13 +8,13 @@
 	</tutorials>
 	<methods>
 		<method name="Abs">
-			<return type="BigRat" />
+			<return type="void" />
 			<param index="0" name="x" type="BigRat" />
 			<description>
 			</description>
 		</method>
 		<method name="Add">
-			<return type="BigRat" />
+			<return type="void" />
 			<param index="0" name="x" type="BigRat" />
 			<param index="1" name="y" type="BigRat" />
 			<description>
@@ -27,7 +27,8 @@
 			</description>
 		</method>
 		<method name="Denom" qualifiers="const">
-			<return type="BigInt" />
+			<return type="void" />
+			<param index="0" name="b" type="BigInt" />
 			<description>
 			</description>
 		</method>
@@ -51,6 +52,16 @@
 			<description>
 			</description>
 		</method>
+		<method name="FloatPrec" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="FloatPrecExact" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="FloatString" qualifiers="const">
 			<return type="String" />
 			<param index="0" name="prec" type="int" />
@@ -58,7 +69,7 @@
 			</description>
 		</method>
 		<method name="Inv">
-			<return type="BigRat" />
+			<return type="int" enum="Error" />
 			<param index="0" name="x" type="BigRat" />
 			<description>
 			</description>
@@ -69,25 +80,33 @@
 			</description>
 		</method>
 		<method name="Mul">
-			<return type="BigRat" />
+			<return type="void" />
 			<param index="0" name="x" type="BigRat" />
 			<param index="1" name="y" type="BigRat" />
 			<description>
 			</description>
 		</method>
 		<method name="Neg">
-			<return type="BigRat" />
+			<return type="void" />
 			<param index="0" name="x" type="BigRat" />
 			<description>
 			</description>
 		</method>
+		<method name="NewRat" qualifiers="static">
+			<return type="BigRat" />
+			<param index="0" name="a" type="int" />
+			<param index="1" name="b" type="int" />
+			<description>
+			</description>
+		</method>
 		<method name="Num" qualifiers="const">
-			<return type="BigInt" />
+			<return type="void" />
+			<param index="0" name="a" type="BigInt" />
 			<description>
 			</description>
 		</method>
 		<method name="Quo">
-			<return type="BigRat" />
+			<return type="int" enum="Error" />
 			<param index="0" name="x" type="BigRat" />
 			<param index="1" name="y" type="BigRat" />
 			<description>
@@ -99,51 +118,51 @@
 			</description>
 		</method>
 		<method name="Set">
-			<return type="BigRat" />
+			<return type="void" />
 			<param index="0" name="x" type="BigRat" />
 			<description>
 			</description>
 		</method>
 		<method name="SetFloat64">
-			<return type="BigRat" />
+			<return type="int" enum="Error" />
 			<param index="0" name="f" type="float" />
 			<description>
 			</description>
 		</method>
 		<method name="SetFrac">
-			<return type="BigRat" />
+			<return type="int" enum="Error" />
 			<param index="0" name="a" type="BigInt" />
 			<param index="1" name="b" type="BigInt" />
 			<description>
 			</description>
 		</method>
 		<method name="SetFrac64">
-			<return type="BigRat" />
+			<return type="int" enum="Error" />
 			<param index="0" name="a" type="int" />
 			<param index="1" name="b" type="int" />
 			<description>
 			</description>
 		</method>
 		<method name="SetInt">
-			<return type="BigRat" />
+			<return type="void" />
 			<param index="0" name="x" type="BigInt" />
 			<description>
 			</description>
 		</method>
 		<method name="SetInt64">
-			<return type="BigRat" />
+			<return type="void" />
 			<param index="0" name="x" type="int" />
 			<description>
 			</description>
 		</method>
 		<method name="SetString">
-			<return type="BigRat" />
+			<return type="int" enum="Error" />
 			<param index="0" name="s" type="String" />
 			<description>
 			</description>
 		</method>
 		<method name="SetUint64">
-			<return type="BigRat" />
+			<return type="void" />
 			<param index="0" name="x" type="int" />
 			<description>
 			</description>
@@ -159,16 +178,21 @@
 			</description>
 		</method>
 		<method name="Sub">
-			<return type="BigRat" />
+			<return type="void" />
 			<param index="0" name="x" type="BigRat" />
 			<param index="1" name="y" type="BigRat" />
 			<description>
 			</description>
 		</method>
-		<method name="make" qualifiers="static">
-			<return type="BigRat" />
-			<param index="0" name="a" type="int" />
-			<param index="1" name="b" type="int" />
+		<method name="from_bytes">
+			<return type="int" />
+			<param index="0" name="bytes" type="PackedByteArray" />
+			<param index="1" name="offset" type="int" default="0" />
+			<description>
+			</description>
+		</method>
+		<method name="to_bytes" qualifiers="const">
+			<return type="PackedByteArray" />
 			<description>
 			</description>
 		</method>
@@ -176,7 +200,7 @@
 	<members>
 		<member name="_a" type="PackedInt64Array" setter="_set_a" getter="_get_a" default="PackedInt64Array()">
 		</member>
-		<member name="_b" type="PackedInt64Array" setter="_set_b" getter="_get_b" default="PackedInt64Array()">
+		<member name="_b" type="PackedInt64Array" setter="_set_b" getter="_get_b" default="PackedInt64Array(1)">
 		</member>
 		<member name="_neg" type="bool" setter="_set_neg" getter="_is_neg" default="false">
 		</member>

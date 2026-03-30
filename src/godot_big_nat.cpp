@@ -1,10 +1,13 @@
-// This file was ported from Go 1.25.7. Original copyright notice follows:
+// This file is ported from src/math/big/nat.go in Go 1.26.1.
+// Original copyright notice follows:
 
 // Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 #include "godot_big_naturals.h"
+
+using namespace godot;
 
 // This file implements unsigned multi-precision integers (natural
 // numbers). They are the building blocks for the implementation
@@ -22,146 +25,121 @@
 // always normalized before returning the final result. The normalized
 // representation of 0 is the empty or nil slice (length = 0).
 
-void nat_norm(PackedInt64Array &z) {
-	int64_t i = z.size();
-	while (i > 0 && z[i - 1] == 0) {
+void BigNat::norm() {
+	int64_t i = array.size();
+	while (i > 0 && array[i - 1] == 0) {
 		i--;
 	}
-
-	z.resize(i);
+	array.resize(i);
 }
 
-void nat_make(PackedInt64Array &z, int64_t n) {
-	// We don't have Go slices, so just let Godot handle the capacity.
-	z.resize(n);
-}
-
-void nat_setWord(PackedInt64Array &z, uint64_t x) {
-	if (x == 0) {
-		z.clear();
+void BigNat::setUint64(uint64_t p_x) {
+	if (p_x == 0) {
+		array.clear();
+		return;
 	}
 
-	z.resize(1);
-	z[0] = x;
+	array.resize(1);
+	array[0] = p_x;
 }
 
-void nat_setUint64(PackedInt64Array &z, uint64_t x) {
-	if (x == 0) {
-		z.clear();
-	}
-
-	z.resize(1);
-	z[0] = x;
+void BigNat::set(BigNat p_x) {
+	array = p_x.array;
 }
 
-void nat_set(PackedInt64Array &z, PackedInt64Array x) {
-	z = x;
-}
-
-void nat_copy(PackedInt64Array &z, int64_t zoff, PackedInt64Array x, int64_t xoff, int64_t n) {
-	for (int64_t i = 0; i < n; i++) {
-		z[i + zoff] = x[i + xoff];
-	}
-}
-
-void nat_clear(PackedInt64Array &z, int64_t zoff, int64_t n) {
-	for (int64_t i = 0; i < n; i++) {
-		z[i + zoff] = 0;
-	}
-}
-
-void nat_add(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y) {
-	int64_t m = x.size();
-	int64_t n = y.size();
+void BigNat::add(BigNat p_x, BigNat p_y) {
+	const int64_t m = p_x.array.size();
+	const int64_t n = p_y.array.size();
 
 	if (m < n) {
-		std::swap(m, n);
-		std::swap(x, y);
+		add(p_y, p_x);
+		return;
 	}
-
 	if (m == 0) {
 		// n == 0 because m >= n; result is 0
-		z.clear();
+		array.clear();
 		return;
 	}
-
 	if (n == 0) {
 		// result is x
-		nat_set(z, x);
+		set(p_x);
 		return;
 	}
-
 	// m > 0
 
-	nat_make(z, m + 1);
-	uint64_t c = nat_addVV(z, 0, x, 0, y, 0, n);
+	array.resize(n);
+	BigWord c = addVV(*this, BigNat{p_x.array.slice(0, n)}, BigNat{p_y.array.slice(0, n)});
 	if (m > n) {
-		c = nat_addVW(z, n, x, n, c, m - n);
+		BigNat z;
+		z.array.resize(m - n);
+		c = addVW(z, BigNat{p_x.array.slice(n)}, c);
+		array.append_array(z.array);
 	}
-	z[m] = c;
+	array.append(c);
 
-	nat_norm(z);
+	norm();
 }
 
-void nat_sub(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y) {
-	int64_t m = x.size();
-	int64_t n = y.size();
+void BigNat::sub(BigNat p_x, BigNat p_y) {
+	const int64_t m = p_x.array.size();
+	const int64_t n = p_y.array.size();
 
 	CRASH_COND_MSG(m < n, "underflow");
 
 	if (m == 0) {
 		// n == 0 because m >= n; result is 0
-		z.clear();
+		array.clear();
 		return;
 	}
-
 	if (n == 0) {
 		// result is x
-		nat_set(z, x);
+		set(p_x);
 		return;
 	}
-
 	// m > 0
 
-	nat_make(z, m);
-	uint64_t c = nat_subVV(z, 0, x, 0, y, 0, n);
+	array.resize(n);
+	BigWord c = subVV(*this, BigNat{p_x.array.slice(0, n)}, BigNat{p_y.array.slice(0, n)});
 	if (m > n) {
-		c = nat_subVW(z, n, x, n, c, m - n);
+		BigNat z;
+		z.array.resize(m - n);
+		c = subVW(z, BigNat{p_x.array.slice(n)}, c);
 	}
 	CRASH_COND_MSG(c != 0, "underflow");
 
-	nat_norm(z);
+	norm();
 }
 
-int nat_cmp(PackedInt64Array x, PackedInt64Array y) {
-	const int64_t m = x.size();
-	const int64_t n = y.size();
+int BigNat::cmp(BigNat p_y) const {
+	const int64_t m = array.size();
+	const int64_t n = p_y.array.size();
 	if (m != n || m == 0) {
 		if (m < n) {
 			return -1;
 		}
-
 		if (m > n) {
-			return 1;
+			return +1;
 		}
-
 		return 0;
 	}
 
 	int64_t i = m - 1;
-	while (i > 0 && x[i] == y[i]) {
+	while (i > 0 && (*this)[i] == p_y[i]) {
 		i--;
 	}
 
-	if (uint64_t(x[i]) < uint64_t(y[i])) {
+	if ((*this)[i] < p_y[i]) {
 		return -1;
 	}
-
-	if (uint64_t(x[i]) > uint64_t(y[i])) {
-		return 1;
+	if ((*this)[i] > p_y[i]) {
+		return +1;
 	}
-
 	return 0;
+}
+
+int BigNat::cmpnorm(BigNat p_y) const {
+	p_y.norm();
+	return cmp(p_y);
 }
 
 // montgomery computes z mod m = x*y*2**(-n*_W) mod m,
@@ -173,25 +151,29 @@ int nat_cmp(PackedInt64Array x, PackedInt64Array y) {
 // In the terminology of that paper, this is an "Almost Montgomery Multiplication":
 // x and y are required to satisfy 0 <= z < 2**(n*_W) and then the result
 // z is guaranteed to satisfy 0 <= z < 2**(n*_W), but it may not be < m.
-void nat_montgomery(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y, PackedInt64Array m, uint64_t k, uint64_t n) {
+void BigNat::montgomery(BigNat p_x, BigNat p_y, BigNat p_m, BigWord p_k, int64_t p_n) {
 	// This code assumes x, y, m are all the same length, n.
 	// (required by addMulVVW and the for loop).
 	// It also assumes that x, y are already reduced mod m,
 	// or else the result will not be properly reduced.
-	CRASH_COND_MSG(x.size() != n || y.size() != n || m.size() != n, "math/big: mismatched montgomery number lengths");
+	CRASH_COND(p_x.array.size() != p_n || p_y.array.size() != p_n || p_m.array.size() != p_n);
 
-	z.resize(n * 2);
-	z.fill(0);
+	array.resize(p_n * 2);
+	array.fill(0);
 
-	uint64_t c = 0;
-	for (int64_t i = 0; i < n; i++) {
-		uint64_t d = y[i];
-		uint64_t c2 = nat_addMulVVWW(z, i, z, i, x, 0, d, 0, n);
-		uint64_t t = uint64_t(z[i]) * k;
-		uint64_t c3 = nat_addMulVVWW(z, i, z, i, m, 0, t, 0, n);
-		uint64_t cx = c + c2;
-		uint64_t cy = cx + c3;
-		z[n + i] = cy;
+	BigWord c = 0;
+	for (int64_t i = 0; i < p_n; i++) {
+		const BigWord d = p_y[i];
+		BigNat z{array.slice(i, p_n + i)};
+		const BigWord c2 = addMulVVWW(z, z, p_x, d, 0);
+		const BigWord t = z[0] * p_k;
+		const BigWord c3 = addMulVVWW(z, z, p_m, t, 0);
+		const BigWord cx = c + c2;
+		const BigWord cy = cx + c3;
+		for (int64_t j = 0; j < p_n; j++) {
+			(*this)[i + j] = z[j];
+		}
+		(*this)[p_n + i] = cy;
 		if (cx < c2 || cy < c3) {
 			c = 1;
 		} else {
@@ -200,66 +182,73 @@ void nat_montgomery(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y,
 	}
 
 	if (c != 0) {
-		nat_subVV(z, 0, z, n, m, 0, n);
+		BigNat z{array.slice(p_n)};
+		array.resize(p_n);
+		subVV(*this, z, p_m);
 	} else {
-		nat_copy(z, 0, z, n, n);
+		array = array.slice(p_n);
 	}
-
-	z.resize(n);
 }
 
 // addTo implements z += x; z must be long enough.
 // (we don't use nat.add because we need z to stay the same
 // slice, and we don't need to normalize z after each addition)
-void nat_addTo(PackedInt64Array &z, int64_t zoff, PackedInt64Array x) {
-	const int64_t n = x.size();
+void BigNat::addTo(BigNat &r_z, int64_t p_start, BigNat p_x) {
+	const int64_t n = p_x.array.size();
 	if (n > 0) {
-		uint64_t c = nat_addVV(z, zoff, z, zoff, x, 0, n);
-		if (c != 0 && z.size() > zoff + n) {
-			c = nat_addVW(z, zoff + n, z, zoff + n, c, z.size() - n - zoff);
+		BigNat z0{r_z.array.slice(p_start, p_start + n)};
+		BigNat z1{r_z.array.slice(p_start + n)};
+		r_z.array.resize(p_start);
+		BigWord c = addVV(z0, z0, p_x);
+		if (c != 0 && !z1.array.is_empty()) {
+			addVW(z1, z1, c);
 		}
-		CRASH_COND(c != 0);
+		r_z.array.append_array(z0.array);
+		r_z.array.append_array(z1.array);
 	}
 }
 
 // mulRange computes the product of all the unsigned integers in the
 // range [a, b] inclusively. If a > b (empty range), the result is 1.
 // The caller may pass stk == nil to request that mulRange obtain and release one itself.
-void nat_mulRange(PackedInt64Array &z, uint64_t a, uint64_t b) {
-	if (a == 0) {
+void BigNat::mulRange(uint64_t p_a, uint64_t p_b) {
+	if (p_a == 0) {
 		// cut long ranges short (optimization)
-		nat_setUint64(z, 0);
+		setUint64(0);
 		return;
 	}
-	if (a > b) {
-		nat_setUint64(z, 1);
+	if (p_a > p_b) {
+		setUint64(1);
 		return;
 	}
-	if (a == b) {
-		nat_setUint64(z, a);
+	if (p_a == p_b) {
+		setUint64(p_a);
+		return;
+	}
+	BigNat a, b;
+	if (p_a + 1 == p_b) {
+		a.setUint64(p_a);
+		b.setUint64(p_b);
+		mul(a, b);
 		return;
 	}
 
-	PackedInt64Array na, nb;
-	if (a + 1 == b) {
-		nat_setUint64(na, a);
-		nat_setUint64(nb, b);
-		nat_mul(z, na, nb);
-		return;
-	}
-
-	const uint64_t m = a + (b - a) / 2; // avoid overflow
-	nat_mulRange(na, a, m);
-	nat_mulRange(nb, m + 1, b);
-	nat_mul(z, na, nb);
+	const uint64_t m = p_a + (p_b - p_a) / 2; // avoid overflow
+	a.mulRange(p_a, m);
+	b.mulRange(m + 1, p_b);
+	mul(a, b);
 }
 
 // bitLen returns the length of x in bits.
 // Unlike most methods, it works even if x is not normalized.
-int64_t nat_bitLen(PackedInt64Array x) {
-	int64_t i = x.size() - 1;
+int64_t BigNat::bitLen() const {
+	int64_t i = array.size() - 1;
 	if (i >= 0) {
-		return i * 64 + std::bit_width(uint64_t(x[i]));
+		if (array[i] == 0) {
+			return i * 64;
+		}
+
+		return i * 64 + 64 - std::countl_zero(uint64_t(array[i]));
 	}
 
 	return 0;
@@ -267,398 +256,386 @@ int64_t nat_bitLen(PackedInt64Array x) {
 
 // trailingZeroBits returns the number of consecutive least significant zero
 // bits of x.
-uint64_t nat_trailingZeroBits(PackedInt64Array x) {
-	if (x.is_empty()) {
+uint64_t BigNat::trailingZeroBits() const {
+	if (array.is_empty()) {
 		return 0;
 	}
-
 	uint64_t i = 0;
-	while (x[i] == 0) {
+	while (array[i] == 0) {
 		i++;
 	}
-
 	// x[i] != 0
-	return i * 64 + uint64_t(std::countr_zero(uint64_t(x[i])));
+	return i * 64 + std::countr_zero(uint64_t(array[i]));
 }
 
 // isPow2 returns i, true when x == 2**i and 0, false otherwise.
-bool nat_isPow2(PackedInt64Array x, uint64_t &i) {
-	i = 0;
-	while (x[i] == 0) {
+Pair<uint64_t, bool> BigNat::isPow2() const {
+	int64_t i = 0;
+	while ((*this)[i] == 0) {
 		i++;
 	}
-
-	if (i == uint64_t(x.size()) - 1 && (x[i] & (x[i] - 1)) == 0) {
-		i = i * 64 + std::countr_zero(uint64_t(x[i]));
-		return true;
+	if (i == array.size() && ((*this)[i] & ((*this)[i] - 1)) == 0) {
+		return {uint64_t(i * 64) + std::countr_zero((*this)[i]), true};
 	}
-
-	i = 0;
-	return false;
+	return {0, false};
 }
 
 // z = x << s
-void nat_lsh(PackedInt64Array &z, PackedInt64Array x, uint64_t s) {
-	if (s == 0) {
-		nat_set(z, x);
+void BigNat::lsh(BigNat p_x, uint64_t p_s) {
+	if (p_s == 0) {
+		set(p_x);
 		return;
 	}
 
-	const int64_t m = x.size();
+	int64_t m = p_x.array.size();
 	if (m == 0) {
-		z.clear();
+		array.clear();
 		return;
 	}
 	// m > 0
 
-	const int64_t n = m + int64_t(s / 64);
-	z.resize(n + 1);
-	s %= 64;
-	if (s == 0) {
-		nat_copy(z, n - m, x, 0, m);
-		z[n] = 0;
+	int64_t n = m + int64_t(p_s / 64);
+	p_s %= 64;
+	if (p_s == 0) {
+		array.resize(n + 1);
+		memcpy(array.ptrw() + n - m, p_x.array.ptr(), m * 8);
+		array[n] = 0;
 	} else {
-		z[n] = nat_lshVU(z, n - m, x, 0, s, m);
+		array.resize(n - m);
+		BigNat z;
+		z.array.resize(n - m);
+		z.array.append(lshVU(z, p_x, p_s));
+		array.append_array(z.array);
 	}
-	nat_clear(z, 0, n - m);
 
-	nat_norm(z);
+	for (int64_t i = 0; i < n - m; i++) {
+		array[i] = 0;
+	}
+
+	norm();
 }
 
 // z = x >> s
-void nat_rsh(PackedInt64Array &z, PackedInt64Array x, uint64_t s) {
-	if (s == 0) {
-		nat_set(z, x);
+void BigNat::rsh(BigNat p_x, uint64_t p_s) {
+	if (p_s == 0) {
+		array = p_x.array;
 		return;
 	}
 
-	const int64_t m = x.size();
-	const int64_t n = m - int64_t(s / 64);
+	int64_t m = p_x.array.size();
+	int64_t n = m - int64_t(p_s / 64);
 	if (n <= 0) {
-		z.clear();
+		array.clear();
 		return;
 	}
-
 	// n > 0
 
-	z.resize(n);
-	s %= 64;
-	if (s == 0) {
-		nat_copy(z, 0, x, m - n, n);
+	p_s %= 64;
+	if (p_s == 0) {
+		array = p_x.array.slice(m - n);
 	} else {
-		nat_rshVU(z, 0, x, m - n, s, n);
+		array.resize(n);
+		rshVU(*this, BigNat{p_x.array.slice(m - n)}, p_s);
 	}
 
-	nat_norm(z);
+	norm();
 }
 
-void nat_setBit(PackedInt64Array &z, PackedInt64Array x, uint64_t i, uint64_t b) {
-	int64_t j = i / 64;
-	uint64_t m = uint64_t(1) << (i % 64);
-	int64_t n = x.size();
-	switch (b) {
+void BigNat::setBit(BigNat p_x, uint64_t p_i, uint64_t p_b) {
+	int64_t j = p_i / 64;
+	BigWord m = BigWord(1) << (p_i % 64);
+	int64_t n = p_x.array.size();
+	switch (p_b) {
 	case 0:
-		z.resize(n);
-		nat_copy(z, 0, x, 0, n);
+		array = p_x.array;
 		if (j >= n) {
 			// no need to grow
 			return;
 		}
-		z[j] &= ~m;
-		nat_norm(z);
+		array[j] &= ~m;
+		norm();
 		return;
 	case 1:
+		array = p_x.array;
 		if (j >= n) {
-			z.resize(j + 1);
-			nat_clear(z, n, n - z.size());
-		} else {
-			z.resize(n);
+			array.resize(j + 1);
 		}
-		nat_copy(z, 0, x, 0, n);
-		z[j] |= m;
+		array[j] |= m;
 		// no need to normalize
 		return;
+	default:
+		CRASH_NOW_MSG("set bit is not 0 or 1");
 	}
-
-	CRASH_NOW_MSG("set bit is not 0 or 1");
 }
 
 // bit returns the value of the i'th bit, with lsb == bit 0.
-uint64_t nat_bit(PackedInt64Array x, uint64_t i) {
-	uint64_t j = i / 64;
-	if (j >= uint64_t(x.size())) {
+uint64_t BigNat::bit(uint64_t p_i) const {
+	int64_t j = p_i / 64;
+	if (j >= array.size()) {
 		return 0;
 	}
-
 	// 0 <= j < len(x)
-	return uint64_t((x[j] >> (i % 64)) & 1);
+	return (uint64_t(array[j]) >> (p_i % 64)) & 1;
 }
 
 // sticky returns 1 if there's a 1 bit within the
 // i least significant bits, otherwise it returns 0.
-uint64_t nat_sticky(PackedInt64Array x, uint64_t i) {
-	uint64_t j = i / 64;
-	if (j >= x.size()) {
-		return x.is_empty() ? 0 : 1;
+uint64_t BigNat::sticky(uint64_t p_i) const {
+	int64_t j = p_i / 64;
+	if (j >= array.size()) {
+		if (array.is_empty()) {
+			return 0;
+		}
+
+		return 1;
 	}
 
 	// 0 <= j < len(x)
-	for (uint64_t k = 0; k < j; k++) {
-		if (x[k] != 0) {
+	for (int64_t i = 0; i < j; i++) {
+		if (array[i] != 0) {
 			return 1;
 		}
 	}
 
-	return (x[j] << (64 - (i % 64))) != 0 ? 1 : 0;
+	if ((uint64_t(array[j]) << (64 - p_i % 64)) != 0) {
+		return 1;
+	}
+
+	return 0;
 }
 
-void nat_and(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y) {
-	int64_t m = x.size();
-	int64_t n = y.size();
+void BigNat::and_(BigNat p_x, BigNat p_y) {
+	int64_t m = p_x.array.size();
+	int64_t n = p_y.array.size();
 	if (m > n) {
 		m = n;
 	}
 	// m <= n
 
-	z.resize(m);
+	array.resize(m);
 	for (int64_t i = 0; i < m; i++) {
-		z[i] = x[i] & y[i];
+		array[i] = p_x[i] & p_y[i];
 	}
 
-	nat_norm(z);
+	norm();
 }
 
 // trunc returns z = x mod 2ⁿ.
-void nat_trunc(PackedInt64Array &z, PackedInt64Array x, uint64_t n) {
-	z = x;
-
-	uint64_t w = (n + 64 - 1) / 64;
-	if (uint64_t(x.size()) < w) {
+void BigNat::trunc(BigNat p_x, uint64_t p_n) {
+	const uint64_t w = (p_n + 64 - 1) / 64;
+	if (p_x.array.size() < w) {
+		set(p_x);
 		return;
 	}
 
-	z.resize(w);
+	array = p_x.array.slice(0, w);
 
-	if (n % 64 != 0) {
-		z[z.size() - 1] &= (1LLU << (n % 64)) - 1;
+	if (p_n % 64 != 0) {
+		(*this)[array.size() - 1] &= (1 << (p_n % 64)) - 1;
 	}
 
-	nat_norm(z);
+	norm();
 }
 
-void nat_andNot(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y) {
-	int64_t m = x.size();
-	int64_t n = y.size();
+void BigNat::andNot(BigNat p_x, BigNat p_y) {
+	int64_t m = p_x.array.size();
+	int64_t n = p_y.array.size();
 	if (n > m) {
 		n = m;
 	}
 	// m >= n
 
-	nat_make(z, m);
+	array = p_x.array.slice(0, m);
 	for (int64_t i = 0; i < n; i++) {
-		z[i] = x[i] & ~y[i];
+		array[i] &= ~p_y[i];
 	}
-	nat_copy(z, n, x, n, m - n);
 
-	nat_norm(z);
+	norm();
 }
 
-void nat_or(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y) {
-	int64_t m = x.size();
-	int64_t n = y.size();
-	PackedInt64Array s = x;
-	if (m < n) {
-		std::swap(m, n);
-		s = y;
+void BigNat::or_(BigNat p_x, BigNat p_y) {
+	if (p_x.array.size() >= p_y.array.size()) {
+		array = p_x.array;
+		for (int64_t i = 0; i < p_y.array.size(); i++) {
+			array[i] |= p_y.array[i];
+		}
+	} else {
+		array = p_y.array;
+		for (int64_t i = 0; i < p_x.array.size(); i++) {
+			array[i] |= p_x.array[i];
+		}
 	}
-	// m >= n
 
-	z.resize(m);
-	for (int64_t i = 0; i < n; i++) {
-		z[i] = x[i] | y[i];
-	}
-	nat_copy(z, n, s, n, m - n);
-
-	nat_norm(z);
+	norm();
 }
 
-void nat_xor(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y) {
-	int64_t m = x.size();
-	int64_t n = y.size();
-
-	PackedInt64Array s = x;
-	if (m < n) {
-		std::swap(m, n);
-		s = y;
+void BigNat::xor_(BigNat p_x, BigNat p_y) {
+	if (p_x.array.size() >= p_y.array.size()) {
+		array = p_x.array;
+		for (int64_t i = 0; i < p_y.array.size(); i++) {
+			array[i] ^= p_y.array[i];
+		}
+	} else {
+		array = p_y.array;
+		for (int64_t i = 0; i < p_x.array.size(); i++) {
+			array[i] ^= p_x.array[i];
+		}
 	}
 
-	// m >= n
-
-	z.resize(m);
-	for (int64_t i = 0; i < n; i++) {
-		z[i] = uint64_t(x[i]) ^ uint64_t(y[i]);
-	}
-	nat_copy(z, n, s, n, m - n);
-
-	nat_norm(z);
+	norm();
 }
 
 // random creates a random integer in [0..limit), using the space in z if
 // possible. n is the bit length of limit.
-void nat_random(PackedInt64Array &z, const Callable &rand, PackedInt64Array limit, int64_t n) {
-	// rand is a function that takes no arguments and returns a random integer between 0 and 2^32 - 1.
+void BigNat::random(const std::function<uint32_t()> &p_rnd, BigNat p_limit, int64_t p_n) {
+	array.resize(p_limit.array.size());
 
-	z.resize(limit.size());
-
-	uint64_t bitLengthOfMSW = uint64_t(n % 64);
+	uint64_t bitLengthOfMSW = uint(p_n % 64);
 	if (bitLengthOfMSW == 0) {
 		bitLengthOfMSW = 64;
 	}
-
-	const uint64_t mask = uint64_t(1LLU << bitLengthOfMSW) - 1;
+	const uint64_t mask = (BigWord(1) << bitLengthOfMSW) - 1;
 
 	while (true) {
-		for (int64_t i = 0; i < z.size(); i++) {
-			z[i] = rand.call().operator uint64_t() | (rand.call().operator uint64_t() << 32);
+		for (int64_t i = 0; i < array.size(); i++) {
+			(*this)[i] = BigWord(p_rnd()) | (BigWord(p_rnd()) << 32);
 		}
 
-		z[limit.size() - 1] &= mask;
-		if (nat_cmp(z, limit) < 0) {
+		(*this)[p_limit.array.size() - 1] &= mask;
+		if (cmp(p_limit) < 0) {
 			break;
 		}
 	}
 
-	nat_norm(z);
+	norm();
 }
 
 // If m != 0 (i.e., len(m) != 0), expNN sets z to x**y mod m;
 // otherwise it sets z to x**y. The result is the value of z.
 // The caller may pass stk == nil to request that expNN obtain and release one itself.
-void nat_expNN(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y, PackedInt64Array m, bool slow) {
+void BigNat::expNN(BigNat x, BigNat y, BigNat m, bool slow) {
 	// x**y mod 1 == 0
-	if (m.size() == 1 && m[0] == 1) {
-		nat_setWord(z, 0);
+	if (m.array.size() == 1 && m[0] == 1) {
+		setUint64(0);
 		return;
 	}
 	// m == 0 || m > 1
 
 	// x**0 == 1
-	if (y.is_empty()) {
-		nat_setWord(z, 1);
+	if (y.array.is_empty()) {
+		setUint64(1);
 		return;
 	}
 	// y > 0
 
 	// 0**y = 0
-	if (x.is_empty()) {
-		nat_setWord(z, 0);
+	if (x.array.is_empty()) {
+		setUint64(0);
 		return;
 	}
 	// x > 0
 
 	// 1**y = 1
-	if (x.size() == 1 && x[0] == 1) {
-		nat_setWord(z, 1);
+	if (x.array.size() == 1 && x[0] == 1) {
+		setUint64(1);
 		return;
 	}
 	// x > 1
 
 	// x**1 == x
-	if (y.size() == 1 && y[0] == 1 && m.is_empty()) {
-		nat_set(z, x);
+	if (y.array.size() == 1 && y[0] == 1 && m.array.is_empty()) {
+		set(x);
 		return;
 	}
 
-	if (y.size() == 1 && y[0] == 1) { // len(m) > 0
-		nat_rem(x, m, z);
+	if (y.array.size() == 1 && y[0] == 1) { // len(m) > 0
+		rem(x, m);
 		return;
 	}
 
 	// y > 1
 
-	if (!m.is_empty()) {
+	if (!m.array.is_empty()) {
 		// We likely end up being as long as the modulus.
-		z.resize(m.size());
+		array.resize(m.array.size());
 
 		// If the exponent is large, we use the Montgomery method for odd values,
 		// and a 4-bit, windowed exponentiation for powers of two,
 		// and a CRT-decomposed Montgomery method for the remaining values
 		// (even values times non-trivial odd values, which decompose into one
 		// instance of each of the first two cases).
-		if (y.size() > 1 && !slow) {
+		if (y.array.size() > 1 && !slow) {
 			if ((m[0] & 1) == 1) {
-				nat_expNNMontgomery(z, x, y, m);
+				expNNMontgomery(x, y, m);
 				return;
 			}
 
-			uint64_t logM;
-			if (nat_isPow2(m, logM)) {
-				nat_expNNWindowed(z, x, y, logM);
+			const Pair<uint64_t, bool> logM = m.isPow2();
+			if (logM.second) {
+				expNNWindowed(x, y, logM.first);
 				return;
 			}
 
-			nat_expNNMontgomeryEven(z, x, y, m);
+			expNNMontgomeryEven(x, y, m);
 			return;
 		}
 	}
 
-	nat_set(z, x);
-	uint64_t v = y[y.size() - 1]; // v > 0 because y is normalized and y > 0
-	uint64_t shift = nat_nlz(v) + 1;
-	v <<= shift;
-	PackedInt64Array q;
+	BigNat &z = *this;
 
-	static constexpr uint64_t mask = 1LLU << (64 - 1);
+	z.set(x);
+	BigWord v = y[y.array.size() - 1]; // v > 0 because y is normalized and y > 0
+	uint64_t shift = std::countl_zero(v) + 1;
+	v <<= shift;
+	BigNat q;
 
 	// We walk through the bits of the exponent one by one. Each time we
 	// see a bit, we square, thus doubling the power. If the bit is a one,
 	// we also multiply by x, thus adding one to the power.
 
-	int64_t w = 64 - int64_t(shift);
+	int64_t w = 64 - shift;
 	// zz and r are used to avoid allocating in mul and div as
 	// otherwise the arguments would alias.
-	PackedInt64Array zz, r;
+	BigNat zz, r;
 	for (int64_t j = 0; j < w; j++) {
-		nat_sqr(zz, z);
-		std::swap(zz, z);
+		zz.sqr(z);
+		SWAP(zz, z);
 
-		if ((v & mask) != 0) {
-			nat_mul(zz, z, x);
-			std::swap(zz, z);
+		if (v != 0) {
+			zz.mul(z, x);
+			SWAP(zz, z);
 		}
 
-		if (!m.is_empty()) {
-			nat_div(z, m, zz, r);
-			std::swap(zz, q);
-			std::swap(z, r);
+		if (!m.array.is_empty()) {
+			zz.div(r, z, m);
+			std::tie(zz, r, q, z) = std::make_tuple(q, z, zz, r);
 		}
 
 		v <<= 1;
 	}
 
-	for (int64_t i = y.size() - 2; i >= 0; i--) {
+	for (int64_t i = y.array.size() - 2; i >= 0; i--) {
 		v = y[i];
 
 		for (int64_t j = 0; j < 64; j++) {
-			nat_sqr(zz, z);
-			std::swap(zz, z);
+			zz.sqr(z);
+			SWAP(zz, z);
 
-			if ((v & mask) != 0) {
-				nat_mul(zz, z, x);
-				std::swap(zz, z);
+			if (v != 0) {
+				zz.mul(z, x);
+				SWAP(zz, z);
 			}
 
-			if (!m.is_empty()) {
-				nat_div(z, m, zz, r);
-				std::swap(zz, q);
-				std::swap(z, r);
+			if (!m.array.is_empty()) {
+				zz.div(r, z, m);
+				std::tie(zz, r, q, z) = std::make_tuple(q, z, zz, r);
 			}
 
 			v <<= 1;
 		}
 	}
 
-	nat_norm(z);
+	norm();
 }
 
 // expNNMontgomeryEven calculates x**y mod m where m = m1 × m2 for m1 = 2ⁿ and m2 odd.
@@ -669,12 +646,12 @@ void nat_expNN(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y, Pack
 // For more details, see Ç. K. Koç, “Montgomery Reduction with Even Modulus”,
 // IEE Proceedings: Computers and Digital Techniques, 141(5) 314-316, September 1994.
 // http://www.people.vcu.edu/~jwang3/CMSC691/j34monex.pdf
-void nat_expNNMontgomeryEven(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y, PackedInt64Array m) {
+void BigNat::expNNMontgomeryEven(BigNat x, BigNat y, BigNat m) {
 	// Split m = m₁ × m₂ where m₁ = 2ⁿ
-	const uint64_t n = nat_trailingZeroBits(m);
-	PackedInt64Array m1, m2;
-	nat_lsh(m1, *natOne, n);
-	nat_rsh(m2, m, n);
+	uint64_t n = m.trailingZeroBits();
+	BigNat m1, m2;
+	m1.lsh(BigNat{{1}}, n);
+	m2.rsh(m, n);
 
 	// We want z = x**y mod m.
 	// z₁ = x**y mod m1 = (x**y mod m) mod m1 = z mod m1
@@ -682,9 +659,9 @@ void nat_expNNMontgomeryEven(PackedInt64Array &z, PackedInt64Array x, PackedInt6
 	// (We are using the math/big convention for names here,
 	// where the computation is z = x**y mod m, so its parts are z1 and z2.
 	// The paper is computing x = a**e mod n; it refers to these as x2 and z1.)
-	PackedInt64Array z1, z2;
-	nat_expNN(z1, x, y, m1, false);
-	nat_expNN(z2, x, y, m2, false);
+	BigNat z1, z2;
+	z1.expNN(x, y, m1, false);
+	z2.expNN(x, y, m2, false);
 
 	// Reconstruct z from z₁, z₂ using CRT, using algorithm from paper,
 	// which uses only a single modInverse (and an easy one at that).
@@ -696,58 +673,55 @@ void nat_expNNMontgomeryEven(PackedInt64Array &z, PackedInt64Array x, PackedInt6
 	//	  < m₂ + (m₁-1) × m₂
 	//	  = m₁ × m₂
 	//	  = m.
-	nat_set(z, z2);
+	set(z2);
 
 	// Compute (z₁ - z₂) mod m1 [m1 == 2**n] into z1.
-	nat_subMod2N(z1, z1, z2, n);
+	z1.subMod2N(z1, z2, n);
 
 	// Reuse z2 for p = (z₁ - z₂) [in z1] * m2⁻¹ (mod m₁ [= 2ⁿ]).
-	PackedInt64Array m2inv;
-	nat_modInverse(m2inv, m2, m1);
-	nat_mul(z2, z2, m2inv);
-	nat_trunc(z2, z2, n);
+	BigNat m2inv;
+	m2inv.modInverse(m2, m1);
+	z2.mul(z1, m2inv);
+	z2.trunc(z2, n);
 
 	// Reuse z1 for p * m2.
-	nat_mul(z1, z2, m2);
-	nat_add(z, z, z1);
-
-	return;
+	z1.mul(z2, m2);
+	add(*this, z1);
 }
 
 // expNNWindowed calculates x**y mod m using a fixed, 4-bit window,
 // where m = 2**logM.
-void nat_expNNWindowed(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y, uint64_t logM) {
-	CRASH_COND_MSG(y.size() <= 1, "big: misuse of expNNWindowed");
-
+void BigNat::expNNWindowed(BigNat x, BigNat y, uint64_t logM) {
+	CRASH_COND(y.array.size() <= 1);
 	if ((x[0] & 1) == 0) {
 		// len(y) > 1, so y  > logM.
 		// x is even, so x**y is a multiple of 2**y which is a multiple of 2**logM.
-		nat_setWord(z, 0);
+		setUint64(0);
 		return;
 	}
-
 	if (logM == 1) {
-		nat_setWord(z, 1);
+		setUint64(1);
 		return;
 	}
 
 	// zz is used to avoid allocating in mul as otherwise
 	// the arguments would alias.
-	PackedInt64Array zz;
+	const int64_t w = int64_t((logM + 64 - 1) / 64);
+	BigNat zz;
 
-	static constexpr uint64_t n = 4;
+	constexpr int64_t n = 4;
 	// powers[i] contains x^i.
-	PackedInt64Array powers[1 << n];
-	nat_set(powers[0], *natOne);
-	nat_trunc(powers[1], x, logM);
-	for (int64_t i = 2; i < (1 << n); i+= 2) {
-		PackedInt64Array &p2 = powers[i / 2];
-		PackedInt64Array &p = powers[i];
-		PackedInt64Array &p1 = powers[i + 1];
-		nat_sqr(p, p2);
-		nat_trunc(p, p, logM);
-		nat_mul(p1, p, x);
-		nat_trunc(p1, p1, logM);
+	BigNat powers[1 << n];
+	powers[0].setUint64(1);
+	powers[1].trunc(x, logM);
+	for (int64_t i = 2; i < (1 << n); i += 2) {
+		BigNat &p2 = powers[i / 2];
+		BigNat &p = powers[i];
+		BigNat &p1 = powers[i + 1];
+		p.sqr(p2);
+		p.trunc(p, logM);
+		p1.mul(p, x);
+		p1.trunc(p1, logM);
 	}
 
 	// Because phi(2**logM) = 2**(logM-1), x**(2**(logM-1)) = 1,
@@ -755,131 +729,130 @@ void nat_expNNWindowed(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array
 	// That is, we can throw away all but the bottom logM-1 bits of y.
 	// Instead of allocating a new y, we start reading y at the right word
 	// and truncate it appropriately at the start of the loop.
-	int64_t i = y.size() - 1;
-	const int64_t mtop = int64_t(logM - 2) / 64; // -2 because the top word of N bits is the (N-1)/W'th word.
-	uint64_t mmask = ~uint64_t(0);
-	const uint64_t mbits = (logM - 1) & (64 - 1);
+	int64_t i = y.array.size() - 1;
+	int64_t mtop = int64_t((logM - 2) / 64); // -2 because the top word of N bits is the (N-1)/W'th word.
+	BigWord mmask = UINT64_MAX;
+	uint64_t mbits = (logM - 1) & (64 - 1);
 	if (mbits != 0) {
 		mmask = (1LLU << mbits) - 1;
 	}
 	if (i > mtop) {
 		i = mtop;
 	}
-
 	bool advance = false;
-	nat_setWord(z, 1);
+	setUint64(1);
 	for (; i >= 0; i--) {
-		uint64_t yi = y[i];
+		BigWord yi = y[i];
 		if (i == mtop) {
 			yi &= mmask;
 		}
+
 		for (int64_t j = 0; j < 64; j += n) {
 			if (advance) {
 				// Account for use of 4 bits in previous iteration.
 				// Unrolled loop for significant performance
 				// gain. Use go test -bench=".*" in crypto/rsa
 				// to check performance before making changes.
-				nat_sqr(zz, z);
-				nat_trunc(z, zz, logM);
+				zz.sqr(*this);
+				trunc(zz, logM);
 
-				nat_sqr(zz, z);
-				nat_trunc(z, zz, logM);
+				zz.sqr(*this);
+				trunc(zz, logM);
 
-				nat_sqr(zz, z);
-				nat_trunc(z, zz, logM);
+				zz.sqr(*this);
+				trunc(zz, logM);
 
-				nat_sqr(zz, z);
-				nat_trunc(z, zz, logM);
+				zz.sqr(*this);
+				trunc(zz, logM);
 			}
 
-			nat_mul(zz, z, powers[yi >> (64 - n)]);
-			nat_trunc(z, zz, logM);
+			zz.mul(*this, powers[yi >> (64 - n)]);
+			trunc(zz, logM);
 
 			yi <<= n;
 			advance = true;
 		}
 	}
 
-	nat_norm(z);
+	norm();
 }
 
 // expNNMontgomery calculates x**y mod m using a fixed, 4-bit window.
 // Uses Montgomery representation.
-void nat_expNNMontgomery(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y, PackedInt64Array m) {
-	const int64_t numWords = m.size();
+void BigNat::expNNMontgomery(BigNat x, BigNat y, BigNat m) {
+	const int64_t numWords = m.array.size();
 
 	// We want the lengths of x and m to be equal.
 	// It is OK if x >= m as long as len(x) == len(m).
-	if (x.size() > numWords) {
-		nat_rem(x, m, x);
+	if (x.array.size() > numWords) {
+		x.rem(x, m);
 		// Note: now len(x) <= numWords, not guaranteed ==.
 	}
-	if (x.size() < numWords) {
-		x.resize(numWords);
+	if (x.array.size() < numWords) {
+		x.array.resize(numWords);
 	}
 
 	// Ideally the precomputations would be performed outside, and reused
 	// k0 = -m**-1 mod 2**_W. Algorithm from: Dumas, J.G. "On Newton–Raphson
 	// Iteration for Multiplicative Inverses Modulo Prime Powers".
-	uint64_t k0 = 2 - m[0];
-	uint64_t t = m[0] - 1;
+	BigWord k0 = 2 - m[0];
+	BigWord t = m[0] - 1;
 	for (int64_t i = 1; i < 64; i <<= 1) {
 		t *= t;
-		k0 *= (t + 1);
+		k0 *= t + 1;
 	}
 	k0 = -k0;
 
 	// RR = 2**(2*_W*len(m)) mod m
-	PackedInt64Array RR, zz;
-	nat_setWord(RR, 1);
-	nat_lsh(zz, RR, uint64_t(2 * numWords * 64));
-	nat_rem(zz, m, RR);
-	if (RR.size() < numWords) {
-		RR.resize(numWords);
+	BigNat RR, zz;
+	RR.setUint64(1);
+	zz.lsh(RR, uint64_t(2 * numWords * 64));
+	RR.rem(zz, m);
+	if (RR.array.size() < numWords) {
+		RR.array.resize(numWords);
 	}
-
 	// one = 1, with equal length to that of m
-	PackedInt64Array one;
-	one.resize(numWords);
+	BigNat one;
+	one.array.resize(numWords);
 	one[0] = 1;
 
-	static constexpr int64_t n = 4;
+	constexpr int64_t n = 4;
 	// powers[i] contains x^i
-	PackedInt64Array powers[1 << n];
-	nat_montgomery(powers[0], one, RR, m, k0, numWords);
-	nat_montgomery(powers[1], x, RR, m, k0, numWords);
+	BigNat powers[1 << n];
+	powers[0].montgomery(one, RR, m, k0, numWords);
+	powers[1].montgomery(x, RR, m, k0, numWords);
 	for (int64_t i = 2; i < (1 << n); i++) {
-		nat_montgomery(powers[i], powers[i - 1], powers[1], m, k0, numWords);
+		powers[i].montgomery(powers[i - 1], powers[1], m, k0, numWords);
 	}
 
 	// initialize z = 1 (Montgomery 1)
-	z.resize(numWords);
-	nat_copy(z, 0, powers[0], 0, numWords);
+	*this = powers[0];
 
-	zz.resize(numWords);
+	zz.array.resize(numWords);
+
+	BigNat &z = *this;
 
 	// same windowed exponent, but with Montgomery multiplications
-	for (int64_t i = y.size() - 1; i >= 0; i--) {
-		uint64_t yi = y[i];
+	for (int64_t i = y.array.size() - 1; i >= 0; i--) {
+		BigWord yi = y[i];
 		for (int64_t j = 0; j < 64; j += n) {
-			if (i != y.size() - 1 || j != 0) {
-				nat_montgomery(zz, z, z, m, k0, numWords);
-				nat_montgomery(z, zz, zz, m, k0, numWords);
-				nat_montgomery(zz, z, z, m, k0, numWords);
-				nat_montgomery(z, zz, zz, m, k0, numWords);
+			if (i != y.array.size() - 1 || j != 0) {
+				zz.montgomery(z, z, m, k0, numWords);
+				z.montgomery(zz, zz, m, k0, numWords);
+				zz.montgomery(z, z, m, k0, numWords);
+				z.montgomery(zz, zz, m, k0, numWords);
 			}
-			nat_montgomery(zz, z, powers[yi >> (64 - n)], m, k0, numWords);
-			std::swap(z, zz);
+			zz.montgomery(z, powers[yi >> (64 - n)], m, k0, numWords);
+			SWAP(z, zz);
 			yi <<= n;
 		}
 	}
-
 	// convert to regular number
-	nat_montgomery(zz, z, one, m, k0, numWords);
+	zz.montgomery(z, one, m, k0, numWords);
 
 	// One last reduction, just in case.
 	// See golang.org/issue/13907.
-	if (nat_cmp(zz, m) >= 0) {
+	if (zz.cmp(m) >= 0) {
 		// Common case is m has high bit set; in that case,
 		// since zz is the same length as m, there can be just
 		// one multiple of m to remove. Just subtract.
@@ -887,36 +860,31 @@ void nat_expNNMontgomery(PackedInt64Array &z, PackedInt64Array x, PackedInt64Arr
 		// so do that unconditionally, but double-check,
 		// in case our beliefs are wrong.
 		// The div is not expected to be reached.
-		nat_sub(zz, zz, m);
-		if (nat_cmp(zz, m) >= 0) {
-			nat_rem(zz, m, zz);
+		zz.sub(zz, m);
+		if (zz.cmp(m) >= 0) {
+			zz.rem(zz, m);
 		}
 	}
 
-	z = zz;
-	nat_norm(z);
+	*this = zz;
+	norm();
 }
 
 // bytes writes the value of z into buf using big-endian encoding.
 // The value of z is encoded in the slice buf[i:]. If the value of z
 // cannot be represented in buf, bytes panics. The number i of unused
 // bytes at the beginning of buf is returned as result.
-int64_t nat_bytes(PackedInt64Array z, PackedByteArray &buf) {
-	// This function is used in cryptographic operations. It must not leak
-	// anything but the Int's sign and bit size through side-channels. Any
-	// changes must be reviewed by a security expert.
-	int64_t i = buf.size();
-	for (int64_t d_ : z) {
-		uint64_t d = d_;
-		for (size_t j = 0; j < sizeof(uint64_t); j++) {
+int64_t BigNat::bytes(PackedByteArray &r_buf) const {
+	int64_t i = r_buf.size();
+	for (const int64_t d_ : array) {
+		BigWord d = d_;
+		for (int j = 0; j < 8; j++) {
 			i--;
-
 			if (i >= 0) {
-				buf[i] = uint64_t(d);
+				r_buf[i] = uint8_t(d);
 			} else {
-				CRASH_COND_MSG(uint8_t(d) != 0, "math/big: buffer too small to fit value");
+				CRASH_COND(uint8_t(d) != 0);
 			}
-
 			d >>= 8;
 		}
 	}
@@ -924,47 +892,41 @@ int64_t nat_bytes(PackedInt64Array z, PackedByteArray &buf) {
 	if (i < 0) {
 		i = 0;
 	}
-	while (i < buf.size() && buf[i] == 0) {
+	while (i < r_buf.size() && r_buf[i] == 0) {
 		i++;
 	}
 
 	return i;
 }
 
-// bigEndianWord returns the contents of buf interpreted as a big-endian encoded Word value.
-uint64_t nat_bigEndianWord(PackedByteArray buf, int64_t i) {
-	return BSWAP64(buf.decode_u64(i));
-}
-
 // setBytes interprets buf as the bytes of a big-endian unsigned
 // integer, sets z to that value, and returns z.
-void nat_setBytes(PackedInt64Array &z, PackedByteArray buf) {
-	z.resize((buf.size() + sizeof(uint64_t) - 1) / sizeof(uint64_t));
+void BigNat::setBytes(const PackedByteArray &p_buf) {
+	array.resize((p_buf.size() + 8 - 1) / 8);
 
-	int64_t i = buf.size();
-	for (int64_t k = 0; i >= sizeof(uint64_t); k++) {
-		z[k] = nat_bigEndianWord(buf, i - sizeof(uint64_t));
-		i -= sizeof(uint64_t);
+	int64_t i = p_buf.size();
+	for (int64_t k = 0; i >= 8; k++) {
+		array[k] = BSWAP64(p_buf.decode_u64(i - 8));
+		i -= 8;
 	}
 
 	if (i > 0) {
-		uint64_t d = 0;
+		BigWord d = 0;
 		for (uint64_t s = 0; i > 0; s += 8) {
-			d |= uint64_t(buf[i - 1]) << s;
+			d |= BigWord(p_buf[i - 1]) << s;
 			i--;
 		}
-
-		z[z.size() - 1] = d;
+		array[array.size() - 1] = d;
 	}
 
-	nat_norm(z);
+	norm();
 }
 
 // sqrt sets z = ⌊√x⌋
 // The caller may pass stk == nil to request that sqrt obtain and release one itself.
-void nat_sqrt(PackedInt64Array &z, PackedInt64Array x) {
-	if (nat_cmp(x, *natOne) <= 0) {
-		nat_set(z, x);
+void BigNat::sqrt(BigNat x) {
+	if (x.cmp(BigNat{{1}}) <= 0) {
+		set(x);
 		return;
 	}
 
@@ -973,48 +935,42 @@ void nat_sqrt(PackedInt64Array &z, PackedInt64Array x) {
 	// https://members.loria.fr/PZimmermann/mca/pub226.html
 	// If x is one less than a perfect square, the sequence oscillates between the correct z and z+1;
 	// otherwise it converges to the correct z and stays there.
-	PackedInt64Array z1, z2, r;
-	nat_setUint64(z1, 1);
-	nat_lsh(z1, z1, uint64_t(nat_bitLen(x) + 1) / 2); // must be ≥ √x
-	while (true) {
-		nat_div(x, z1, z2, r);
-		nat_add(z2, z2, z1);
-		nat_rsh(z2, z2, 1);
-
-		if (nat_cmp(z2, z1) >= 0) {
+	BigNat z1, z2, r;
+	z1.setUint64(1);
+	z1.lsh(z1, uint64_t(x.bitLen() + 1) / 2); // must be ≥ √x
+	for (int64_t n = 0; ; n++) {
+		z2.div(r, x, z1);
+		z2.add(z2, z1);
+		z2.rsh(z2, 1);
+		if (z2.cmp(z1) >= 0) {
 			// z1 is answer.
-			nat_set(z, z1);
+			set(z1);
 			return;
 		}
-
-		std::swap(z1, z2);
+		SWAP(z1, z2);
 	}
 }
 
 // subMod2N returns z = (x - y) mod 2ⁿ.
-void nat_subMod2N(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y, uint64_t n) {
-	if (nat_bitLen(x) > n) {
-		nat_trunc(x, x, n);
+void BigNat::subMod2N(BigNat x, BigNat y, uint64_t n) {
+	if (x.bitLen() > n) {
+		x.trunc(x, n);
 	}
-	if (nat_bitLen(y) > n) {
-		nat_trunc(y, y, n);
+	if (y.bitLen() > n) {
+		y.trunc(y, n);
 	}
-
-	if (nat_cmp(x, y) >= 0) {
-		nat_sub(z, x, y);
+	if (x.cmp(y) >= 0) {
+		sub(x, y);
 		return;
 	}
-
 	// x - y < 0; x - y mod 2ⁿ = x - y + 2ⁿ = 2ⁿ - (y - x) = 1 + 2ⁿ-1 - (y - x) = 1 + ^(y - x).
-	nat_sub(z, y, x);
-	while (uint64_t(z.size()) * 64 < n) {
-		z.append(0);
+	sub(y, x);
+	while (array.size() * 64 < n) {
+		array.append(0);
 	}
-
-	for (int64_t i = 0; i < z.size(); i++) {
-		z[i] = ~z[i];
+	for (int64_t i = 0; i < array.size(); i++) {
+		array[i] = ~array[i];
 	}
-
-	nat_trunc(z, z, n);
-	nat_add(z, z, *natOne);
+	trunc(*this, n);
+	add(*this, BigNat{{1}});
 }

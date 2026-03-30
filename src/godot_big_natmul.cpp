@@ -1,4 +1,5 @@
-// This file was ported from Go 1.25.7. Original copyright notice follows:
+// This file is ported from src/math/big/natmul.go in Go 1.26.1.
+// Original copyright notice follows:
 
 // Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
@@ -6,6 +7,8 @@
 
 #include "godot_big_naturals.h"
 #include "godot_big_int.h"
+
+using namespace godot;
 
 // Multiplication.
 
@@ -22,158 +25,156 @@ static constexpr int64_t karatsubaSqrThreshold = 80; // see calibrate_test.go
 
 // mul sets z = x*y, using stk for temporary storage.
 // The caller may pass stk == nil to request that mul obtain and release one itself.
-void nat_mul(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y) {
-	int64_t m = x.size();
-	int64_t n = y.size();
+void BigNat::mul(BigNat p_x, BigNat p_y) {
+	const int64_t m = p_x.array.size();
+	const int64_t n = p_y.array.size();
 
 	if (m < n) {
-		std::swap(x, y);
-		std::swap(m, n);
+		mul(p_y, p_x);
+		return;
 	}
-
 	if (m == 0 || n == 0) {
-		z.clear();
+		array.clear();
 		return;
 	}
-
 	if (n == 1) {
-		nat_mulAddWW(z, x, y[0], 0);
+		mulAddWW(p_x, p_y[0], 0);
 		return;
 	}
-
 	// m >= n > 1
-
-	z.resize(m + n);
 
 	// use basic multiplication if the numbers are small
 	if (n < karatsubaThreshold) {
-		nat_basicMul(z, x, y);
-		nat_norm(z);
+		array.resize(m + n);
+		basicMul(*this, p_x, p_y);
+		norm();
 		return;
 	}
+
+	array.resize(n + n);
 
 	// Let x = x1:x0 where x0 is the same length as y.
 	// Compute z = x0*y and then add in x1*y in sections
 	// if needed.
-	z.resize(2 * n);
-	nat_karatsuba(z, x.slice(0, n), y);
+	karatsuba(*this, BigNat{p_x.array.slice(0, n)}, p_y);
 
 	if (n < m) {
-		z.resize(m + n);
-		PackedInt64Array t;
+		array.resize(m + n);
+		BigNat t;
 		for (int64_t i = n; i < m; i += n) {
-			nat_mul(t, x.slice(i, Math::min(i + n, m)), y);
-			nat_addTo(z, i, t);
+			t.mul(BigNat{p_x.array.slice(i, Math::min(i + n, p_x.array.size()))}, p_y);
+			addTo(*this, i, t);
 		}
 	}
 
-	nat_norm(z);
+	norm();
 }
 
 // sqr sets z = x*x, using stk for temporary storage.
 // The caller may pass stk == nil to request that sqr obtain and release one itself.
-void nat_sqr(PackedInt64Array &z, PackedInt64Array x) {
-	const int64_t n = x.size();
+void BigNat::sqr(BigNat p_x) {
+	const int64_t n = p_x.array.size();
+	array.resize(2 * n);
 	if (n == 0) {
-		z.clear();
 		return;
 	}
 
 	if (n == 1) {
-		const uint64_t d = x[0];
-		uint64_t z1, z0;
-		z.resize(2);
-		nat_mulWW(d, d, z1, z0);
-		z[1] = z1;
-		z[0] = z0;
-		nat_norm(z);
+		const BigWord d = p_x[0];
+		mulWW(d, d, (*this)[1], (*this)[0]);
+		norm();
 		return;
 	}
 
-	z.resize(2 * n);
-
 	if (n < basicSqrThreshold && n < karatsubaSqrThreshold) {
-		nat_basicMul(z, x, x);
-		nat_norm(z);
+		basicMul(*this, p_x, p_x);
+		norm();
 		return;
 	}
 
 	if (n < karatsubaSqrThreshold) {
-		nat_basicSqr(z, x);
-		nat_norm(z);
+		basicSqr(*this, p_x);
+		norm();
 		return;
 	}
 
-	nat_karatsubaSqr(z, x);
-	nat_norm(z);
+	karatsubaSqr(*this, p_x);
+	norm();
 }
 
 // basicSqr sets z = x*x and is asymptotically faster than basicMul
 // by about a factor of 2, but slower for small arguments due to overhead.
 // Requirements: len(x) > 0, len(z) == 2*len(x)
 // The (non-normalized) result is placed in z.
-void nat_basicSqr(PackedInt64Array &z, PackedInt64Array x) {
-	const int64_t n = x.size();
-	CRASH_COND(z.size() != 2 * n);
-
+void BigNat::basicSqr(BigNat &z, BigNat x) {
+	const int64_t n = x.array.size();
 	if (n < basicSqrThreshold) {
-		nat_basicMul(z, x, x);
+		basicMul(z, x, x);
 		return;
 	}
 
-	PackedInt64Array t;
-	t.resize(2 * n);
+	BigNat t;
+	t.array.resize(2 * n);
 
-	uint64_t z1, z0;
-	nat_mulWW(x[0], x[0], z1, z0); // the initial square
-	z[1] = z1;
-	z[0] = z0;
+	mulWW(x[0], x[0], z[1], z[0]); // the initial square
 	for (int64_t i = 1; i < n; i++) {
-		const uint64_t d = uint64_t(x[i]);
-
+		const BigWord d = x[i];
 		// z collects the squares x[i] * x[i]
-		nat_mulWW(d, d, z1, z0);
-		z[2 * i + 1] = z1;
-		z[2 * i] = z0;
-
+		mulWW(d, d, z[2 * i + 1], z[2 * i]);
 		// t collects the products x[i] * x[j] where j < i
-		t[2 * i] = nat_addMulVVWW(t, i, t, i, x, 0, d, 0, i);
+		BigNat tempt{t.array.slice(i, 2 * i)};
+		t[2 * i] = addMulVVWW(tempt, tempt, BigNat{x.array.slice(0, i)}, d, 0);
+		for (int64_t j = 0; j < i; j++) {
+			t[i + j] = tempt[j];
+		}
 	}
-	t[2 * n - 1] = nat_lshVU(t, 1, t, 1, 1, 2 * n - 2); // double the j < i products
-	nat_addVV(z, 0, z, 0, t, 0, 2 * n);                 // combine the result
+	BigNat tempt{t.array.slice(1, 2 * n - 1)};
+	t[2 * n - 1] = lshVU(tempt, tempt, 1); // double the j < i products
+	for (int64_t j = 0; j < 2 * n - 2; j++) {
+		t[1 + j] = tempt[j];
+	}
+	addVV(z, z, t); // combine the result
 }
 
 // mulAddWW returns z = x*y + r.
-void nat_mulAddWW(PackedInt64Array &z, PackedInt64Array x, uint64_t y, uint64_t r) {
-	const int64_t m = x.size();
-	if (m == 0 || y == 0) {
-		nat_setWord(z, r); // result is r
+void BigNat::mulAddWW(BigNat p_x, BigWord p_y, BigWord p_r) {
+	int64_t m = p_x.array.size();
+	if (m == 0 || p_y == 0) {
+		setUint64(p_r); // result is r
 		return;
 	}
 	// m > 0
 
-	z.resize(m + 1);
-	z[m] = nat_mulAddVWW(z, 0, x, 0, y, r, m);
-	nat_norm(z);
+	array.resize(m);
+	array.append(mulAddVWW(*this, p_x, p_y, p_r));
+
+	norm();
 }
 
 // basicMul multiplies x and y and leaves the result in z.
 // The (non-normalized) result is placed in z[0 : len(x) + len(y)].
-void nat_basicMul(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y) {
-	nat_clear(z, 0, x.size() + y.size()); // initialize z
-	for (int64_t i = 0; i < y.size(); i++) {
-		const uint64_t d = y[i];
+void BigNat::basicMul(BigNat &z, BigNat x, BigNat y) {
+	for (int64_t i = 0; i < x.array.size() + y.array.size(); i++) {
+		z[i] = 0; // initialize z
+	}
+	for (int64_t i = 0; i < y.array.size(); i++) {
+		const BigWord d = y[i];
 		if (d != 0) {
-			z[x.size() + i] = nat_addMulVVWW(z, i, z, i, x, 0, d, 0, x.size());
+			BigNat tempz{z.array.slice(i, i + x.array.size())};
+			z[x.array.size() + i] = addMulVVWW(tempz, tempz, x, d, 0);
+			for (int64_t j = 0; j < x.array.size(); j++) {
+				z[i + j] = tempz[j];
+			}
 		}
 	}
 }
 
-#ifdef GODOT_BIG_DEBUG_KARATSUBA
+#ifdef DBGFLAG_ASSERT
 // ifmt returns the debug formatting of the Int x: 0xHEX.
-static String ifmt(Ref<BigInt> x) {
-	String neg, s = x->Text(16), t;
-	if (s == "") { // happens for denormalized zero
+static String ifmt(const BigNat &x) {
+	String s = x.utoa(16);
+	String t;
+	if (s.is_empty()) { // happens for denormalized zero
 		s = "0x0";
 	}
 	if (s[0] == '-') {
@@ -187,8 +188,19 @@ static String ifmt(Ref<BigInt> x) {
 		t = s.substr(s.length() - D) + "_" + t;
 		s = s.substr(0, s.length() - D);
 	}
-
 	return neg + s + t;
+}
+static String ifmt(const Ref<BigInt> &x) {
+	String neg = x->_neg ? "-" : "";
+	return neg + ifmt(x->_abs);
+}
+
+// trace prints a single debug value.
+static void trace(const String &name, const BigNat &x) {
+	print_line(name, "=", ifmt(x));
+}
+static void trace(const String &name, const Ref<BigInt> &x) {
+	print_line(name, "=", ifmt(x));
 }
 #endif
 
@@ -196,15 +208,13 @@ static String ifmt(Ref<BigInt> x) {
 // writing the (non-normalized) result to z.
 // x and y must have the same length n,
 // and z must have length twice that.
-void nat_karatsuba(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y) {
-	const int64_t n = x.size();
-
-	CRASH_COND(y.size() != n);
-	CRASH_COND(z.size() != n * 2);
+void BigNat::karatsuba(BigNat &z, BigNat x, BigNat y) {
+	const int64_t n = y.array.size();
+	CRASH_COND(x.array.size() != n || z.array.size() != 2 * n);
 
 	// Fall back to basic algorithm if small enough.
 	if (n < karatsubaThreshold || n < 2) {
-		nat_basicMul(z, x, y);
+		basicMul(z, x, y);
 		return;
 	}
 
@@ -229,33 +239,26 @@ void nat_karatsuba(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y) 
 	//	z1 = (x0-x1)*(y1-y0) + z0 + z2
 
 	const int64_t n2 = (n + 1) / 2;
-
-	PackedInt64Array x0n = x.slice(0, n2);
-	nat_norm(x0n);
-	PackedInt64Array x1n = x.slice(n2);
-	nat_norm(x1n);
-	PackedInt64Array y0n = y.slice(0, n2);
-	nat_norm(y0n);
-	PackedInt64Array y1n = y.slice(n2);
-	nat_norm(y1n);
-
 	Ref<BigInt> x0, x1, y0, y1, z0, z1, z2, tx, ty;
 	x0.instantiate();
-	x0->_set_abs(x0n);
 	x1.instantiate();
-	x1->_set_abs(x1n);
 	y0.instantiate();
-	y0->_set_abs(y0n);
 	y1.instantiate();
-	y1->_set_abs(y1n);
-
 	z0.instantiate();
-	z2.instantiate();
-
-	// Allocate temporary storage for z1; repurpose z0 to hold tx and ty.
 	z1.instantiate();
+	z2.instantiate();
 	tx.instantiate();
 	ty.instantiate();
+
+	x0->_abs.array = x.array.slice(0, n2);
+	x0->_abs.norm();
+	x1->_abs.array = x.array.slice(n2);
+	x1->_abs.norm();
+
+	y0->_abs.array = y.array.slice(0, n2);
+	y0->_abs.norm();
+	y1->_abs.array = y.array.slice(n2);
+	y1->_abs.norm();
 
 	tx->Sub(x0, x1);
 	ty->Sub(y1, y0);
@@ -265,47 +268,35 @@ void nat_karatsuba(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y) 
 	z2->Mul(x1, y1);
 	z1->Add(z1, z0);
 	z1->Add(z1, z2);
-	z.fill(0);
-	nat_copy(z, 0, z0->_get_abs(), 0, z0->_get_abs().size());
-	nat_copy(z, n2 * 2, z2->_get_abs(), 0, z2->_get_abs().size());
-	nat_addTo(z, n2, z1->_get_abs());
 
-#ifdef GODOT_BIG_DEBUG_KARATSUBA
+	z.array = z0->_abs.array;
+	DEV_ASSERT(z.array.size() <= 2 * n2);
+	z.array.resize(2 * n2);
+	z.array.append_array(z2->_abs.array);
+	DEV_ASSERT(z.array.size() <= 2 * n);
+	z.array.resize(2 * n);
+	addTo(z, n2, z1->_abs);
+
 	// Debug mode: double-check answer and print trace on failure.
-	PackedInt64Array zz;
-	zz.resize(z.size());
-	nat_basicMul(zz, x, y);
-	if (nat_cmp(z, zz) != 0) {
-		// All the temps were aliased to z and gone. Recompute.
-		z0->Mul(x0, y0);
-		tx->Sub(x1, x0);
-		ty->Sub(y0, y1);
-		z2->Mul(x1, y1);
-
-		Ref<BigInt> xi, yi, zi, zzi;
-		xi.instantiate();
-		xi->_set_abs(x);
-		yi.instantiate();
-		yi->_set_abs(y);
-		zi.instantiate();
-		zi->_set_abs(z);
-		zzi.instantiate();
-		zzi->_set_abs(zz);
-
+#ifdef DBGFLAG_ASSERT
+	BigNat zz;
+	zz.array.resize(z.array.size());
+	basicMul(zz, x, y);
+	if (z.cmp(zz) != 0) {
 		print_line("karatsuba wrong");
-		print_line("x =", ifmt(xi));
-		print_line("y =", ifmt(yi));
-		print_line("z =", ifmt(zi));
-		print_line("zz=", ifmt(zzi));
-		print_line("x0=", ifmt(x0));
-		print_line("x1=", ifmt(x1));
-		print_line("y0=", ifmt(y0));
-		print_line("y1=", ifmt(y1));
-		print_line("tx=", ifmt(tx));
-		print_line("ty=", ifmt(ty));
-		print_line("z0=", ifmt(z0));
-		print_line("z1=", ifmt(z1));
-		print_line("z2=", ifmt(z2));
+		trace("x ", x);
+		trace("y ", y);
+		trace("z ", z);
+		trace("zz", zz);
+		trace("x0", x0);
+		trace("x1", x1);
+		trace("y0", y0);
+		trace("y1", y1);
+		trace("tx", tx);
+		trace("ty", ty);
+		trace("z0", z0);
+		trace("z1", z1);
+		trace("z2", z2);
 		CRASH_NOW_MSG("karatsuba");
 	}
 #endif
@@ -316,12 +307,12 @@ void nat_karatsuba(PackedInt64Array &z, PackedInt64Array x, PackedInt64Array y) 
 // z must have length 2*len(x).
 // It is analogous to [karatsuba] but can run faster
 // knowing both multiplicands are the same value.
-void nat_karatsubaSqr(PackedInt64Array &z, PackedInt64Array x) {
-	const int64_t n = x.size();
-	CRASH_COND(z.size() != 2 * n);
+void BigNat::karatsubaSqr(BigNat &z, BigNat x) {
+	const int64_t n = x.array.size();
+	CRASH_COND(z.array.size() != 2 * n);
 
 	if (n < karatsubaSqrThreshold || n < 2) {
-		nat_basicSqr(z, x);
+		basicSqr(z, x);
 		return;
 	}
 
@@ -343,74 +334,50 @@ void nat_karatsubaSqr(PackedInt64Array &z, PackedInt64Array x) {
 	//	z1 = z0 + z2 - (x0-x1)²
 
 	const int64_t n2 = (n + 1) / 2;
-
-	PackedInt64Array x0n = x.slice(0, n2);
-	nat_norm(x0n);
-	PackedInt64Array x1n = x.slice(n2);
-	nat_norm(x1n);
-
 	Ref<BigInt> x0, x1, z0, z1, z2, tx;
 	x0.instantiate();
-	x0->_set_abs(x0n);
 	x1.instantiate();
-	x1->_set_abs(x1n);
 	z0.instantiate();
-	z2.instantiate();
-
-	// Allocate temporary storage for z1; repurpose z0 to hold tx.
 	z1.instantiate();
+	z2.instantiate();
 	tx.instantiate();
 
-	tx->Sub(x0, x1);
-	PackedInt64Array z1n;
-	nat_sqr(z1n, tx->_get_abs());
-	z1->_set_abs(z1n);
-	z1->_set_neg(true);
+	x0->_abs.array = x.array.slice(0, n2);
+	x0->_abs.norm();
+	x1->_abs.array = x.array.slice(n2);
+	x1->_abs.norm();
 
-	PackedInt64Array z0n, z2n;
-	nat_sqr(z0n, x0n);
-	nat_sqr(z2n, x1n);
-	z0->_set_abs(z0n);
-	z2->_set_abs(z2n);
+	tx->Sub(x0, x1);
+	z1->_abs.sqr(tx->_abs);
+	z1->_neg = true;
+
+	z0->_abs.sqr(x0->_abs);
+	z2->_abs.sqr(x1->_abs);
 	z1->Add(z1, z0);
 	z1->Add(z1, z2);
-	z.fill(0);
-	nat_copy(z, 0, z0n, 0, z0n.size());
-	nat_copy(z, n2 * 2, z2n, 0, z2n.size());
-	nat_addTo(z, n2, z1->_get_abs());
 
-#ifdef GODOT_BIG_DEBUG_KARATSUBA
+	z.array = z0->_abs.array;
+	DEV_ASSERT(z.array.size() <= 2 * n2);
+	z.array.resize(2 * n2);
+	z.array.append_array(z2->_abs.array);
+	DEV_ASSERT(z.array.size() <= 2 * n);
+	z.array.resize(2 * n);
+	addTo(z, n2, z1->_abs);
+
 	// Debug mode: double-check answer and print trace on failure.
-	PackedInt64Array zz;
-	zz.resize(2 * n);
-	nat_basicSqr(zz, x);
-	if (nat_cmp(z, zz) != 0) {
-		// All the temps were aliased to z and gone. Recompute.
-		tx->Sub(x0, x1);
-		z0->Mul(x0, x0);
-		z2->Mul(x1, x1);
-		z1->Mul(tx, tx);
-		z1->Neg(z1);
-		z1->Add(z1, z0);
-		z1->Add(z1, z2);
-
-		Ref<BigInt> xi, zi, zzi;
-		xi.instantiate();
-		xi->_set_abs(x);
-		zi.instantiate();
-		zi->_set_abs(z);
-		zzi.instantiate();
-		zzi->_set_abs(zz);
-
+#ifdef DBGFLAG_ASSERT
+	BigNat zz;
+	basicSqr(zz, x);
+	if (z.cmp(zz) != 0) {
 		print_line("karatsubaSqr wrong");
-		print_line("x =", ifmt(xi));
-		print_line("z =", ifmt(zi));
-		print_line("zz=", ifmt(zzi));
-		print_line("x0=", ifmt(x0));
-		print_line("x1=", ifmt(x1));
-		print_line("z0=", ifmt(z0));
-		print_line("z1=", ifmt(z1));
-		print_line("z2=", ifmt(z2));
+		trace("x ", x);
+		trace("z ", z);
+		trace("zz", zz);
+		trace("x0", x0);
+		trace("x1", x1);
+		trace("z0", z0);
+		trace("z1", z1);
+		trace("z2", z2);
 		CRASH_NOW_MSG("karatsubaSqr");
 	}
 #endif
