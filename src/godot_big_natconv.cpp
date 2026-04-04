@@ -314,7 +314,7 @@ String BigNat::itoa(bool p_neg, int64_t p_base) const {
 	if (b == (b & -b)) {
 		// shift is base b digit size in bits
 		const uint64_t shift = std::countr_zero(uint64_t(b)); // shift > 0 because b >= 2
-		const BigWord mask = BigWord(1LLU << shift - 1);
+		const BigWord mask = BigWord((1LLU << shift) - 1);
 		BigWord w = BigWord(array[0]); // current word
 		uint64_t nbits = 64; // number of unprocessed bits in w
 

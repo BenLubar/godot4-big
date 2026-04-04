@@ -37,9 +37,9 @@ Ref<BigRat> BigRat::NewRat(int64_t p_a, int64_t p_b) {
 // SetFloat64 sets z to exactly f and returns z.
 // If f is not finite, SetFloat returns nil.
 Error BigRat::SetFloat64(double p_f) {
-	constexpr uint64_t expMask = 1LLU << 11 - 1;
+	constexpr uint64_t expMask = (1LLU << 11) - 1;
 	const uint64_t bits = std::bit_cast<uint64_t>(p_f);
-	uint64_t mantissa = bits & (1LLU << 52 - 1);
+	uint64_t mantissa = bits & ((1LLU << 52) - 1);
 	int32_t exp = int32_t((bits >> 52) & expMask);
 	ERR_FAIL_COND_V_MSG(exp == expMask, ERR_INVALID_PARAMETER, "float is non-finite");
 
@@ -88,7 +88,7 @@ static Pair<float, bool> quotToFloat32(BigNat a, BigNat b) {
 
 	// exponent
 	static constexpr int64_t Esize = Fsize - Msize1;
-	static constexpr int64_t Ebias = 1LL << (Esize - 1) - 1;
+	static constexpr int64_t Ebias = (1LL << (Esize - 1)) - 1;
 	static constexpr int64_t Emin  = 1 - Ebias;
 	static constexpr int64_t Emax  = Ebias;
 
@@ -185,7 +185,7 @@ static Pair<double, bool> quotToFloat64(BigNat a, BigNat b) {
 
 	// exponent
 	static constexpr int64_t Esize = Fsize - Msize1;
-	static constexpr int64_t Ebias = 1LL << (Esize - 1) - 1;
+	static constexpr int64_t Ebias = (1LL << (Esize - 1)) - 1;
 	static constexpr int64_t Emin  = 1 - Ebias;
 	static constexpr int64_t Emax  = Ebias;
 

@@ -830,7 +830,7 @@ Pair<float, BigAccuracy> BigFloat::Float32() const {
 	static constexpr int32_t fbits = 32;                //        float size
 	static constexpr int32_t mbits = 23;                //        mantissa size (excluding implicit msb)
 	static constexpr int32_t ebits = fbits - mbits - 1; //     8  exponent size
-	static constexpr int32_t bias  = 1<<(ebits-1) - 1;  //   127  exponent bias
+	static constexpr int32_t bias  = (1<<(ebits-1)) - 1;//   127  exponent bias
 	static constexpr int32_t dmin  = 1 - bias - mbits;  //  -149  smallest unbiased exponent (denormal)
 	static constexpr int32_t emin  = 1 - bias;          //  -126  smallest unbiased exponent (normal)
 	static constexpr int32_t emax  = bias;              //   127  largest unbiased exponent (normal)
@@ -951,7 +951,7 @@ Pair<double, BigAccuracy> BigFloat::Float64() const {
 	static constexpr int64_t fbits = 64;                //        float size
 	static constexpr int64_t mbits = 52;                //        mantissa size (excluding implicit msb)
 	static constexpr int64_t ebits = fbits - mbits - 1; //    11  exponent size
-	static constexpr int64_t bias  = 1<<(ebits-1) - 1;  //  1023  exponent bias
+	static constexpr int64_t bias  = (1<<(ebits-1)) - 1;//  1023  exponent bias
 	static constexpr int64_t dmin  = 1 - bias - mbits;  // -1074  smallest unbiased exponent (denormal)
 	static constexpr int64_t emin  = 1 - bias;          // -1022  smallest unbiased exponent (normal)
 	static constexpr int64_t emax  = bias;              //  1023  largest unbiased exponent (normal)
