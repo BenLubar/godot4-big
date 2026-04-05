@@ -494,7 +494,7 @@ void BigNat::random(const std::function<uint32_t()> &p_rnd, BigNat p_limit, int6
 	if (bitLengthOfMSW == 0) {
 		bitLengthOfMSW = 64;
 	}
-	const uint64_t mask = (BigWord(1) << bitLengthOfMSW) - 1;
+	const uint64_t mask = bitLengthOfMSW < 64 ? (BigWord(1) << bitLengthOfMSW) - 1 : UINT64_MAX;
 
 	while (true) {
 		for (int64_t i = 0; i < array.size(); i++) {
@@ -706,7 +706,6 @@ void BigNat::expNNWindowed(BigNat x, BigNat y, uint64_t logM) {
 
 	// zz is used to avoid allocating in mul as otherwise
 	// the arguments would alias.
-	const int64_t w = int64_t((logM + 64 - 1) / 64);
 	BigNat zz;
 
 	constexpr int64_t n = 4;
