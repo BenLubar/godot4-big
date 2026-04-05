@@ -12,16 +12,16 @@ public:
 	bool _neg = false; // sign
 	BigNat _abs; // absolute value of the integer
 	void _set_neg(bool p_neg);
-	bool _is_neg() const;
+	[[nodiscard]] bool _is_neg() const;
 	void _set_abs(const godot::PackedInt64Array &p_abs);
-	godot::PackedInt64Array _get_abs() const;
+	[[nodiscard]] godot::PackedInt64Array _get_abs() const;
 
-	godot::PackedByteArray to_uvarint() const;
+	[[nodiscard]] godot::PackedByteArray to_uvarint() const;
 	int64_t from_uvarint(const godot::PackedByteArray &p_bytes, int64_t p_offset = 0);
-	godot::PackedByteArray to_svarint() const;
+	[[nodiscard]] godot::PackedByteArray to_svarint() const;
 	int64_t from_svarint(const godot::PackedByteArray &p_bytes, int64_t p_offset = 0);
 
-	int Sign() const;
+	[[nodiscard]] int Sign() const;
 
 	void SetInt64(int64_t p_x);
 	void SetUint64(uint64_t p_x);
@@ -42,23 +42,23 @@ public:
 	godot::Error Mod(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
 	godot::Error DivMod(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &r_m);
 
-	int Cmp(const godot::Ref<BigInt> &p_y) const;
-	int CmpAbs(const godot::Ref<BigInt> &p_y) const;
+	[[nodiscard]] int Cmp(const godot::Ref<BigInt> &p_y) const;
+	[[nodiscard]] int CmpAbs(const godot::Ref<BigInt> &p_y) const;
 
-	int64_t Int64() const;
-	uint64_t Uint64() const;
-	bool IsInt64() const;
-	bool IsUint64() const;
+	[[nodiscard]] int64_t Int64() const;
+	[[nodiscard]] uint64_t Uint64() const;
+	[[nodiscard]] bool IsInt64() const;
+	[[nodiscard]] bool IsUint64() const;
 
-	godot::Pair<double, BigAccuracy> Float64() const;
-	_FORCE_INLINE_ double _Float64_bind() const { return Float64().first; }
-	_FORCE_INLINE_ BigAccuracy _Float64Accuracy_bind() const { return Float64().second; }
+	[[nodiscard]] godot::Pair<double, BigAccuracy> Float64() const;
+	[[nodiscard]] _FORCE_INLINE_ double _Float64_bind() const { return Float64().first; }
+	[[nodiscard]] _FORCE_INLINE_ BigAccuracy _Float64Accuracy_bind() const { return Float64().second; }
 
 	void SetBytes(const godot::PackedByteArray &p_bytes);
-	godot::PackedByteArray Bytes() const;
+	[[nodiscard]] godot::PackedByteArray Bytes() const;
 	void FillBytes(godot::PackedByteArray &r_bytes) const; // not exposed to gdscript
-	int64_t BitLen() const;
-	uint64_t TrailingZeroBits() const;
+	[[nodiscard]] int64_t BitLen() const;
+	[[nodiscard]] uint64_t TrailingZeroBits() const;
 
 	godot::Error Exp(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &p_m = nullptr);
 	godot::Error expSlow(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &p_m);
@@ -83,7 +83,7 @@ public:
 
 	void Lsh(const godot::Ref<BigInt> &p_x, uint64_t p_n);
 	void Rsh(const godot::Ref<BigInt> &p_x, uint64_t p_n);
-	uint64_t Bit(int64_t p_i) const;
+	[[nodiscard]] uint64_t Bit(int64_t p_i) const;
 	void SetBit(const godot::Ref<BigInt> &p_x, int64_t p_i, uint64_t p_b);
 	void And(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
 	void AndNot(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
@@ -96,8 +96,8 @@ public:
 	static constexpr int64_t MAX_BASE = 10 + ('z' - 'a' + 1) + ('Z' - 'A' + 1);
 	godot::Error _scan(const godot::String &s, int64_t &off, int64_t &base);
 	godot::Error SetString(const godot::String &p_s, int64_t p_base = 0);
-	godot::String String(int64_t p_base = 10) const;
-	_FORCE_INLINE_ godot::String _to_string() const { return String(); }
+	[[nodiscard]] godot::String String(int64_t p_base = 10) const;
+	[[nodiscard]] _FORCE_INLINE_ godot::String _to_string() const { return String(); }
 
-	bool ProbablyPrime(int64_t n) const;
+	[[nodiscard]] bool ProbablyPrime(int64_t n) const;
 };

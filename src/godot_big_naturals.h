@@ -26,19 +26,19 @@ struct BigNat {
 	void set(BigNat p_x);
 	void add(BigNat p_x, BigNat p_y);
 	void sub(BigNat p_x, BigNat p_y);
-	int cmp(BigNat p_y) const;
-	int cmpnorm(BigNat p_y) const;
+	[[nodiscard]] int cmp(BigNat p_y) const;
+	[[nodiscard]] int cmpnorm(BigNat p_y) const;
 	void montgomery(BigNat p_x, BigNat p_y, BigNat p_m, BigWord p_k, int64_t p_n);
 	void mulRange(uint64_t p_x, uint64_t p_y);
 
-	int64_t bitLen() const;
-	uint64_t trailingZeroBits() const;
-	godot::Pair<uint64_t, bool> isPow2() const;
+	[[nodiscard]] int64_t bitLen() const;
+	[[nodiscard]] uint64_t trailingZeroBits() const;
+	[[nodiscard]] godot::Pair<uint64_t, bool> isPow2() const;
 	void lsh(BigNat p_x, uint64_t p_s);
 	void rsh(BigNat p_x, uint64_t p_s);
 	void setBit(BigNat p_x, uint64_t p_i, uint64_t p_s);
-	uint64_t bit(uint64_t p_i) const;
-	uint64_t sticky(uint64_t p_i) const;
+	[[nodiscard]] uint64_t bit(uint64_t p_i) const;
+	[[nodiscard]] uint64_t sticky(uint64_t p_i) const;
 	void and_(BigNat p_x, BigNat p_y);
 	void trunc(BigNat p_x, uint64_t p_n);
 	void andNot(BigNat p_x, BigNat p_y);
@@ -57,7 +57,7 @@ struct BigNat {
 	void rem(BigNat p_u, BigNat p_v);
 	void div(BigNat &r_r, BigNat p_u, BigNat p_v);
 	BigWord divW(BigNat p_x, BigWord p_y);
-	BigWord modW(BigWord p_d) const;
+	[[nodiscard]] BigWord modW(BigWord p_d) const;
 	static BigWord divWVW(BigNat &p_z, BigWord p_xn, BigNat p_x, BigWord p_y);
 	static void divWW(BigWord p_x1, BigWord p_x0, BigWord p_y, BigWord p_m, BigWord &r_q, BigWord &r_r);
 	void divLarge(BigNat &r_r, BigNat p_u, BigNat p_v);
@@ -77,21 +77,21 @@ struct BigNat {
 	static void karatsuba(BigNat &r_z, BigNat p_x, BigNat p_y);
 	static void karatsubaSqr(BigNat &r_z, BigNat p_x);
 
-	bool probablyPrimeMillerRabin(int64_t p_reps, bool force2) const;
-	bool probablyPrimeLucas() const;
+	[[nodiscard]] bool probablyPrimeMillerRabin(int64_t p_reps, bool force2) const;
+	[[nodiscard]] bool probablyPrimeLucas() const;
 
 	godot::Error modInverse(BigNat g, BigNat n);
 
 	void expWW(BigWord p_x, BigWord p_y);
-	_FORCE_INLINE_ godot::String utoa(int64_t p_base) const { return itoa(false, p_base); }
-	godot::String itoa(bool p_neg, int64_t p_base) const;
+	[[nodiscard]] _FORCE_INLINE_ godot::String utoa(int64_t p_base) const { return itoa(false, p_base); }
+	[[nodiscard]] godot::String itoa(bool p_neg, int64_t p_base) const;
 	void convertWords(uint8_t *r_s, int64_t r_s_size, BigWord p_b, int64_t p_ndigits, BigWord p_bb, const godot::Vector<BigDivisor> &p_table);
 
-	uint32_t low32() const;
-	uint64_t low64() const;
+	[[nodiscard]] uint32_t low32() const;
+	[[nodiscard]] uint64_t low64() const;
 	int64_t fnorm();
-	uint32_t msb32() const;
-	uint64_t msb64() const;
+	[[nodiscard]] uint32_t msb32() const;
+	[[nodiscard]] uint64_t msb64() const;
 
 	static void mulWW(BigWord p_x, BigWord p_y, BigWord &r_z1, BigWord &r_z0);
 	static void mulAddWWW(BigWord p_x, BigWord p_y, BigWord p_c, BigWord &r_z1, BigWord &r_z0);
@@ -111,7 +111,7 @@ struct BigNat {
 		return BigWord(array[p_index]);
 	}
 
-	godot::PackedByteArray to_uvarint() const;
+	[[nodiscard]] godot::PackedByteArray to_uvarint() const;
 	uint64_t from_uvarint(const godot::Span<uint8_t> &p_bytes);
 
 	static godot::Error scanSign(const godot::String &s, int64_t &off, bool &neg);
