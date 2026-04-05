@@ -36,23 +36,37 @@ static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Div(uint64_t hi, uint6
 #else
 static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Add(uint64_t x, uint64_t y, uint64_t carry) {
 	uint64_t out, carryout;
-#if __WORDSIZE == 64
+#if __WORDSIZE == 64 && __has_builtin(__builtin_addcl)
 	static_assert(sizeof(uint64_t) == sizeof(unsigned long));
 	out = __builtin_addcl(x, y, carry, &carryout);
-#else
+#elif __WORDSIZE == 32 && __has_builtin(__builtin_addcll)
 	static_assert(sizeof(uint64_t) == sizeof(unsigned long long));
 	out = __builtin_addcll(x, y, carry, &carryout);
+#else
+	out = x + y + carry;
+	// The sum will overflow if both top bits are set (x & y) or if one of them
+	// is (x | y), and a carry from the lower place happened. If such a carry
+	// happens, the top bit will be 1 + 0 + 1 = 0 (&^ sum).
+	carryout = ((x & y) | ((x | y) & ~out)) >> 63;
+
 #endif
 	return std::make_tuple(out, carryout);
 }
 static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Sub(uint64_t x, uint64_t y, uint64_t carry) {
 	uint64_t out, carryout;
-#if __WORDSIZE == 64
+#if __WORDSIZE == 64 && __has_builtin(__builtin_subcl)
 	static_assert(sizeof(uint64_t) == sizeof(unsigned long));
 	out = __builtin_subcl(x, y, carry, &carryout);
-#else
+#elif __WORDSIZE == 32 && __has_builtin(__builtin_subcll)
 	static_assert(sizeof(uint64_t) == sizeof(unsigned long long));
 	out = __builtin_subcll(x, y, carry, &carryout);
+#else
+	out = x - y - carry;
+	// The difference will underflow if the top bit of x is not set and the top
+	// bit of y is set (^x & y) or if they are the same (^(x ^ y)) and a borrow
+	// from the lower place happens. If that borrow happens, the result will be
+	// 1 - 1 - 1 = 0 - 0 - 1 = 1 (& diff).
+	carryout = ((~x & y) | (~(x ^ y) & out)) >> 63;
 #endif
 	return std::make_tuple(out, carryout);
 }
