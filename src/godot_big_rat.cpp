@@ -162,7 +162,7 @@ static Pair<float, bool> quotToFloat32(BigNat a, BigNat b) {
 	}
 	mantissa >>= 1; // discard rounding bit.  Mantissa now scaled by 1<<Msize1.
 
-	const float f = std::ldexpf(float(mantissa), exp - Msize1);
+	const float f = ldexpf(float(mantissa), exp - Msize1);
 	if (Math::is_inf(f)) {
 		exact = false;
 	}

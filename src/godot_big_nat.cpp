@@ -490,7 +490,7 @@ void BigNat::xor_(BigNat p_x, BigNat p_y) {
 void BigNat::random(const std::function<uint32_t()> &p_rnd, BigNat p_limit, int64_t p_n) {
 	array.resize(p_limit.array.size());
 
-	uint64_t bitLengthOfMSW = uint(p_n % 64);
+	uint64_t bitLengthOfMSW = uint64_t(p_n % 64);
 	if (bitLengthOfMSW == 0) {
 		bitLengthOfMSW = 64;
 	}
