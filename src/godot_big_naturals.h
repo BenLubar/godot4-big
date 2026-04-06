@@ -108,7 +108,7 @@ struct BigNat {
 		return reinterpret_cast<BigWord &>(array[p_index]);
 	}
 	BigWord operator[](int64_t p_index) const {
-		return BigWord(array[p_index]);
+		return static_cast<BigWord>(array[p_index]);
 	}
 
 	[[nodiscard]] godot::PackedByteArray to_uvarint() const;

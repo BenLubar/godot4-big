@@ -7,6 +7,8 @@
 
 #include "godot_big_naturals.h"
 
+#include <bit>
+
 #ifdef _MSC_VER
 #include <immintrin.h>
 static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Add(uint64_t x, uint64_t y, uint64_t carry) {
@@ -35,7 +37,8 @@ static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Div(uint64_t hi, uint6
 }
 #else
 static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Add(uint64_t x, uint64_t y, uint64_t carry) {
-	uint64_t out, carryout;
+	uint64_t out;
+	uint64_t carryout;
 #if __WORDSIZE == 64 && __has_builtin(__builtin_addcl)
 	static_assert(sizeof(uint64_t) == sizeof(unsigned long));
 	out = __builtin_addcl(x, y, carry, &carryout);
@@ -53,7 +56,8 @@ static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Add(uint64_t x, uint64
 	return std::make_tuple(out, carryout);
 }
 static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Sub(uint64_t x, uint64_t y, uint64_t carry) {
-	uint64_t out, carryout;
+	uint64_t out;
+	uint64_t carryout;
 #if __WORDSIZE == 64 && __has_builtin(__builtin_subcl)
 	static_assert(sizeof(uint64_t) == sizeof(unsigned long));
 	out = __builtin_subcl(x, y, carry, &carryout);
@@ -71,17 +75,19 @@ static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Sub(uint64_t x, uint64
 	return std::make_tuple(out, carryout);
 }
 static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Mul(uint64_t x, uint64_t y) {
-	uint64_t hi, lo;
-	const unsigned __int128 product = ((unsigned __int128)x) * ((unsigned __int128)y);
-	hi = uint64_t(product >> 64);
-	lo = uint64_t(product);
+	uint64_t hi;
+	uint64_t lo;
+	const unsigned __int128 product = static_cast<unsigned __int128>(x) * static_cast<unsigned __int128>(y);
+	hi = static_cast<uint64_t>(product >> 64);
+	lo = static_cast<uint64_t>(product);
 	return std::make_tuple(hi, lo);
 }
 static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Div(uint64_t hi, uint64_t lo, uint64_t y) {
-	uint64_t quo, rem;
-	const unsigned __int128 x = (((unsigned __int128)hi) << 64) | (unsigned __int128)lo;
-	quo = uint64_t(x / y);
-	rem = uint64_t(x % y);
+	uint64_t quo;
+	uint64_t rem;
+	const unsigned __int128 x = (static_cast<unsigned __int128>(hi) << 64) | static_cast<unsigned __int128>(lo);
+	quo = static_cast<uint64_t>(x / y);
+	rem = static_cast<uint64_t>(x % y);
 	return std::make_tuple(quo, rem);
 }
 #endif
@@ -114,7 +120,9 @@ void BigNat::mulWW(BigWord p_x, BigWord p_y, BigWord &r_z1, BigWord &r_z0) {
 
 // z1<<_W + z0 = x*y + c
 void BigNat::mulAddWWW(BigWord p_x, BigWord p_y, BigWord p_c, BigWord &r_z1, BigWord &r_z0) {
-	uint64_t hi, lo, cc;
+	uint64_t hi;
+	uint64_t lo;
+	uint64_t cc;
 	std::tie(hi, lo) = bits_Mul(p_x, p_y);
 	std::tie(lo, cc) = bits_Add(lo, p_c, 0);
 	r_z1 = hi + cc;
@@ -275,7 +283,8 @@ BigWord BigNat::addMulVVWW(BigNat &r_z, BigNat p_x, BigNat p_y, BigWord p_m, Big
 
 	BigWord c = p_a;
 	for (int64_t i = 0; i < r_z.array.size(); i++) {
-		BigWord z1, z0;
+		BigWord z1;
+		BigWord z0;
 		mulAddWWW(p_y[i], p_m, p_x[i], z1, z0);
 		std::tie(r_z[i], c) = bits_Add(z0, c, 0);
 		c += z1;
@@ -308,7 +317,10 @@ void BigNat::divWW(BigWord x1, BigWord x0, BigWord y, BigWord m, BigWord &q, Big
 	//            = ⎣(x1*m+x1*B+x0)/B + x0*m/B^2 + delta2*(x1*B+x0)/B^2⎦
 	// The latter two terms of this three-term sum are between 0 and 1.
 	// So we can compute just the first term, and we will be low by at most 2.
-	uint64_t t1, t0, c, discard;
+	uint64_t t1;
+	uint64_t t0;
+	uint64_t c;
+	uint64_t discard;
 	std::tie(t1, t0) = bits_Mul(m, x1);
 	std::tie(discard, c) = bits_Add(t0, x0, 0);
 	std::tie(t1, discard) = bits_Add(t1, x1, c);
@@ -318,7 +330,11 @@ void BigNat::divWW(BigWord x1, BigWord x0, BigWord y, BigWord m, BigWord &q, Big
 	uint64_t qq = t1;
 
 	// compute remainder r=x-d*q.
-	uint64_t dq1, dq0, r0, r1, b;
+	uint64_t dq1;
+	uint64_t dq0;
+	uint64_t r0;
+	uint64_t r1;
+	uint64_t b;
 	std::tie(dq1, dq0) = bits_Mul(d, qq);
 	std::tie(r0, b) = bits_Sub(x0, dq0, 0);
 	std::tie(r1, discard) = bits_Sub(x1, dq1, b);
@@ -365,7 +381,8 @@ BigWord BigNat::reciprocalWord(BigWord d1) {
 	const uint64_t x1 = ~u;
 	const uint64_t x0 = UINT64_MAX;
 
-	uint64_t q, r;
+	uint64_t q;
+	uint64_t r;
 	std::tie(q, r) = bits_Div(x1, x0, u); // (_B^2-1)/U-_B = (_B*(_M-C)+_M)/U
 	return q;
 }
