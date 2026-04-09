@@ -8,7 +8,7 @@
 
 #include <functional>
 
-enum BigAccuracy {
+enum BigAccuracy : int8_t {
 	ACC_BELOW = -1,
 	ACC_EXACT = 0,
 	ACC_ABOVE = 1,
@@ -25,8 +25,11 @@ struct BigNat {
 	void setUint64(uint64_t p_x);
 	void set(BigNat p_x);
 	void add(BigNat p_x, BigNat p_y);
+	void add1(BigNat p_x);
 	void sub(BigNat p_x, BigNat p_y);
+	void sub1(BigNat p_x);
 	[[nodiscard]] int cmp(BigNat p_y) const;
+	[[nodiscard]] int cmp1() const;
 	[[nodiscard]] int cmpnorm(BigNat p_y) const;
 	void montgomery(BigNat p_x, BigNat p_y, BigNat p_m, BigWord p_k, int64_t p_n);
 	void mulRange(uint64_t p_x, uint64_t p_y);
@@ -49,7 +52,7 @@ struct BigNat {
 	void expNNMontgomeryEven(BigNat p_x, BigNat p_y, BigNat p_m);
 	void expNNWindowed(BigNat p_x, BigNat p_y, uint64_t p_log_m);
 	void expNNMontgomery(BigNat p_x, BigNat p_y, BigNat p_m);
-	int64_t bytes(godot::PackedByteArray &r_buf) const;
+	[[nodiscard]] int64_t bytes(godot::PackedByteArray &r_buf) const;
 	void setBytes(const godot::PackedByteArray &p_buf);
 	void sqrt(BigNat p_x);
 	void subMod2N(BigNat p_x, BigNat p_y, uint64_t p_n);
@@ -112,7 +115,7 @@ struct BigNat {
 	}
 
 	[[nodiscard]] godot::PackedByteArray to_uvarint() const;
-	uint64_t from_uvarint(const godot::Span<uint8_t> &p_bytes);
+	[[nodiscard]] uint64_t from_uvarint(const godot::Span<uint8_t> &p_bytes);
 
 	static godot::Error scanSign(const godot::String &s, int64_t &off, bool &neg);
 	static godot::Error scanExponent(const godot::String &s, int64_t &off, bool base2ok, bool sepOk, int64_t &exp, int64_t &base);
@@ -121,7 +124,7 @@ struct BigNat {
 };
 
 struct BigDivisor {
-	BigNat bbb;          // divisor
-	int64_t nbits = 0;   // bit length of divisor (discounting leading zeros) ~= log2(bbb)
+	BigNat bbb; // divisor
+	int64_t nbits = 0; // bit length of divisor (discounting leading zeros) ~= log2(bbb)
 	int64_t ndigits = 0; // digit length of divisor in terms of output base digits
 };

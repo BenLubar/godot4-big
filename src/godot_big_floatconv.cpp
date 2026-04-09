@@ -39,7 +39,8 @@ Error BigFloat::_scan(const godot::String &s, int64_t &off, int64_t &base) {
 	}
 
 	// exponent
-	int64_t exp = 0, ebase = 0;
+	int64_t exp = 0;
+	int64_t ebase = 0;
 	err = BigNat::scanExponent(s, off, true, orig_base == 0, exp, ebase);
 	if (err != OK) {
 		return err;
@@ -66,7 +67,7 @@ Error BigFloat::_scan(const godot::String &s, int64_t &off, int64_t &base) {
 	// needed for base-10 exponents.
 
 	// normalize mantissa and determine initial exponent contributions
-	int64_t exp2 = _mant.array.size() * 64 - _mant.fnorm();
+	int64_t exp2 = (_mant.array.size() * 64) - _mant.fnorm();
 	int64_t exp5 = 0;
 
 	// determine binary or decimal exponent contribution of radix point
@@ -75,34 +76,34 @@ Error BigFloat::_scan(const godot::String &s, int64_t &off, int64_t &base) {
 		// -fcount is the number of digits to the right
 		// of '.'. Adjust relevant exponent accordingly.
 		switch (base) {
-		case 10:
-			exp5 = fcount;
-			[[fallthrough]]; // 10**e == 5**e * 2**e
-		case 2:
-			exp2 += fcount;
-			break;
-		case 8:
-			exp2 += fcount * 3; // octal digits are 3 bits each
-			break;
-		case 16:
-			exp2 += fcount * 4; // hexadecimal digits are 4 bits each
-			break;
-		default:
-			CRASH_NOW_MSG("unexpected mantissa base");
+			case 10:
+				exp5 = fcount;
+				[[fallthrough]]; // 10**e == 5**e * 2**e
+			case 2:
+				exp2 += fcount;
+				break;
+			case 8:
+				exp2 += fcount * 3; // octal digits are 3 bits each
+				break;
+			case 16:
+				exp2 += fcount * 4; // hexadecimal digits are 4 bits each
+				break;
+			default:
+				CRASH_NOW_MSG("unexpected mantissa base");
 		}
 		// fcount consumed - not needed anymore
 	}
 
 	// take actual exponent into account
 	switch (ebase) {
-	case 10:
-		exp5 += exp;
-		[[fallthrough]]; // see fallthrough above
-	case 2:
-		exp2 += exp;
-		break;
-	default:
-		CRASH_NOW_MSG("unexpected exponent base");
+		case 10:
+			exp5 += exp;
+			[[fallthrough]]; // see fallthrough above
+		case 2:
+			exp2 += exp;
+			break;
+		default:
+			CRASH_NOW_MSG("unexpected exponent base");
 	}
 	// exp consumed - not needed anymore
 
@@ -110,7 +111,7 @@ Error BigFloat::_scan(const godot::String &s, int64_t &off, int64_t &base) {
 	if (MIN_EXP <= exp2 && exp2 <= MAX_EXP) {
 		_prec = prec;
 		_form = FORM_FINITE;
-		_exp = int32_t(exp2);
+		_exp = static_cast<int32_t>(exp2);
 	} else {
 		ERR_FAIL_V_MSG(ERR_INVALID_DATA, "exponent overflow");
 	}
@@ -123,14 +124,13 @@ Error BigFloat::_scan(const godot::String &s, int64_t &off, int64_t &base) {
 	// exp5 != 0
 
 	// apply 5**exp5
-	Ref<BigFloat> p;
-	p.instantiate();
+	Ref<BigFloat> p{ memnew(BigFloat) };
 	p->SetPrec(Prec() + 64); // use more bits for p -- TODO(gri) what is the right number?
 	if (exp5 < 0) {
-		p->_pow5(uint64_t(-exp5));
+		p->_pow5(static_cast<uint64_t>(-exp5));
 		Quo(this, p);
 	} else {
-		p->_pow5(uint64_t(exp5));
+		p->_pow5(static_cast<uint64_t>(exp5));
 		Mul(this, p);
 	}
 
@@ -142,7 +142,7 @@ Error BigFloat::_scan(const godot::String &s, int64_t &off, int64_t &base) {
 //	for p, q := uint64(0), uint64(1); p < q; p, q = q, q*5 {
 //		fmt.Println(q)
 //	}
-static constexpr uint64_t pow5tab[] = {
+static constexpr std::array<uint64_t, 28> pow5tab{
 	1,
 	5,
 	25,

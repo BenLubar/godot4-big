@@ -7,7 +7,11 @@
 
 #include "godot_big_naturals.h"
 
+#include <algorithm>
+
 using namespace godot;
+
+// NOLINTBEGIN(performance-unnecessary-value-param)
 
 // This file implements unsigned multi-precision integers (natural
 // numbers). They are the building blocks for the implementation
@@ -68,14 +72,35 @@ void BigNat::add(BigNat p_x, BigNat p_y) {
 	// m > 0
 
 	array.resize(n);
-	BigWord c = addVV(*this, BigNat{p_x.array.slice(0, n)}, BigNat{p_y.array.slice(0, n)});
+	BigWord c = addVV(*this, BigNat{ p_x.array.slice(0, n) }, BigNat{ p_y.array.slice(0, n) });
 	if (m > n) {
 		BigNat z;
 		z.array.resize(m - n);
-		c = addVW(z, BigNat{p_x.array.slice(n)}, c);
+		c = addVW(z, BigNat{ p_x.array.slice(n) }, c);
 		array.append_array(z.array);
 	}
 	array.append(c);
+
+	norm();
+}
+
+void BigNat::add1(BigNat p_x) {
+	const int64_t m = p_x.array.size();
+	const int64_t n = 1;
+
+	if (m < n) {
+		// p_x must be 0
+		array.resize(1);
+		array[0] = 1;
+		return;
+	}
+	// m > 0
+
+	array.resize(m);
+	BigWord c = addVW(*this, p_x, 1);
+	if (c != 0) {
+		array.append(c);
+	}
 
 	norm();
 }
@@ -99,12 +124,32 @@ void BigNat::sub(BigNat p_x, BigNat p_y) {
 	// m > 0
 
 	array.resize(n);
-	BigWord c = subVV(*this, BigNat{p_x.array.slice(0, n)}, BigNat{p_y.array.slice(0, n)});
+	BigWord c = subVV(*this, BigNat{ p_x.array.slice(0, n) }, BigNat{ p_y.array.slice(0, n) });
 	if (m > n) {
 		BigNat z;
 		z.array.resize(m - n);
-		c = subVW(z, BigNat{p_x.array.slice(n)}, c);
+		c = subVW(z, BigNat{ p_x.array.slice(n) }, c);
 	}
+	CRASH_COND_MSG(c != 0, "underflow");
+
+	norm();
+}
+
+void BigNat::sub1(BigNat p_x) {
+	const int64_t m = p_x.array.size();
+	const int64_t n = 1;
+
+	CRASH_COND_MSG(m < n, "underflow");
+
+	if (m == 0) {
+		// n == 0 because m >= n; result is 0
+		array.clear();
+		return;
+	}
+	// m > 0
+
+	array.resize(m);
+	const BigWord c = subVW(*this, p_x, 1);
 	CRASH_COND_MSG(c != 0, "underflow");
 
 	norm();
@@ -137,6 +182,28 @@ int BigNat::cmp(BigNat p_y) const {
 	return 0;
 }
 
+int BigNat::cmp1() const {
+	const int64_t m = array.size();
+	const int64_t n = 1;
+	if (m != n || m == 0) {
+		if (m < n) {
+			return -1;
+		}
+		if (m > n) {
+			return +1;
+		}
+		return 0;
+	}
+
+	if ((*this)[0] < 1) {
+		return -1;
+	}
+	if ((*this)[0] > 1) {
+		return +1;
+	}
+	return 0;
+}
+
 int BigNat::cmpnorm(BigNat p_y) const {
 	p_y.norm();
 	return cmp(p_y);
@@ -164,7 +231,7 @@ void BigNat::montgomery(BigNat p_x, BigNat p_y, BigNat p_m, BigWord p_k, int64_t
 	BigWord c = 0;
 	for (int64_t i = 0; i < p_n; i++) {
 		const BigWord d = p_y[i];
-		BigNat z{array.slice(i, p_n + i)};
+		BigNat z{ array.slice(i, p_n + i) };
 		const BigWord c2 = addMulVVWW(z, z, p_x, d, 0);
 		const BigWord t = z[0] * p_k;
 		const BigWord c3 = addMulVVWW(z, z, p_m, t, 0);
@@ -182,7 +249,7 @@ void BigNat::montgomery(BigNat p_x, BigNat p_y, BigNat p_m, BigWord p_k, int64_t
 	}
 
 	if (c != 0) {
-		BigNat z{array.slice(p_n)};
+		BigNat z{ array.slice(p_n) };
 		array.resize(p_n);
 		subVV(*this, z, p_m);
 	} else {
@@ -196,8 +263,8 @@ void BigNat::montgomery(BigNat p_x, BigNat p_y, BigNat p_m, BigWord p_k, int64_t
 void BigNat::addTo(BigNat &r_z, int64_t p_start, BigNat p_x) {
 	const int64_t n = p_x.array.size();
 	if (n > 0) {
-		BigNat z0{r_z.array.slice(p_start, p_start + n)};
-		BigNat z1{r_z.array.slice(p_start + n)};
+		BigNat z0{ r_z.array.slice(p_start, p_start + n) };
+		BigNat z1{ r_z.array.slice(p_start + n) };
 		r_z.array.resize(p_start);
 		BigWord c = addVV(z0, z0, p_x);
 		if (c != 0 && !z1.array.is_empty()) {
@@ -225,7 +292,8 @@ void BigNat::mulRange(uint64_t p_a, uint64_t p_b) {
 		setUint64(p_a);
 		return;
 	}
-	BigNat a, b;
+	BigNat a;
+	BigNat b;
 	if (p_a + 1 == p_b) {
 		a.setUint64(p_a);
 		b.setUint64(p_b);
@@ -233,7 +301,7 @@ void BigNat::mulRange(uint64_t p_a, uint64_t p_b) {
 		return;
 	}
 
-	const uint64_t m = p_a + (p_b - p_a) / 2; // avoid overflow
+	const uint64_t m = p_a + ((p_b - p_a) / 2); // avoid overflow
 	a.mulRange(p_a, m);
 	b.mulRange(m + 1, p_b);
 	mul(a, b);
@@ -248,7 +316,7 @@ int64_t BigNat::bitLen() const {
 			return i * 64;
 		}
 
-		return i * 64 + 64 - std::countl_zero(uint64_t(array[i]));
+		return (i * 64) + 64 - std::countl_zero(static_cast<uint64_t>(array[i]));
 	}
 
 	return 0;
@@ -265,7 +333,7 @@ uint64_t BigNat::trailingZeroBits() const {
 		i++;
 	}
 	// x[i] != 0
-	return i * 64 + std::countr_zero(uint64_t(array[i]));
+	return (i * 64) + std::countr_zero(static_cast<uint64_t>(array[i]));
 }
 
 // isPow2 returns i, true when x == 2**i and 0, false otherwise.
@@ -275,9 +343,9 @@ Pair<uint64_t, bool> BigNat::isPow2() const {
 		i++;
 	}
 	if (i == array.size() && ((*this)[i] & ((*this)[i] - 1)) == 0) {
-		return {uint64_t(i * 64) + std::countr_zero((*this)[i]), true};
+		return { static_cast<uint64_t>(i * 64) + std::countr_zero((*this)[i]), true };
 	}
-	return {0, false};
+	return { 0, false };
 }
 
 // z = x << s
@@ -294,7 +362,7 @@ void BigNat::lsh(BigNat p_x, uint64_t p_s) {
 	}
 	// m > 0
 
-	int64_t n = m + int64_t(p_s / 64);
+	int64_t n = m + static_cast<int64_t>(p_s / 64);
 	p_s %= 64;
 	if (p_s == 0) {
 		array.resize(n + 1);
@@ -323,7 +391,7 @@ void BigNat::rsh(BigNat p_x, uint64_t p_s) {
 	}
 
 	int64_t m = p_x.array.size();
-	int64_t n = m - int64_t(p_s / 64);
+	int64_t n = m - static_cast<int64_t>(p_s / 64);
 	if (n <= 0) {
 		array.clear();
 		return;
@@ -335,7 +403,7 @@ void BigNat::rsh(BigNat p_x, uint64_t p_s) {
 		array = p_x.array.slice(m - n);
 	} else {
 		array.resize(n);
-		rshVU(*this, BigNat{p_x.array.slice(m - n)}, p_s);
+		rshVU(*this, BigNat{ p_x.array.slice(m - n) }, p_s);
 	}
 
 	norm();
@@ -343,28 +411,28 @@ void BigNat::rsh(BigNat p_x, uint64_t p_s) {
 
 void BigNat::setBit(BigNat p_x, uint64_t p_i, uint64_t p_b) {
 	int64_t j = p_i / 64;
-	BigWord m = BigWord(1) << (p_i % 64);
+	BigWord m = static_cast<BigWord>(1) << (p_i % 64);
 	int64_t n = p_x.array.size();
 	switch (p_b) {
-	case 0:
-		array = p_x.array;
-		if (j >= n) {
-			// no need to grow
+		case 0:
+			array = p_x.array;
+			if (j >= n) {
+				// no need to grow
+				return;
+			}
+			array[j] &= ~m;
+			norm();
 			return;
-		}
-		array[j] &= ~m;
-		norm();
-		return;
-	case 1:
-		array = p_x.array;
-		if (j >= n) {
-			array.resize(j + 1);
-		}
-		array[j] |= m;
-		// no need to normalize
-		return;
-	default:
-		CRASH_NOW_MSG("set bit is not 0 or 1");
+		case 1:
+			array = p_x.array;
+			if (j >= n) {
+				array.resize(j + 1);
+			}
+			array[j] |= m;
+			// no need to normalize
+			return;
+		default:
+			CRASH_NOW_MSG("set bit is not 0 or 1");
 	}
 }
 
@@ -375,7 +443,7 @@ uint64_t BigNat::bit(uint64_t p_i) const {
 		return 0;
 	}
 	// 0 <= j < len(x)
-	return (uint64_t(array[j]) >> (p_i % 64)) & 1;
+	return (static_cast<uint64_t>(array[j]) >> (p_i % 64)) & 1;
 }
 
 // sticky returns 1 if there's a 1 bit within the
@@ -397,7 +465,7 @@ uint64_t BigNat::sticky(uint64_t p_i) const {
 		}
 	}
 
-	if ((uint64_t(array[j]) << (64 - p_i % 64)) != 0) {
+	if ((static_cast<uint64_t>(array[j]) << (64 - (p_i % 64))) != 0) {
 		return 1;
 	}
 
@@ -407,9 +475,7 @@ uint64_t BigNat::sticky(uint64_t p_i) const {
 void BigNat::and_(BigNat p_x, BigNat p_y) {
 	int64_t m = p_x.array.size();
 	int64_t n = p_y.array.size();
-	if (m > n) {
-		m = n;
-	}
+	m = std::min(m, n);
 	// m <= n
 
 	array.resize(m);
@@ -440,9 +506,7 @@ void BigNat::trunc(BigNat p_x, uint64_t p_n) {
 void BigNat::andNot(BigNat p_x, BigNat p_y) {
 	int64_t m = p_x.array.size();
 	int64_t n = p_y.array.size();
-	if (n > m) {
-		n = m;
-	}
+	n = std::min(n, m);
 	// m >= n
 
 	array = p_x.array.slice(0, m);
@@ -596,14 +660,15 @@ void BigNat::expNN(BigNat x, BigNat y, BigNat m, bool slow) {
 	int64_t w = 64 - shift;
 	// zz and r are used to avoid allocating in mul and div as
 	// otherwise the arguments would alias.
-	BigNat zz, r;
+	BigNat zz;
+	BigNat r;
 	for (int64_t j = 0; j < w; j++) {
 		zz.sqr(z);
-		SWAP(zz, z);
+		std::swap(zz, z);
 
 		if (v != 0) {
 			zz.mul(z, x);
-			SWAP(zz, z);
+			std::swap(zz, z);
 		}
 
 		if (!m.array.is_empty()) {
@@ -619,11 +684,11 @@ void BigNat::expNN(BigNat x, BigNat y, BigNat m, bool slow) {
 
 		for (int64_t j = 0; j < 64; j++) {
 			zz.sqr(z);
-			SWAP(zz, z);
+			std::swap(zz, z);
 
 			if (v != 0) {
 				zz.mul(z, x);
-				SWAP(zz, z);
+				std::swap(zz, z);
 			}
 
 			if (!m.array.is_empty()) {
@@ -649,8 +714,9 @@ void BigNat::expNN(BigNat x, BigNat y, BigNat m, bool slow) {
 void BigNat::expNNMontgomeryEven(BigNat x, BigNat y, BigNat m) {
 	// Split m = m₁ × m₂ where m₁ = 2ⁿ
 	uint64_t n = m.trailingZeroBits();
-	BigNat m1, m2;
-	m1.lsh(BigNat{{1}}, n);
+	BigNat m1;
+	BigNat m2;
+	m1.lsh(BigNat{ { 1 } }, n);
 	m2.rsh(m, n);
 
 	// We want z = x**y mod m.
@@ -659,7 +725,8 @@ void BigNat::expNNMontgomeryEven(BigNat x, BigNat y, BigNat m) {
 	// (We are using the math/big convention for names here,
 	// where the computation is z = x**y mod m, so its parts are z1 and z2.
 	// The paper is computing x = a**e mod n; it refers to these as x2 and z1.)
-	BigNat z1, z2;
+	BigNat z1;
+	BigNat z2;
 	z1.expNN(x, y, m1, false);
 	z2.expNN(x, y, m2, false);
 
@@ -710,7 +777,7 @@ void BigNat::expNNWindowed(BigNat x, BigNat y, uint64_t logM) {
 
 	constexpr int64_t n = 4;
 	// powers[i] contains x^i.
-	BigNat powers[1 << n];
+	std::array<BigNat, 1 << n> powers;
 	powers[0].setUint64(1);
 	powers[1].trunc(x, logM);
 	for (int64_t i = 2; i < (1 << n); i += 2) {
@@ -735,9 +802,7 @@ void BigNat::expNNWindowed(BigNat x, BigNat y, uint64_t logM) {
 	if (mbits != 0) {
 		mmask = (1LLU << mbits) - 1;
 	}
-	if (i > mtop) {
-		i = mtop;
-	}
+	i = std::min(i, mtop);
 	bool advance = false;
 	setUint64(1);
 	for (; i >= 0; i--) {
@@ -803,7 +868,8 @@ void BigNat::expNNMontgomery(BigNat x, BigNat y, BigNat m) {
 	k0 = -k0;
 
 	// RR = 2**(2*_W*len(m)) mod m
-	BigNat RR, zz;
+	BigNat RR;
+	BigNat zz;
 	RR.setUint64(1);
 	zz.lsh(RR, uint64_t(2 * numWords * 64));
 	RR.rem(zz, m);
@@ -817,7 +883,7 @@ void BigNat::expNNMontgomery(BigNat x, BigNat y, BigNat m) {
 
 	constexpr int64_t n = 4;
 	// powers[i] contains x^i
-	BigNat powers[1 << n];
+	std::array<BigNat, 1 << n> powers;
 	powers[0].montgomery(one, RR, m, k0, numWords);
 	powers[1].montgomery(x, RR, m, k0, numWords);
 	for (int64_t i = 2; i < (1 << n); i++) {
@@ -842,7 +908,7 @@ void BigNat::expNNMontgomery(BigNat x, BigNat y, BigNat m) {
 				z.montgomery(zz, zz, m, k0, numWords);
 			}
 			zz.montgomery(z, powers[yi >> (64 - n)], m, k0, numWords);
-			SWAP(z, zz);
+			std::swap(z, zz);
 			yi <<= n;
 		}
 	}
@@ -888,9 +954,7 @@ int64_t BigNat::bytes(PackedByteArray &r_buf) const {
 		}
 	}
 
-	if (i < 0) {
-		i = 0;
-	}
+	i = std::max<int64_t>(i, 0);
 	while (i < r_buf.size() && r_buf[i] == 0) {
 		i++;
 	}
@@ -912,7 +976,7 @@ void BigNat::setBytes(const PackedByteArray &p_buf) {
 	if (i > 0) {
 		BigWord d = 0;
 		for (uint64_t s = 0; i > 0; s += 8) {
-			d |= BigWord(p_buf[i - 1]) << s;
+			d |= static_cast<BigWord>(p_buf[i - 1]) << s;
 			i--;
 		}
 		array[array.size() - 1] = d;
@@ -924,7 +988,7 @@ void BigNat::setBytes(const PackedByteArray &p_buf) {
 // sqrt sets z = ⌊√x⌋
 // The caller may pass stk == nil to request that sqrt obtain and release one itself.
 void BigNat::sqrt(BigNat x) {
-	if (x.cmp(BigNat{{1}}) <= 0) {
+	if (x.cmp1() <= 0) {
 		set(x);
 		return;
 	}
@@ -934,10 +998,12 @@ void BigNat::sqrt(BigNat x) {
 	// https://members.loria.fr/PZimmermann/mca/pub226.html
 	// If x is one less than a perfect square, the sequence oscillates between the correct z and z+1;
 	// otherwise it converges to the correct z and stays there.
-	BigNat z1, z2, r;
+	BigNat z1;
+	BigNat z2;
+	BigNat r;
 	z1.setUint64(1);
-	z1.lsh(z1, uint64_t(x.bitLen() + 1) / 2); // must be ≥ √x
-	for (int64_t n = 0; ; n++) {
+	z1.lsh(z1, static_cast<uint64_t>(x.bitLen() + 1) / 2); // must be ≥ √x
+	for (int64_t n = 0;; n++) {
 		z2.div(r, x, z1);
 		z2.add(z2, z1);
 		z2.rsh(z2, 1);
@@ -946,7 +1012,7 @@ void BigNat::sqrt(BigNat x) {
 			set(z1);
 			return;
 		}
-		SWAP(z1, z2);
+		std::swap(z1, z2);
 	}
 }
 
@@ -967,9 +1033,11 @@ void BigNat::subMod2N(BigNat x, BigNat y, uint64_t n) {
 	while (array.size() * 64 < n) {
 		array.append(0);
 	}
-	for (int64_t i = 0; i < array.size(); i++) {
-		array[i] = ~array[i];
+	for (long &i : array) {
+		i = ~i;
 	}
 	trunc(*this, n);
-	add(*this, BigNat{{1}});
+	add1(*this);
 }
+
+// NOLINTEND(performance-unnecessary-value-param)

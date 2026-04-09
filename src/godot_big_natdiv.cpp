@@ -39,20 +39,20 @@ and returned as rem.
 
 For example, here is a sketch of dividing 5 digits by 3 digits (n=3, m=2).
 
-	                 q₂ q₁ q₀
-	         _________________
+					 q₂ q₁ q₀
+			 _________________
 	v₂ v₁ v₀ ) u₄ u₃ u₂ u₁ u₀
-	           ↓  ↓  ↓  |  |
-	          [u₄ u₃ u₂]|  |
-	        - [  q₂·v  ]|  |
-	        ----------- ↓  |
-	          [  rem  | u₁]|
-	        - [    q₁·v   ]|
-	           ----------- ↓
-	             [  rem  | u₀]
-	           - [    q₀·v   ]
-	              ------------
-	                [  rem   ]
+			   ↓  ↓  ↓  |  |
+			  [u₄ u₃ u₂]|  |
+			- [  q₂·v  ]|  |
+			----------- ↓  |
+			  [  rem  | u₁]|
+			- [    q₁·v   ]|
+			   ----------- ↓
+				 [  rem  | u₀]
+			   - [    q₀·v   ]
+				  ------------
+					[  rem   ]
 
 Instead of creating new storage for the remainders and copying digits from u
 as indicated by the arrows, we use u's storage directly as both the source
@@ -187,9 +187,9 @@ Checking uₙuₙ₋₁uₙ₋₂ < q̂·vₙ₋₁vₙ₋₂ is the same as u�
 and
 
 	uₙuₙ₋₁uₙ₋₂ - q̂·vₙ₋₁vₙ₋₂ = (uₙuₙ₋₁·B + uₙ₋₂) - q̂·(vₙ₋₁·B + vₙ₋₂)
-	                          [splitting off the bottom digit]
-	                      = (uₙuₙ₋₁ - q̂·vₙ₋₁)·B + uₙ₋₂ - q̂·vₙ₋₂
-	                          [regrouping]
+							  [splitting off the bottom digit]
+						  = (uₙuₙ₋₁ - q̂·vₙ₋₁)·B + uₙ₋₂ - q̂·vₙ₋₂
+							  [regrouping]
 
 The expression (uₙuₙ₋₁ - q̂·vₙ₋₁) is the remainder of uₙuₙ₋₁ / vₙ₋₁.
 If the initial guess returns both q̂ and its remainder r̂, then checking
@@ -243,23 +243,23 @@ produce two output digits each (one wide digit) with 4-digit remainders.
 The final step must use what it has: the 4-digit remainder plus one more,
 5 digits to divide by 4.
 
-	                       q₆ q₅ q₄ q₃ q₂ q₁ q₀
-	            _______________________________
+						   q₆ q₅ q₄ q₃ q₂ q₁ q₀
+				_______________________________
 	v₃ v₂ v₁ v₀ ) u₉ u₈ u₇ u₆ u₅ u₄ u₃ u₂ u₁ u₀
-	              ↓  ↓  ↓  ↓  ↓  |  |  |  |  |
-	             [u₉ u₈ u₇ u₆ u₅]|  |  |  |  |
-	           - [    q₆q₅·v    ]|  |  |  |  |
-	           ----------------- ↓  ↓  |  |  |
-	                [    rem    |u₄ u₃]|  |  |
-	              - [     q₄q₃·v      ]|  |  |
-	              -------------------- ↓  ↓  |
-	                      [    rem    |u₂ u₁]|
-	                    - [     q₂q₁·v      ]|
-	                    -------------------- ↓
-	                            [    rem    |u₀]
-	                          - [     q₀·v     ]
-	                          ------------------
-	                               [    rem    ]
+				  ↓  ↓  ↓  ↓  ↓  |  |  |  |  |
+				 [u₉ u₈ u₇ u₆ u₅]|  |  |  |  |
+			   - [    q₆q₅·v    ]|  |  |  |  |
+			   ----------------- ↓  ↓  |  |  |
+					[    rem    |u₄ u₃]|  |  |
+				  - [     q₄q₃·v      ]|  |  |
+				  -------------------- ↓  ↓  |
+						  [    rem    |u₂ u₁]|
+						- [     q₂q₁·v      ]|
+						-------------------- ↓
+								[    rem    |u₀]
+							  - [     q₀·v     ]
+							  ------------------
+								   [    rem    ]
 
 An alternative would be to look ahead to how well n/2 divides into n+m and
 adjust the first step to use fewer digits as needed, making the first step
@@ -267,23 +267,23 @@ more special to make the last step not special at all. For example, using the
 same input, we could choose to use only 4 digits in the first step, leaving
 a full wide digit for the last step:
 
-	                       q₆ q₅ q₄ q₃ q₂ q₁ q₀
-	            _______________________________
+						   q₆ q₅ q₄ q₃ q₂ q₁ q₀
+				_______________________________
 	v₃ v₂ v₁ v₀ ) u₉ u₈ u₇ u₆ u₅ u₄ u₃ u₂ u₁ u₀
-	              ↓  ↓  ↓  ↓  |  |  |  |  |  |
-	             [u₉ u₈ u₇ u₆]|  |  |  |  |  |
-	           - [    q₆·v   ]|  |  |  |  |  |
-	           -------------- ↓  ↓  |  |  |  |
-	             [    rem    |u₅ u₄]|  |  |  |
-	           - [     q₅q₄·v      ]|  |  |  |
-	           -------------------- ↓  ↓  |  |
-	                   [    rem    |u₃ u₂]|  |
-	                 - [     q₃q₂·v      ]|  |
-	                 -------------------- ↓  ↓
-	                         [    rem    |u₁ u₀]
-	                       - [     q₁q₀·v      ]
-	                       ---------------------
-	                               [    rem    ]
+				  ↓  ↓  ↓  ↓  |  |  |  |  |  |
+				 [u₉ u₈ u₇ u₆]|  |  |  |  |  |
+			   - [    q₆·v   ]|  |  |  |  |  |
+			   -------------- ↓  ↓  |  |  |  |
+				 [    rem    |u₅ u₄]|  |  |  |
+			   - [     q₅q₄·v      ]|  |  |  |
+			   -------------------- ↓  ↓  |  |
+					   [    rem    |u₃ u₂]|  |
+					 - [     q₃q₂·v      ]|  |
+					 -------------------- ↓  ↓
+							 [    rem    |u₁ u₀]
+						   - [     q₁q₀·v      ]
+						   ---------------------
+								   [    rem    ]
 
 Today, the code in divRecursiveStep works like the first example. Perhaps in
 the future we will make it work like the alternative, to avoid a special case
@@ -386,21 +386,21 @@ This fact will be used a few times in the proofs.
 Proof that q ≤ q̂:
 
 	q̂·y₁ = ⌊x₁/y₁⌋·y₁                      [by definition, q̂ = ⌊x₁/y₁⌋]
-	     > (x₁/y₁ - 1)·y₁                  [x₁/y₁ - 1 < ⌊x₁/y₁⌋]
-	     = x₁ - y₁                         [distribute y₁]
+		 > (x₁/y₁ - 1)·y₁                  [x₁/y₁ - 1 < ⌊x₁/y₁⌋]
+		 = x₁ - y₁                         [distribute y₁]
 
 	So q̂·y₁ > x₁ - y₁.
 	Since q̂·y₁ is an integer, q̂·y₁ ≥ x₁ - y₁ + 1.
 
 	q̂ - q = q̂ - ⌊x/y⌋                      [by definition, q = ⌊x/y⌋]
-	      ≥ q̂ - x/y                        [⌊x/y⌋ < x/y]
-	      = (1/y)·(q̂·y - x)                [factor out 1/y]
-	      ≥ (1/y)·(q̂·y₁·S - x)             [y = y₁·S + y₀ ≥ y₁·S]
-	      ≥ (1/y)·((x₁ - y₁ + 1)·S - x)    [above: q̂·y₁ ≥ x₁ - y₁ + 1]
-	      = (1/y)·(x₁·S - y₁·S + S - x)    [distribute S]
-	      = (1/y)·(S - x₀ - y₁·S)          [-x = -x₁·S - x₀]
-	      > -y₁·S / y                      [x₀ < S, so S - x₀ > 0; drop it]
-	      ≥ -1                             [y₁·S ≤ y]
+		  ≥ q̂ - x/y                        [⌊x/y⌋ < x/y]
+		  = (1/y)·(q̂·y - x)                [factor out 1/y]
+		  ≥ (1/y)·(q̂·y₁·S - x)             [y = y₁·S + y₀ ≥ y₁·S]
+		  ≥ (1/y)·((x₁ - y₁ + 1)·S - x)    [above: q̂·y₁ ≥ x₁ - y₁ + 1]
+		  = (1/y)·(x₁·S - y₁·S + S - x)    [distribute S]
+		  = (1/y)·(S - x₀ - y₁·S)          [-x = -x₁·S - x₀]
+		  > -y₁·S / y                      [x₀ < S, so S - x₀ > 0; drop it]
+		  ≥ -1                             [y₁·S ≤ y]
 
 	So q̂ - q > -1.
 	Since q̂ - q is an integer, q̂ - q ≥ 0, or equivalently q ≤ q̂.
@@ -408,25 +408,25 @@ Proof that q ≤ q̂:
 Proof that q̂ ≤ q+2:
 
 	x₁/y₁ - x/y = x₁·S/y₁·S - x/y          [multiply left term by S/S]
-	            ≤ x/y₁·S - x/y             [x₁S ≤ x]
-	            = (x/y)·(y/y₁·S - 1)       [factor out x/y]
-	            = (x/y)·((y - y₁·S)/y₁·S)  [move -1 into y/y₁·S fraction]
-	            = (x/y)·(y₀/y₁·S)          [y - y₁·S = y₀]
-	            = (x/y)·(1/y₁)·(y₀/S)      [factor out 1/y₁]
-	            < (x/y)·(1/y₁)             [y₀ < S, so y₀/S < 1]
-	            ≤ (x/y)·(2/T)              [y₁ ≥ T/2, so 1/y₁ ≤ 2/T]
-	            < T·(2/T)                  [x/y < T]
-	            = 2                        [T·(2/T) = 2]
+				≤ x/y₁·S - x/y             [x₁S ≤ x]
+				= (x/y)·(y/y₁·S - 1)       [factor out x/y]
+				= (x/y)·((y - y₁·S)/y₁·S)  [move -1 into y/y₁·S fraction]
+				= (x/y)·(y₀/y₁·S)          [y - y₁·S = y₀]
+				= (x/y)·(1/y₁)·(y₀/S)      [factor out 1/y₁]
+				< (x/y)·(1/y₁)             [y₀ < S, so y₀/S < 1]
+				≤ (x/y)·(2/T)              [y₁ ≥ T/2, so 1/y₁ ≤ 2/T]
+				< T·(2/T)                  [x/y < T]
+				= 2                        [T·(2/T) = 2]
 
 	So x₁/y₁ - x/y < 2.
 
 	q̂ - q = ⌊x₁/y₁⌋ - q                    [by definition, q̂ = ⌊x₁/y₁⌋]
-	      = ⌊x₁/y₁⌋ - ⌊x/y⌋                [by definition, q = ⌊x/y⌋]
-	      ≤ x₁/y₁ - ⌊x/y⌋                  [⌊x₁/y₁⌋ ≤ x₁/y₁]
-	      < x₁/y₁ - (x/y - 1)              [⌊x/y⌋ > x/y - 1]
-	      = (x₁/y₁ - x/y) + 1              [regrouping]
-	      < 2 + 1                          [above: x₁/y₁ - x/y < 2]
-	      = 3
+		  = ⌊x₁/y₁⌋ - ⌊x/y⌋                [by definition, q = ⌊x/y⌋]
+		  ≤ x₁/y₁ - ⌊x/y⌋                  [⌊x₁/y₁⌋ ≤ x₁/y₁]
+		  < x₁/y₁ - (x/y - 1)              [⌊x/y⌋ > x/y - 1]
+		  = (x₁/y₁ - x/y) + 1              [regrouping]
+		  < 2 + 1                          [above: x₁/y₁ - x/y < 2]
+		  = 3
 
 	So q̂ - q < 3.
 	Since q̂ - q is an integer, q̂ - q ≤ 2.
@@ -509,7 +509,7 @@ static constexpr int64_t divRecursiveThreshold = 40; // see calibrate_test.go
 
 // rem returns r such that r = u%v.
 // It uses z as the storage for r.
-void BigNat::rem(BigNat u, BigNat v) {
+void BigNat::rem(BigNat u, BigNat v) { // NOLINT(performance-unnecessary-value-param)
 	BigNat q;
 	q.array.resize(MAX(1, u.array.size() - (v.array.size() - 1)));
 	q.div(*this, u, v);
@@ -518,7 +518,7 @@ void BigNat::rem(BigNat u, BigNat v) {
 // div returns q, r such that q = ⌊u/v⌋ and r = u%v = u - q·v.
 // It uses z and z2 as the storage for q and r.
 // The caller may pass stk == nil to request that div obtain and release one itself.
-void BigNat::div(BigNat &r, BigNat u, BigNat v) {
+void BigNat::div(BigNat &r, BigNat u, BigNat v) { // NOLINT(performance-unnecessary-value-param)
 	CRASH_COND_MSG(v.array.is_empty(), "division by zero");
 
 	if (v.array.size() == 1) {
@@ -541,7 +541,7 @@ void BigNat::div(BigNat &r, BigNat u, BigNat v) {
 // divW returns q, r such that q = ⌊x/y⌋ and r = x%y = x - q·y.
 // It uses z as the storage for q.
 // Note that y is a single digit (Word), not a big number.
-BigWord BigNat::divW(BigNat x, BigWord y) {
+BigWord BigNat::divW(BigNat x, BigWord y) { // NOLINT(performance-unnecessary-value-param)
 	const int64_t m = x.array.size();
 	CRASH_COND_MSG(y == 0, "division by zero");
 
@@ -592,7 +592,7 @@ BigWord BigNat::divWVW(BigNat &z, BigWord xn, BigNat x, BigWord y) {
 // It uses z and u as the storage for q and r.
 // The caller must ensure that len(vIn) ≥ 2 (use divW otherwise)
 // and that len(uIn) ≥ len(vIn) (the answer is 0, uIn otherwise).
-void BigNat::divLarge(BigNat &r, BigNat uIn, BigNat vIn) {
+void BigNat::divLarge(BigNat &r, BigNat uIn, BigNat vIn) { // NOLINT(performance-unnecessary-value-param)
 	const int64_t n = vIn.array.size();
 	const int64_t m = uIn.array.size() - n;
 
@@ -663,8 +663,9 @@ void BigNat::divBasic(BigNat &u, BigNat v) {
 			divWW(ujn, u[j + n - 1], vn1, rec, qhat, rhat);
 
 			// Refine q̂ to a 3-by-2 guess. See “Refining Guesses” above.
-			const BigWord vn2 = v[n-2];
-			BigWord x1 = 0, x0 = 0;
+			const BigWord vn2 = v[n - 2];
+			BigWord x1 = 0;
+			BigWord x0 = 0;
 			mulWW(qhat, vn2, x1, x0);
 			const BigWord ujn2 = u[j + n - 2];
 			while (greaterThan(x1, x0, rhat, ujn2)) { // x1x0 > r̂ u[j+n-2]
@@ -693,13 +694,13 @@ void BigNat::divBasic(BigNat &u, BigNat v) {
 		// Subtract q̂·v from the current section of u.
 		// If it underflows, q̂·v > u, which we fix up
 		// by decrementing q̂ and adding v back.
-		BigNat tempu{u.array.slice(j, j + qhl)};
-		BigWord c = subVV(tempu, tempu, BigNat{qhatv.array.slice(0, qhl)});
+		BigNat tempu{ u.array.slice(j, j + qhl) };
+		BigWord c = subVV(tempu, tempu, BigNat{ qhatv.array.slice(0, qhl) });
 		for (int64_t i = 0; i < qhl; i++) {
 			u[j + i] = tempu[i];
 		}
 		if (c != 0) {
-			tempu = BigNat{u.array.slice(j, j + n)};
+			tempu = BigNat{ u.array.slice(j, j + n) };
 			c = addVV(tempu, tempu, v);
 			for (int64_t i = 0; i < n; i++) {
 				u[j + i] = tempu[i];
@@ -737,7 +738,7 @@ bool BigNat::greaterThan(BigWord x1, BigWord x0, BigWord y1, BigWord y0) {
 // around divRecursiveStep, the real implementation.
 void BigNat::divRecursive(BigNat &u, BigNat v) {
 	array.fill(0);
-	divRecursiveStep(u, v, 0);
+	divRecursiveStep(u, v, 0); // NOLINT(performance-unnecessary-value-param)
 }
 
 // divRecursiveStep is the actual implementation of recursive division.
@@ -777,8 +778,8 @@ void BigNat::divRecursiveStep(BigNat &u, BigNat v, int64_t depth) {
 	// TODO(rsc): Look into whether using ⌈n/2⌉ is better than ⌊n/2⌋.
 	const int64_t B = n / 2;
 
-	const BigNat vtos{v.array.slice(0, B - 1)};
-	const BigNat vfroms{v.array.slice(B - 1)};
+	const BigNat vtos{ v.array.slice(0, B - 1) };
+	const BigNat vfroms{ v.array.slice(B - 1) };
 
 	// Compute each wide digit of the quotient.
 	//
@@ -807,7 +808,7 @@ void BigNat::divRecursiveStep(BigNat &u, BigNat v, int64_t depth) {
 		// Compute the 2-by-1 guess q̂, leaving r̂ in uu[s:B+n].
 		BigNat qhat;
 		qhat.array.resize(B + 1);
-		BigNat uu{u.array.slice(j - 1, j + n)};
+		BigNat uu{ u.array.slice(j - 1, j + n) };
 		qhat.divRecursiveStep(u, vfroms, depth + 1);
 		for (int64_t i = 0; i < n + 1; i++) {
 			u[j - 1 + i] = i < uu.array.size() ? uu[i] : 0;
@@ -829,20 +830,20 @@ void BigNat::divRecursiveStep(BigNat &u, BigNat v, int64_t depth) {
 		BigNat qhatv;
 		qhatv.mul(qhat, vtos);
 		for (int64_t i = 0; i < 2; i++) {
-			if (qhatv.cmpnorm(BigNat{u.array.slice(j - B)}) <= 0) {
+			if (qhatv.cmpnorm(BigNat{ u.array.slice(j - B) }) <= 0) {
 				break;
 			}
 			subVW(qhat, qhat, 1);
-			BigNat qhatvs{qhatv.array.slice(s)};
+			BigNat qhatvs{ qhatv.array.slice(s) };
 			qhatv.array.resize(s);
 			BigWord c = subVV(qhatv, qhatv, vtos);
 			subVW(qhatvs, qhatvs, c);
 			qhatv.array.append_array(qhatvs.array);
-			addTo(u, j-B+s, vfroms);
+			addTo(u, j - B + s, vfroms);
 		}
-		CRASH_COND(qhatv.cmpnorm(BigNat{u.array.slice(j - B)}) > 0);
-		BigNat uu0{u.array.slice(j - B, j - B + qhatv.array.size())};
-		BigNat uu1{u.array.slice(j - B + qhatv.array.size())};
+		CRASH_COND(qhatv.cmpnorm(BigNat{ u.array.slice(j - B) }) > 0);
+		BigNat uu0{ u.array.slice(j - B, j - B + qhatv.array.size()) };
+		BigNat uu1{ u.array.slice(j - B + qhatv.array.size()) };
 		u.array.resize(j - B);
 		BigWord c = subVV(uu0, uu0, qhatv);
 		u.array.append_array(uu0.array);
@@ -859,7 +860,7 @@ void BigNat::divRecursiveStep(BigNat &u, BigNat v, int64_t depth) {
 	const int64_t s = B - 1;
 	BigNat qhat;
 	qhat.array.resize(B + 1);
-	BigNat us{u.array.slice(s)};
+	BigNat us{ u.array.slice(s) };
 	us.norm();
 	qhat.divRecursiveStep(us, vfroms, depth + 1);
 	for (int64_t i = 0; s + i < u.array.size(); i++) {
@@ -872,7 +873,7 @@ void BigNat::divRecursiveStep(BigNat &u, BigNat v, int64_t depth) {
 	for (int64_t i = 0; i < 2; i++) {
 		if (qhatv.cmpnorm(u) > 0) {
 			subVW(qhat, qhat, 1);
-			BigNat qhatvs{qhatv.array.slice(s)};
+			BigNat qhatvs{ qhatv.array.slice(s) };
 			qhatv.array.resize(s);
 			BigWord c = subVV(qhatv, qhatv, vtos);
 			subVW(qhatvs, qhatvs, c);
@@ -881,7 +882,7 @@ void BigNat::divRecursiveStep(BigNat &u, BigNat v, int64_t depth) {
 		}
 	}
 	CRASH_COND(qhatv.cmpnorm(u) > 0);
-	BigNat uqhatv{u.array.slice(qhatv.array.size())};
+	BigNat uqhatv{ u.array.slice(qhatv.array.size()) };
 	u.array.resize(qhatv.array.size());
 	BigWord c = subVV(u, u, qhatv);
 	if (c > 0) {

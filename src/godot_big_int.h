@@ -11,6 +11,7 @@ protected:
 public:
 	bool _neg = false; // sign
 	BigNat _abs; // absolute value of the integer
+
 	void _set_neg(bool p_neg);
 	[[nodiscard]] bool _is_neg() const;
 	void _set_abs(const godot::PackedInt64Array &p_abs);
@@ -25,7 +26,7 @@ public:
 
 	void SetInt64(int64_t p_x);
 	void SetUint64(uint64_t p_x);
-	static godot::Ref<BigInt> NewInt(int64_t p_x);
+	[[nodiscard]] static godot::Ref<BigInt> NewInt(int64_t p_x);
 	void Set(const godot::Ref<BigInt> &p_x);
 
 	void Abs(const godot::Ref<BigInt> &p_x);
@@ -51,8 +52,8 @@ public:
 	[[nodiscard]] bool IsUint64() const;
 
 	[[nodiscard]] godot::Pair<double, BigAccuracy> Float64() const;
-	[[nodiscard]] _FORCE_INLINE_ double _Float64_bind() const { return Float64().first; }
-	[[nodiscard]] _FORCE_INLINE_ BigAccuracy _Float64Accuracy_bind() const { return Float64().second; }
+	[[nodiscard]] _FORCE_INLINE_ double Float64_bind() const { return Float64().first; }
+	[[nodiscard]] _FORCE_INLINE_ BigAccuracy Float64Accuracy_bind() const { return Float64().second; }
 
 	void SetBytes(const godot::PackedByteArray &p_bytes);
 	[[nodiscard]] godot::PackedByteArray Bytes() const;
@@ -72,7 +73,7 @@ public:
 	void _lehmerGCD(const godot::Ref<BigInt> &r_x, const godot::Ref<BigInt> &r_y, const godot::Ref<BigInt> &p_a, const godot::Ref<BigInt> &p_b);
 
 	void Rand(const std::function<uint32_t()> &p_rnd, const godot::Ref<BigInt> &p_n);
-	void _Rand_bind(const godot::Callable &p_rnd, const godot::Ref<BigInt> &p_n);
+	void Rand_bind(const godot::Callable &p_rnd, const godot::Ref<BigInt> &p_n);
 
 	godot::Error ModInverse(const godot::Ref<BigInt> &p_g, const godot::Ref<BigInt> &p_n);
 	static int Jacobi(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);

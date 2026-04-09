@@ -7,8 +7,8 @@
 
 // This file implements nat-to-string conversion functions.
 
-#include "godot_big_naturals.h"
 #include "godot_big_int.h"
+#include "godot_big_naturals.h"
 
 #include <bit>
 
@@ -29,7 +29,7 @@ static constexpr int64_t MAX_BASE_SMALL = 10 + ('z' - 'a' + 1);
 static constexpr void maxPow(BigWord p_b, BigWord &r_p, int64_t &r_n) {
 	r_p = p_b;
 	r_n = 1;
-	for (const BigWord max = UINT64_MAX / p_b; r_p <= max; ) {
+	for (const BigWord max = UINT64_MAX / p_b; r_p <= max;) {
 		r_p *= p_b;
 		r_n++;
 	}
@@ -122,27 +122,27 @@ Error BigNat::scan(const String &s, int64_t &off, int64_t base, bool fracOk, int
 			if (off < s.length()) {
 				// possibly one of 0b, 0B, 0o, 0O, 0x, 0X
 				switch (s[off]) {
-				case 'b':
-				case 'B':
-					b = 2;
-					prefix = 'b';
-					break;
-				case 'o':
-				case 'O':
-					b = 8;
-					prefix = 'o';
-					break;
-				case 'x':
-				case 'X':
-					b = 16;
-					prefix = 'x';
-					break;
-				default:
-					if (!fracOk) {
+					case 'b':
+					case 'B':
+						b = 2;
+						prefix = 'b';
+						break;
+					case 'o':
+					case 'O':
 						b = 8;
-						prefix = '0';
-					}
-					break;
+						prefix = 'o';
+						break;
+					case 'x':
+					case 'X':
+						b = 16;
+						prefix = 'x';
+						break;
+					default:
+						if (!fracOk) {
+							b = 8;
+							prefix = '0';
+						}
+						break;
 				}
 				if (prefix != 0) {
 					count = 0; // prefix is not counted
@@ -164,25 +164,25 @@ Error BigNat::scan(const String &s, int64_t &off, int64_t base, bool fracOk, int
 	// (corresponding to 3-bit and 5-bit chunks) that don't pack nicely into
 	// words, but those are not too important.
 	array.clear();
-	BigWord b1 = BigWord(b);
+	BigWord b1 = static_cast<BigWord>(b);
 	BigWord bn = 0; // b1**n (or 0 for the special bit-packing cases b=2,4,16)
-	int64_t n = 0;  // max digits that fit into Word
+	int64_t n = 0; // max digits that fit into Word
 	switch (b) {
-	case 2: // 1 bit per digit
-		n = 64;
-		break;
-	case 4: // 2 bits per digit
-		n = 64 / 2;
-		break;
-	case 16: // 4 bits per digit
-		n = 64 / 4;
-		break;
-	default:
-		maxPow(b1, bn, n);
-		break;
+		case 2: // 1 bit per digit
+			n = 64;
+			break;
+		case 4: // 2 bits per digit
+			n = 64 / 2;
+			break;
+		case 16: // 4 bits per digit
+			n = 64 / 4;
+			break;
+		default:
+			maxPow(b1, bn, n);
+			break;
 	}
-	BigWord di = 0;  // 0 <= di < b1**i < bn
-	int64_t i = 0;   // 0 <= i < n
+	BigWord di = 0; // 0 <= di < b1**i < bn
+	int64_t i = 0; // 0 <= i < n
 	int64_t dp = -1; // position of decimal point
 	while (off < s.length()) {
 		if (s[off] == '.' && fracOk) {
@@ -201,14 +201,14 @@ Error BigNat::scan(const String &s, int64_t &off, int64_t base, bool fracOk, int
 			// convert rune into digit value d1
 			BigWord d1 = 0;
 			if ('0' <= s[off] && s[off] <= '9') {
-				d1 = BigWord(s[off] - '0');
+				d1 = static_cast<BigWord>(s[off]) - '0';
 			} else if ('a' <= s[off] && s[off] <= 'z') {
-				d1 = BigWord(s[off] - 'a' + 10);
+				d1 = static_cast<BigWord>(s[off]) - 'a' + 10;
 			} else if ('A' <= s[off] && s[off] <= 'Z') {
 				if (b <= MAX_BASE_SMALL) {
-					d1 = BigWord(s[off] - 'A' + 10);
+					d1 = static_cast<BigWord>(s[off]) - 'A' + 10;
 				} else {
-					d1 = BigWord(s[off] - 'A' + MAX_BASE_SMALL);
+					d1 = static_cast<BigWord>(s[off]) - 'A' + MAX_BASE_SMALL;
 				}
 			} else {
 				d1 = BigInt::MAX_BASE + 1;
@@ -221,7 +221,7 @@ Error BigNat::scan(const String &s, int64_t &off, int64_t base, bool fracOk, int
 			count++;
 
 			// collect d1 in di
-			di = di * b1 + d1;
+			di = (di * b1) + d1;
 			i++;
 
 			// if di is "full", add it to the result
@@ -313,9 +313,9 @@ String BigNat::itoa(bool p_neg, int64_t p_base) const {
 	BigWord b = p_base;
 	if (b == (b & -b)) {
 		// shift is base b digit size in bits
-		const uint64_t shift = std::countr_zero(uint64_t(b)); // shift > 0 because b >= 2
-		const BigWord mask = BigWord((1LLU << shift) - 1);
-		BigWord w = BigWord(array[0]); // current word
+		const uint64_t shift = std::countr_zero(static_cast<uint64_t>(b)); // shift > 0 because b >= 2
+		const BigWord mask = static_cast<BigWord>((1LLU << shift) - 1);
+		BigWord w = static_cast<BigWord>(array[0]); // current word
 		uint64_t nbits = 64; // number of unprocessed bits in w
 
 		// convert less-significant words (include leading zeros)
@@ -416,9 +416,9 @@ void BigNat::convertWords(uint8_t *r_s, int64_t r_s_size, BigWord p_b, int64_t p
 		int64_t index = p_table.size() - 1;
 		while (array.size() > leafSize) {
 			// find divisor close to sqrt(q) if possible, but in any case < q
-			int64_t maxLength = bitLen();       // ~= log2 q, or at of least largest possible q of this bit length
+			int64_t maxLength = bitLen(); // ~= log2 q, or at of least largest possible q of this bit length
 			int64_t minLength = maxLength >> 1; // ~= log2 sqrt(q)
-			while (index > 0 && p_table[index-1].nbits > minLength) {
+			while (index > 0 && p_table[index - 1].nbits > minLength) {
 				index--; // desired
 			}
 			if (p_table[index].nbits >= maxLength && p_table[index].bbb.cmp(*this) >= 0) {
@@ -448,7 +448,7 @@ void BigNat::convertWords(uint8_t *r_s, int64_t r_s_size, BigWord p_b, int64_t p
 				// this appears to be faster for BenchmarkString10000Base10
 				// and smaller strings (but a bit slower for larger ones)
 				const BigWord t = r / 10;
-				r_s[i] = '0' + char(r - t * 10);
+				r_s[i] = '0' + char(r - (t * 10));
 				r = t;
 			}
 		}
@@ -476,14 +476,14 @@ extern std::mutex cacheBase10_mutex;
 
 // expWW computes x**y
 void BigNat::expWW(BigWord p_x, BigWord p_y) {
-	expNN(BigNat{{int64_t(p_x)}}, BigNat{{int64_t(p_y)}}, BigNat{}, false);
+	expNN(BigNat{ { int64_t(p_x) } }, BigNat{ { int64_t(p_y) } }, BigNat{}, false);
 }
 
 // construct table of powers of bb*leafSize to use in subdivisions.
 static Vector<BigDivisor> divisors(int64_t p_m, BigWord p_b, int64_t p_ndigits, BigWord p_bb) {
 	// only compute table when recursive conversion is enabled and x is large
 	if (leafSize == 0 || p_m <= leafSize) {
-		return Vector<BigDivisor>();
+		return {};
 	}
 
 	// determine k where (bb**leafSize)**(2**k) >= sqrt(x)

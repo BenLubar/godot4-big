@@ -6,6 +6,7 @@
 // license that can be found in the LICENSE file.
 
 #include "godot_big_float.h"
+
 #include "godot_big_int.h"
 #include "godot_big_rat.h"
 
@@ -70,8 +71,7 @@ using namespace godot;
 Ref<BigFloat> BigFloat::NewFloat(double p_x) {
 	ERR_FAIL_COND_V(Math::is_nan(p_x), nullptr);
 
-	Ref<BigFloat> f;
-	f.instantiate();
+	Ref<BigFloat> f{ memnew(BigFloat) };
 	f->SetFloat64(p_x);
 	return f;
 }
@@ -116,11 +116,11 @@ void BigFloat::SetPrec(uint64_t p_prec) {
 	}
 
 	// general case
-	if (p_prec > uint64_t(MAX_PREC)) {
+	if (p_prec > static_cast<uint64_t>(MAX_PREC)) {
 		p_prec = MAX_PREC;
 	}
 	const uint32_t old = _prec;
-	_prec = uint32_t(p_prec);
+	_prec = static_cast<uint32_t>(p_prec);
 	if (_prec < old) {
 		_round(0);
 	}
@@ -154,7 +154,7 @@ uint32_t BigFloat::MinPrec() const {
 		return 0;
 	}
 
-	return uint64_t(_mant.array.size() * 64) - _mant.trailingZeroBits();
+	return static_cast<uint64_t>(_mant.array.size() * 64) - _mant.trailingZeroBits();
 }
 
 // Mode returns the rounding mode of x.
@@ -240,7 +240,7 @@ void BigFloat::_setExpAndRound(int64_t p_exp, uint64_t p_sbit) {
 	}
 
 	_form = FORM_FINITE;
-	_exp = int32_t(p_exp);
+	_exp = static_cast<int32_t>(p_exp);
 	_round(p_sbit);
 }
 
@@ -273,7 +273,7 @@ void BigFloat::SetMantExp(const Ref<BigFloat> &p_mant, int64_t p_exp) {
 
 	if (_form == FORM_FINITE) {
 		// 0 < |mant| < +Inf
-		_setExpAndRound(int64_t(_exp) + int64_t(p_exp), 0);
+		_setExpAndRound(static_cast<int64_t>(_exp) + p_exp, 0);
 	}
 
 	emit_changed();
@@ -307,7 +307,7 @@ bool BigFloat::IsInt() const {
 	}
 
 	// x.exp > 0
-	return _prec <= uint32_t(_exp) || MinPrec() <= uint64_t(_exp); // not enough bits for fractional mantissa
+	return _prec <= static_cast<uint32_t>(_exp) || MinPrec() <= static_cast<uint64_t>(_exp); // not enough bits for fractional mantissa
 }
 
 // debugging support
@@ -344,8 +344,8 @@ void BigFloat::_round(uint64_t p_sbit) {
 	// z.form == finite && len(z.mant) > 0
 	// m > 0 implies z.prec > 0 (checked by validate)
 
-	uint32_t m = uint32_t(_mant.array.size()); // present mantissa length in words
-	uint32_t bits = m * 64;                    // present mantissa bits; bits > 0
+	uint32_t m = static_cast<uint32_t>(_mant.array.size()); // present mantissa length in words
+	uint32_t bits = m * 64; // present mantissa bits; bits > 0
 	if (bits <= _prec) {
 		// mantissa fits => nothing to do
 		return;
@@ -365,8 +365,8 @@ void BigFloat::_round(uint64_t p_sbit) {
 	//   1     1        >  0.5, < 1.0
 
 	// bits > z.prec: mantissa too large => round
-	uint64_t r = uint64_t(bits - _prec - 1); // rounding bit position; r >= 0
-	uint64_t rbit = _mant.bit(r) & 1;    // rounding bit; be safe and ensure it's a single bit
+	uint64_t r = static_cast<uint64_t>(bits - _prec - 1); // rounding bit position; r >= 0
+	uint64_t rbit = _mant.bit(r) & 1; // rounding bit; be safe and ensure it's a single bit
 	// The sticky bit is only needed for rounding ToNearestEven
 	// or when the rounding bit is zero. Avoid computation otherwise.
 	if (p_sbit == 0 && (rbit == 0 || _mode == TO_NEAREST_EVEN)) {
@@ -381,8 +381,8 @@ void BigFloat::_round(uint64_t p_sbit) {
 	}
 
 	// determine number of trailing zero bits (ntz) and compute lsb mask of mantissa's least-significant word
-	uint32_t ntz = n * 64 - _prec; // 0 <= ntz < _W
-	BigWord lsb = BigWord(1) << ntz;
+	uint32_t ntz = (n * 64) - _prec; // 0 <= ntz < _W
+	BigWord lsb = static_cast<BigWord>(1) << ntz;
 
 	// round if result is inexact
 	if ((rbit | p_sbit) != 0) {
@@ -391,24 +391,24 @@ void BigFloat::_round(uint64_t p_sbit) {
 		// mantissa.
 		bool inc = false;
 		switch (_mode) {
-		case TO_NEGATIVE_INF:
-			inc = _neg;
-			break;
-		case TO_ZERO:
-			// nothing to do
-			break;
-		case TO_NEAREST_EVEN:
-			inc = rbit != 0 && (p_sbit != 0 || (_mant[0] & lsb) != 0);
-			break;
-		case TO_NEAREST_AWAY:
-			inc = rbit != 0;
-			break;
-		case AWAY_FROM_ZERO:
-			inc = true;
-			break;
-		case TO_POSITIVE_INF:
-			inc = !_neg;
-			break;
+			case TO_NEGATIVE_INF:
+				inc = _neg;
+				break;
+			case TO_ZERO:
+				// nothing to do
+				break;
+			case TO_NEAREST_EVEN:
+				inc = rbit != 0 && (p_sbit != 0 || (_mant[0] & lsb) != 0);
+				break;
+			case TO_NEAREST_AWAY:
+				inc = rbit != 0;
+				break;
+			case AWAY_FROM_ZERO:
+				inc = true;
+				break;
+			case TO_POSITIVE_INF:
+				inc = !_neg;
+				break;
 		}
 
 		// A positive result (!z.neg) is Above the exact result if we increment,
@@ -461,7 +461,7 @@ void BigFloat::_setBits64(bool p_neg, uint64_t p_x) {
 	_form = FORM_FINITE;
 	const uint64_t s = std::countl_zero(p_x);
 	_mant.setUint64(p_x << s);
-	_exp = 64 - int32_t(s); // always fits
+	_exp = 64 - static_cast<int32_t>(s); // always fits
 	if (_prec < 64) {
 		_round(0);
 	}
@@ -487,7 +487,7 @@ void BigFloat::SetInt64(int64_t p_x) {
 
 	// We cannot simply call z.SetUint64(uint64(u)) and change
 	// the sign afterwards because the sign affects rounding.
-	_setBits64(p_x < 0, uint64_t(u));
+	_setBits64(p_x < 0, static_cast<uint64_t>(u));
 }
 
 // SetFloat64 sets z to the (possibly rounded) value of x and returns z.
@@ -518,8 +518,8 @@ Error BigFloat::SetFloat64(double p_x) {
 	_form = FORM_FINITE;
 	int exp = 0;
 	double fmant = std::frexp(p_x, &exp); // get normalized mantissa
-	_mant.setUint64((1LLU << 63) | std::bit_cast<uint64_t>(fmant) << 11);
-	_exp = int32_t(exp); // always fits
+	_mant.setUint64((1LLU << 63) | (std::bit_cast<uint64_t>(fmant) << 11));
+	_exp = static_cast<int32_t>(exp); // always fits
 	if (_prec < 53) {
 		_round(0);
 	}
@@ -534,13 +534,13 @@ Error BigFloat::SetFloat64(double p_x) {
 int64_t BigNat::fnorm() {
 	DEV_ASSERT(!array.is_empty() && array[array.size() - 1] != 0);
 
-	const uint64_t s = std::countl_zero(uint64_t(array[array.size() - 1]));
+	const uint64_t s = std::countl_zero(static_cast<uint64_t>(array[array.size() - 1]));
 	if (s > 0) {
 		[[maybe_unused]] const BigWord c = lshVU(*this, *this, s);
 		DEV_ASSERT(c == 0);
 	}
 
-	return int64_t(s);
+	return static_cast<int64_t>(s);
 }
 
 // SetInt sets z to the (possibly rounded) value of x and returns z.
@@ -552,7 +552,7 @@ void BigFloat::SetInt(const Ref<BigInt> &p_x) {
 	// TODO(gri) can be more efficient if z.prec > 0
 	// but small compared to the size of x, or if there
 	// are many trailing 0's.
-	uint32_t bits = uint32_t(p_x->BitLen());
+	uint32_t bits = static_cast<uint32_t>(p_x->BitLen());
 	if (_prec == 0) {
 		_prec = Math::max(bits, 64u);
 	}
@@ -576,8 +576,7 @@ void BigFloat::SetInt(const Ref<BigInt> &p_x) {
 void BigFloat::SetRat(const Ref<BigRat> &p_x) {
 	ERR_FAIL_NULL(*p_x);
 
-	Ref<BigInt> x;
-	x.instantiate();
+	Ref<BigInt> x{ memnew(BigInt) };
 	p_x->Num(x);
 
 	if (p_x->IsInt()) {
@@ -585,9 +584,8 @@ void BigFloat::SetRat(const Ref<BigRat> &p_x) {
 		return;
 	}
 
-	Ref<BigFloat> a, b;
-	a.instantiate();
-	b.instantiate();
+	Ref<BigFloat> a{ memnew(BigFloat) };
+	Ref<BigFloat> b{ memnew(BigFloat) };
 
 	a->SetInt(x);
 	p_x->Denom(x);
@@ -704,25 +702,25 @@ Pair<uint64_t, BigAccuracy> BigFloat::Uint64() const {
 #endif
 
 	if (_form == FORM_ZERO) {
-		return {UINT64_C(0), ACC_EXACT};
+		return { UINT64_C(0), ACC_EXACT };
 	}
 
 	if (_form == FORM_INF) {
 		if (_neg) {
-			return {UINT64_C(0), ACC_ABOVE};
+			return { UINT64_C(0), ACC_ABOVE };
 		}
 
-		return {UINT64_MAX, ACC_BELOW};
+		return { UINT64_MAX, ACC_BELOW };
 	}
 
 	if (_neg) {
-		return {UINT64_C(0), ACC_ABOVE};
+		return { UINT64_C(0), ACC_ABOVE };
 	}
 
 	// 0 < x < +Inf
 	if (_exp <= 0) {
 		// 0 < x < 1
-		return {UINT64_C(0), ACC_BELOW};
+		return { UINT64_C(0), ACC_BELOW };
 	}
 
 	// 1 <= x < Inf
@@ -730,14 +728,14 @@ Pair<uint64_t, BigAccuracy> BigFloat::Uint64() const {
 		// u = trunc(x) fits into a uint64
 		const uint64_t u = _mant.msb64() >> (64 - uint32_t(_exp));
 		if (MinPrec() <= 64) {
-			return {u, ACC_EXACT};
+			return { u, ACC_EXACT };
 		}
 
-		return {u, ACC_BELOW}; // x truncated
+		return { u, ACC_BELOW }; // x truncated
 	}
 
 	// x too large
-	return {UINT64_MAX, ACC_BELOW};
+	return { UINT64_MAX, ACC_BELOW };
 }
 
 // Int64 returns the integer resulting from truncating x towards zero.
@@ -751,22 +749,22 @@ Pair<int64_t, BigAccuracy> BigFloat::Int64() const {
 #endif
 
 	if (_form == FORM_ZERO) {
-		return {INT64_C(0), ACC_EXACT};
+		return { INT64_C(0), ACC_EXACT };
 	}
 
 	if (_form == FORM_INF) {
 		if (_neg) {
-			return {INT64_MIN, ACC_ABOVE};
+			return { INT64_MIN, ACC_ABOVE };
 		}
 
-		return {INT64_MAX, ACC_BELOW};
+		return { INT64_MAX, ACC_BELOW };
 	}
 
 	// 0 < |x| < +Inf
 	BigAccuracy acc = _neg ? ACC_ABOVE : ACC_BELOW;
 	if (_exp <= 0) {
 		// 0 < |x| < 1
-		return {INT64_C(0), acc};
+		return { INT64_C(0), acc };
 	}
 	// x.exp > 0
 
@@ -779,10 +777,10 @@ Pair<int64_t, BigAccuracy> BigFloat::Int64() const {
 		}
 
 		if (MinPrec() <= uint64_t(_exp)) {
-			return {i, ACC_EXACT};
+			return { i, ACC_EXACT };
 		}
 
-		return {i, acc}; // x truncated
+		return { i, acc }; // x truncated
 	}
 
 	if (_neg) {
@@ -791,11 +789,11 @@ Pair<int64_t, BigAccuracy> BigFloat::Int64() const {
 			acc = ACC_EXACT;
 		}
 
-		return {INT64_MIN, acc};
+		return { INT64_MIN, acc };
 	}
 
 	// x too large
-	return {INT64_MAX, ACC_BELOW};
+	return { INT64_MAX, ACC_BELOW };
 }
 
 // Float32 returns the float32 value nearest to x. If x is too small to be
@@ -811,29 +809,29 @@ Pair<float, BigAccuracy> BigFloat::Float32() const {
 	if (_form == FORM_ZERO) {
 		if (_neg) {
 			const float z = 0.0f;
-			return {-z, ACC_EXACT};
+			return { -z, ACC_EXACT };
 		}
 
-		return {0.0f, ACC_EXACT};
+		return { 0.0f, ACC_EXACT };
 	}
 
 	if (_form == FORM_INF) {
 		if (_neg) {
-			return {-HUGE_VALF, ACC_EXACT};
+			return { -HUGE_VALF, ACC_EXACT };
 		}
 
-		return {HUGE_VALF, ACC_EXACT};
+		return { HUGE_VALF, ACC_EXACT };
 	}
 
 	// 0 < |x| < +Inf
 
-	static constexpr int32_t fbits = 32;                //        float size
-	static constexpr int32_t mbits = 23;                //        mantissa size (excluding implicit msb)
+	static constexpr int32_t fbits = 32; //        float size
+	static constexpr int32_t mbits = 23; //        mantissa size (excluding implicit msb)
 	static constexpr int32_t ebits = fbits - mbits - 1; //     8  exponent size
-	static constexpr int32_t bias  = (1<<(ebits-1)) - 1;//   127  exponent bias
-	static constexpr int32_t dmin  = 1 - bias - mbits;  //  -149  smallest unbiased exponent (denormal)
-	static constexpr int32_t emin  = 1 - bias;          //  -126  smallest unbiased exponent (normal)
-	static constexpr int32_t emax  = bias;              //   127  largest unbiased exponent (normal)
+	static constexpr int32_t bias = (1 << (ebits - 1)) - 1; //   127  exponent bias
+	static constexpr int32_t dmin = 1 - bias - mbits; //  -149  smallest unbiased exponent (denormal)
+	static constexpr int32_t emin = 1 - bias; //  -126  smallest unbiased exponent (normal)
+	static constexpr int32_t emax = bias; //   127  largest unbiased exponent (normal)
 
 	// Float mantissa m is 0.5 <= m < 1.0; compute exponent e for float32 mantissa.
 	int32_t e = _exp - 1; // exponent for normal mantissa m with 1.0 <= m < 2.0
@@ -853,14 +851,14 @@ Pair<float, BigAccuracy> BigFloat::Float32() const {
 		// If m > 0.5, it is rounded up to 1.0; i.e., the smallest denormal.
 		// If m == 0.5, it is rounded down to even, i.e., 0.0.
 		// If p < 0, the mantissa value m is <= "0.25" which is never rounded up.
-		if (p < 0 /* m <= 0.25 */ || (p == 0 && _mant.sticky(uint64_t(_mant.array.size() * 64 - 1)) == 0) /* m == 0.5 */) {
+		if (p < 0 /* m <= 0.25 */ || (p == 0 && _mant.sticky(static_cast<uint64_t>((_mant.array.size() * 64) - 1)) == 0) /* m == 0.5 */) {
 			// underflow to ±0
 			if (_neg) {
 				const float z = 0.0f;
-				return {-z, ACC_ABOVE};
+				return { -z, ACC_ABOVE };
 			}
 
-			return {0.0f, ACC_BELOW};
+			return { 0.0f, ACC_BELOW };
 		}
 
 		// otherwise, round up
@@ -868,17 +866,16 @@ Pair<float, BigAccuracy> BigFloat::Float32() const {
 		// Float.round doesn't support rounding to 0 bits of precision.
 		if (p == 0) {
 			if (_neg) {
-				return {-FLT_TRUE_MIN, ACC_BELOW};
+				return { -FLT_TRUE_MIN, ACC_BELOW };
 			}
-			return {FLT_TRUE_MIN, ACC_ABOVE};
+			return { FLT_TRUE_MIN, ACC_ABOVE };
 		}
 	}
 	// p > 0
 
 	// round
-	Ref<BigFloat> r;
-	r.instantiate();
-	r->_prec = uint32_t(p);
+	Ref<BigFloat> r{ memnew(BigFloat) };
+	r->_prec = static_cast<uint32_t>(p);
 	r->Set(const_cast<BigFloat *>(this));
 	e = r->_exp - 1;
 
@@ -888,15 +885,17 @@ Pair<float, BigAccuracy> BigFloat::Float32() const {
 	if (r->_form == FORM_INF || e > emax) {
 		// overflow
 		if (_neg) {
-			return {-HUGE_VALF, ACC_BELOW};
+			return { -HUGE_VALF, ACC_BELOW };
 		}
 
-		return {HUGE_VALF, ACC_ABOVE};
+		return { HUGE_VALF, ACC_ABOVE };
 	}
 	// e <= emax
 
 	// Determine sign, biased exponent, and mantissa.
-	uint32_t sign = 0, bexp = 0, mant = 0;
+	uint32_t sign = 0;
+	uint32_t bexp = 0;
+	uint32_t mant = 0;
 	if (_neg) {
 		sign = 1U << (fbits - 1);
 	}
@@ -916,7 +915,7 @@ Pair<float, BigAccuracy> BigFloat::Float32() const {
 		mant = (r->_mant.msb32() >> ebits) & ((1 << mbits) - 1); // cut off msb (implicit 1 bit)
 	}
 
-	return {std::bit_cast<float>(sign | bexp | mant), r->_acc};
+	return { std::bit_cast<float>(sign | bexp | mant), r->_acc };
 }
 
 // Float64 returns the float64 value nearest to x. If x is too small to be
@@ -932,29 +931,29 @@ Pair<double, BigAccuracy> BigFloat::Float64() const {
 	if (_form == FORM_ZERO) {
 		if (_neg) {
 			const double z = 0.0;
-			return {-z, ACC_EXACT};
+			return { -z, ACC_EXACT };
 		}
 
-		return {0.0, ACC_EXACT};
+		return { 0.0, ACC_EXACT };
 	}
 
 	if (_form == FORM_INF) {
 		if (_neg) {
-			return {-HUGE_VAL, ACC_EXACT};
+			return { -HUGE_VAL, ACC_EXACT };
 		}
 
-		return {HUGE_VAL, ACC_EXACT};
+		return { HUGE_VAL, ACC_EXACT };
 	}
 
 	// 0 < |x| < +Inf
 
-	static constexpr int64_t fbits = 64;                //        float size
-	static constexpr int64_t mbits = 52;                //        mantissa size (excluding implicit msb)
+	static constexpr int64_t fbits = 64; //        float size
+	static constexpr int64_t mbits = 52; //        mantissa size (excluding implicit msb)
 	static constexpr int64_t ebits = fbits - mbits - 1; //    11  exponent size
-	static constexpr int64_t bias  = (1<<(ebits-1)) - 1;//  1023  exponent bias
-	static constexpr int64_t dmin  = 1 - bias - mbits;  // -1074  smallest unbiased exponent (denormal)
-	static constexpr int64_t emin  = 1 - bias;          // -1022  smallest unbiased exponent (normal)
-	static constexpr int64_t emax  = bias;              //  1023  largest unbiased exponent (normal)
+	static constexpr int64_t bias = (1 << (ebits - 1)) - 1; //  1023  exponent bias
+	static constexpr int64_t dmin = 1 - bias - mbits; // -1074  smallest unbiased exponent (denormal)
+	static constexpr int64_t emin = 1 - bias; // -1022  smallest unbiased exponent (normal)
+	static constexpr int64_t emax = bias; //  1023  largest unbiased exponent (normal)
 
 	// Float mantissa m is 0.5 <= m < 1.0; compute exponent e for float64 mantissa.
 	int64_t e = int64_t(_exp) - 1; // exponent for normal mantissa m with 1.0 <= m < 2.0
@@ -974,13 +973,13 @@ Pair<double, BigAccuracy> BigFloat::Float64() const {
 		// If m > 0.5, it is rounded up to 1.0; i.e., the smallest denormal.
 		// If m == 0.5, it is rounded down to even, i.e., 0.0.
 		// If p < 0, the mantissa value m is <= "0.25" which is never rounded up.
-		if (p < 0 /* m <= 0.25 */ || (p == 0 && _mant.sticky(uint64_t(_mant.array.size() * 64 - 1)) == 0) /* m == 0.5 */) {
+		if (p < 0 /* m <= 0.25 */ || (p == 0 && _mant.sticky(uint64_t((_mant.array.size() * 64) - 1)) == 0) /* m == 0.5 */) {
 			// underflow to ±0
 			if (_neg) {
 				const double z = 0.0;
-				return {-z, ACC_ABOVE};
+				return { -z, ACC_ABOVE };
 			}
-			return {0.0, ACC_BELOW};
+			return { 0.0, ACC_BELOW };
 		}
 
 		// otherwise, round up
@@ -988,17 +987,16 @@ Pair<double, BigAccuracy> BigFloat::Float64() const {
 		// Float.round doesn't support rounding to 0 bits of precision.
 		if (p == 0) {
 			if (_neg) {
-				return {-DBL_TRUE_MIN, ACC_BELOW};
+				return { -DBL_TRUE_MIN, ACC_BELOW };
 			}
 
-			return {DBL_TRUE_MIN, ACC_ABOVE};
+			return { DBL_TRUE_MIN, ACC_ABOVE };
 		}
 	}
 	// p > 0
 
 	// round
-	Ref<BigFloat> r;
-	r.instantiate();
+	Ref<BigFloat> r{ memnew(BigFloat) };
 	r->_prec = uint32_t(p);
 	r->Set(const_cast<BigFloat *>(this));
 	e = int64_t(r->_exp) - 1;
@@ -1009,14 +1007,16 @@ Pair<double, BigAccuracy> BigFloat::Float64() const {
 	if (r->_form == FORM_INF || e > emax) {
 		// overflow
 		if (_neg) {
-			return {-HUGE_VAL, ACC_BELOW};
+			return { -HUGE_VAL, ACC_BELOW };
 		}
-		return {HUGE_VAL, ACC_ABOVE};
+		return { HUGE_VAL, ACC_ABOVE };
 	}
 	// e <= emax
 
 	// Determine sign, biased exponent, and mantissa.
-	uint64_t sign = 0, bexp = 0, mant = 0;
+	uint64_t sign = 0;
+	uint64_t bexp = 0;
+	uint64_t mant = 0;
 	if (_neg) {
 		sign = 1LLU << (fbits - 1);
 	}
@@ -1036,7 +1036,7 @@ Pair<double, BigAccuracy> BigFloat::Float64() const {
 		mant = (r->_mant.msb64() >> ebits) & ((1LLU << mbits) - 1); // cut off msb (implicit 1 bit)
 	}
 
-	return {std::bit_cast<double>(sign | bexp | mant), r->_acc};
+	return { std::bit_cast<double>(sign | bexp | mant), r->_acc };
 }
 
 // Int returns the result of truncating x towards zero;
@@ -1180,8 +1180,8 @@ void BigFloat::_uadd(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 
 	// compute exponents ex, ey for mantissa with "binary point"
 	// on the right (mantissa.0) - use int64 to avoid overflow
-	int64_t ex = int64_t(p_x->_exp) - p_x->_mant.array.size() * 64;
-	int64_t ey = int64_t(p_y->_exp) - p_y->_mant.array.size() * 64;
+	int64_t ex = int64_t(p_x->_exp) - (p_x->_mant.array.size() * 64);
+	int64_t ey = int64_t(p_y->_exp) - (p_y->_mant.array.size() * 64);
 
 	const bool al = this == *p_x || this == *p_y;
 
@@ -1212,7 +1212,7 @@ void BigFloat::_uadd(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 	}
 	// len(z.mant) > 0
 
-	_setExpAndRound(ex + _mant.array.size() * 64 - _mant.fnorm(), 0);
+	_setExpAndRound(ex + (_mant.array.size() * 64) - _mant.fnorm(), 0);
 }
 
 // z = x - y for |x| > |y|, ignoring signs of x and y for the subtraction
@@ -1226,8 +1226,8 @@ void BigFloat::_usub(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 
 	validateBinaryOperands(p_x, p_y);
 
-	int64_t ex = int64_t(p_x->_exp) - p_x->_mant.array.size() * 64;
-	int64_t ey = int64_t(p_y->_exp) - p_y->_mant.array.size() * 64;
+	int64_t ex = int64_t(p_x->_exp) - (p_x->_mant.array.size() * 64);
+	int64_t ey = int64_t(p_y->_exp) - (p_y->_mant.array.size() * 64);
 
 	const bool al = this == *p_x || this == *p_y;
 
@@ -1264,7 +1264,7 @@ void BigFloat::_usub(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 	}
 	// len(z.mant) > 0
 
-	_setExpAndRound(ex + _mant.array.size() * 64 - _mant.fnorm(), 0);
+	_setExpAndRound(ex + (_mant.array.size() * 64) - _mant.fnorm(), 0);
 }
 
 // z = x * y, ignoring signs of x and y for the multiplication
@@ -1320,7 +1320,7 @@ void BigFloat::_uquo(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 	// divide
 	BigNat r;
 	_mant.div(r, xadj, p_y->_mant);
-	const int64_t e = int64_t(p_x->_exp) - int64_t(p_y->_exp) - (d - _mant.array.size()) * 64;
+	const int64_t e = int64_t(p_x->_exp) - int64_t(p_y->_exp) - ((d - _mant.array.size()) * 64);
 
 	// The result is long enough to include (at least) the rounding bit.
 	// If there's a non-zero remainder, the corresponding fractional part
@@ -1349,7 +1349,8 @@ int BigFloat::_ucmp(const Ref<BigFloat> &p_y) const {
 	int64_t i = _mant.array.size();
 	int64_t j = p_y->_mant.array.size();
 	while (i > 0 || j > 0) {
-		BigWord xm = 0, ym = 0;
+		BigWord xm = 0;
+		BigWord ym = 0;
 		if (i > 0) {
 			i--;
 			xm = _mant[i];
@@ -1434,7 +1435,7 @@ Error BigFloat::Add(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 				_usub(p_x, p_y);
 			} else {
 				_neg = !_neg;
-				_usub(p_y, p_x);
+				_usub(p_y, p_x); // NOLINT(readability-suspicious-call-argument)
 			}
 		}
 
@@ -1504,7 +1505,7 @@ Error BigFloat::Sub(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 				_usub(p_x, p_y);
 			} else {
 				_neg = !_neg;
-				_usub(p_y, p_x);
+				_usub(p_y, p_x); // NOLINT(readability-suspicious-call-argument)
 			}
 		}
 		if (_form == FORM_ZERO && _mode == TO_NEGATIVE_INF && _acc == ACC_EXACT) {
@@ -1671,14 +1672,14 @@ int BigFloat::Cmp(const Ref<BigFloat> &p_y) const {
 int BigFloat::_ord() const {
 	int m = 0;
 	switch (_form) {
-	case FORM_FINITE:
-		m = 1;
-		break;
-	case FORM_ZERO:
-		return 0;
-	case FORM_INF:
-		m = 2;
-		break;
+		case FORM_FINITE:
+			m = 1;
+			break;
+		case FORM_ZERO:
+			return 0;
+		case FORM_INF:
+			m = 2;
+			break;
 	}
 	if (_neg) {
 		m = -m;

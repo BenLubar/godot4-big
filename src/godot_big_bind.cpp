@@ -83,14 +83,14 @@ void BigFloat::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("Copy", "x"), &BigFloat::Copy);
 
 	// convert to other types
-	ClassDB::bind_method(D_METHOD("Uint64"), &BigFloat::_Uint64_bind);
-	ClassDB::bind_method(D_METHOD("Uint64Accuracy"), &BigFloat::_Uint64Accuracy_bind);
-	ClassDB::bind_method(D_METHOD("Int64"), &BigFloat::_Int64_bind);
-	ClassDB::bind_method(D_METHOD("Int64Accuracy"), &BigFloat::_Int64Accuracy_bind);
-	ClassDB::bind_method(D_METHOD("Float32"), &BigFloat::_Float32_bind);
-	ClassDB::bind_method(D_METHOD("Float32Accuracy"), &BigFloat::_Float32Accuracy_bind);
-	ClassDB::bind_method(D_METHOD("Float64"), &BigFloat::_Float64_bind);
-	ClassDB::bind_method(D_METHOD("Float64Accuracy"), &BigFloat::_Float64Accuracy_bind);
+	ClassDB::bind_method(D_METHOD("Uint64"), &BigFloat::Uint64_bind);
+	ClassDB::bind_method(D_METHOD("Uint64Accuracy"), &BigFloat::Uint64Accuracy_bind);
+	ClassDB::bind_method(D_METHOD("Int64"), &BigFloat::Int64_bind);
+	ClassDB::bind_method(D_METHOD("Int64Accuracy"), &BigFloat::Int64Accuracy_bind);
+	ClassDB::bind_method(D_METHOD("Float32"), &BigFloat::Float32_bind);
+	ClassDB::bind_method(D_METHOD("Float32Accuracy"), &BigFloat::Float32Accuracy_bind);
+	ClassDB::bind_method(D_METHOD("Float64"), &BigFloat::Float64_bind);
+	ClassDB::bind_method(D_METHOD("Float64Accuracy"), &BigFloat::Float64Accuracy_bind);
 	ClassDB::bind_method(D_METHOD("Int", "z"), &BigFloat::Int);
 	ClassDB::bind_method(D_METHOD("Rat", "z"), &BigFloat::Rat);
 
@@ -232,8 +232,8 @@ void BigInt::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("Uint64"), &BigInt::Uint64);
 	ClassDB::bind_method(D_METHOD("IsInt64"), &BigInt::IsInt64);
 	ClassDB::bind_method(D_METHOD("IsUint64"), &BigInt::IsUint64);
-	ClassDB::bind_method(D_METHOD("Float64"), &BigInt::_Float64_bind);
-	ClassDB::bind_method(D_METHOD("Float64Accuracy"), &BigInt::_Float64Accuracy_bind);
+	ClassDB::bind_method(D_METHOD("Float64"), &BigInt::Float64_bind);
+	ClassDB::bind_method(D_METHOD("Float64Accuracy"), &BigInt::Float64Accuracy_bind);
 
 	// binary conversion
 	ClassDB::bind_method(D_METHOD("SetBytes", "bytes"), &BigInt::SetBytes);
@@ -244,7 +244,7 @@ void BigInt::_bind_methods() {
 	// cool math tricks
 	ClassDB::bind_method(D_METHOD("Exp", "x", "y", "m"), &BigInt::Exp, DEFVAL(nullptr));
 	ClassDB::bind_method(D_METHOD("GCD", "x", "y", "a", "b"), &BigInt::GCD);
-	ClassDB::bind_method(D_METHOD("Rand", "rnd", "n"), &BigInt::_Rand_bind);
+	ClassDB::bind_method(D_METHOD("Rand", "rnd", "n"), &BigInt::Rand_bind);
 
 	// fancy math tricks
 	ClassDB::bind_method(D_METHOD("ModInverse", "g", "n"), &BigInt::ModInverse);
@@ -322,10 +322,10 @@ void BigRat::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("Set", "x"), &BigRat::Set);
 
 	// convert to floats
-	ClassDB::bind_method(D_METHOD("Float32"), &BigRat::_Float32_bind);
-	ClassDB::bind_method(D_METHOD("Float32Exact"), &BigRat::_Float32Exact_bind);
-	ClassDB::bind_method(D_METHOD("Float64"), &BigRat::_Float64_bind);
-	ClassDB::bind_method(D_METHOD("Float64Exact"), &BigRat::_Float64Exact_bind);
+	ClassDB::bind_method(D_METHOD("Float32"), &BigRat::Float32_bind);
+	ClassDB::bind_method(D_METHOD("Float32Exact"), &BigRat::Float32Exact_bind);
+	ClassDB::bind_method(D_METHOD("Float64"), &BigRat::Float64_bind);
+	ClassDB::bind_method(D_METHOD("Float64Exact"), &BigRat::Float64Exact_bind);
 
 	// arithmetic
 	ClassDB::bind_method(D_METHOD("Abs", "x"), &BigRat::Abs);
@@ -348,8 +348,8 @@ void BigRat::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("String"), &BigRat::String);
 	ClassDB::bind_method(D_METHOD("RatString"), &BigRat::RatString);
 	ClassDB::bind_method(D_METHOD("FloatString", "prec"), &BigRat::FloatString);
-	ClassDB::bind_method(D_METHOD("FloatPrec"), &BigRat::_FloatPrec_bind);
-	ClassDB::bind_method(D_METHOD("FloatPrecExact"), &BigRat::_FloatPrecExact_bind);
+	ClassDB::bind_method(D_METHOD("FloatPrec"), &BigRat::FloatPrec_bind);
+	ClassDB::bind_method(D_METHOD("FloatPrecExact"), &BigRat::FloatPrecExact_bind);
 }
 
 void BigRat::_set_neg(bool p_neg) {

@@ -54,15 +54,15 @@ Error BigFloat::Sqrt(const Ref<BigFloat> &p_x) {
 	//   √(2z)·2**(⌊½b⌋)   if b > 0 is odd
 	//   √(½z)·2**(⌈½b⌉)   if b < 0 is odd
 	switch (b % 2) {
-	case 0:
-		// nothing to do
-		break;
-	case 1:
-		_exp++;
-		break;
-	case -1:
-		_exp--;
-		break;
+		case 0:
+			// nothing to do
+			break;
+		case 1:
+			_exp++;
+			break;
+		case -1:
+			_exp--;
+			break;
 	}
 	// 0.25 <= z < 2.0
 
@@ -88,31 +88,25 @@ void BigFloat::_sqrtInverse(const Ref<BigFloat> &p_x) {
 	//   g(t) = f(t)/f'(t) = -½t(1 - xt²)
 	// and the next guess is given by
 	//   t2 = t - g(t) = ½t(3 - xt²)
-	Ref<BigFloat> u, v;
-	u.instantiate();
-	v.instantiate();
-
-	const auto ng = [u, v, p_x](const Ref<BigFloat> &t) -> void {
-		u->_prec = t->_prec;
-		v->_prec = t->_prec;
-		u->Mul(t, t);           // u = t²
-		u->Mul(p_x, u);         //   = xt²
-		v->Sub(*floatThree, u); // v = 3 - xt²
-		u->Mul(t, v);           // u = t(3 - xt²)
-		u->_exp--;              //   = ½t(3 - xt²)
-		t->Set(u);
-	};
+	Ref<BigFloat> u{ memnew(BigFloat) };
+	Ref<BigFloat> v{ memnew(BigFloat) };
 
 	const Pair<double, BigAccuracy> xf = p_x->Float64();
-	Ref<BigFloat> sqi;
-	sqi.instantiate();
-	sqi->SetFloat64(1.0 / Math::sqrt(xf.first));
-	for (uint32_t prec = _prec + 32; sqi->_prec < prec; ) {
-		sqi->_prec *= 2;
-		ng(sqi);
+	Ref<BigFloat> t{ memnew(BigFloat) };
+	t->SetFloat64(1.0 / Math::sqrt(xf.first));
+	for (uint32_t prec = _prec + 32; t->_prec < prec;) {
+		t->_prec *= 2;
+		u->_prec = t->_prec;
+		v->_prec = t->_prec;
+		u->Mul(t, t); // u = t²
+		u->Mul(p_x, u); //   = xt²
+		v->Sub(*floatThree, u); // v = 3 - xt²
+		u->Mul(t, v); // u = t(3 - xt²)
+		u->_exp--; //   = ½t(3 - xt²)
+		t->Set(u);
 	}
 	// sqi = 1/√x
 
 	// x/√x = √x
-	Mul(p_x, sqi);
+	Mul(p_x, t);
 }

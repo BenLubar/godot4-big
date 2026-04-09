@@ -14,7 +14,9 @@ protected:
 
 public:
 	bool _neg = false;
-	BigNat _a, _b{{1}};
+	BigNat _a;
+	BigNat _b{ { 1 } };
+
 	void _set_neg(bool p_neg);
 	[[nodiscard]] bool _is_neg() const;
 	void _set_a(const godot::PackedInt64Array &p_a);
@@ -36,11 +38,11 @@ public:
 	void Set(const godot::Ref<BigRat> &p_x);
 
 	[[nodiscard]] godot::Pair<float, bool> Float32() const;
-	[[nodiscard]] _FORCE_INLINE_ float _Float32_bind() const { return Float32().first; }
-	[[nodiscard]] _FORCE_INLINE_ bool _Float32Exact_bind() const { return Float32().second; }
+	[[nodiscard]] _FORCE_INLINE_ float Float32_bind() const { return Float32().first; }
+	[[nodiscard]] _FORCE_INLINE_ bool Float32Exact_bind() const { return Float32().second; }
 	[[nodiscard]] godot::Pair<double, bool> Float64() const;
-	[[nodiscard]] _FORCE_INLINE_ double _Float64_bind() const { return Float64().first; }
-	[[nodiscard]] _FORCE_INLINE_ bool _Float64Exact_bind() const { return Float64().second; }
+	[[nodiscard]] _FORCE_INLINE_ double Float64_bind() const { return Float64().first; }
+	[[nodiscard]] _FORCE_INLINE_ bool Float64Exact_bind() const { return Float64().second; }
 
 	void Abs(const godot::Ref<BigRat> &p_x);
 	void Neg(const godot::Ref<BigRat> &p_x);
@@ -64,6 +66,6 @@ public:
 	[[nodiscard]] godot::String RatString() const;
 	[[nodiscard]] godot::String FloatString(int64_t p_prec) const;
 	[[nodiscard]] godot::Pair<int64_t, bool> FloatPrec() const;
-	[[nodiscard]] _FORCE_INLINE_ int64_t _FloatPrec_bind() const { return FloatPrec().first; }
-	[[nodiscard]] _FORCE_INLINE_ bool _FloatPrecExact_bind() const { return FloatPrec().second; }
+	[[nodiscard]] _FORCE_INLINE_ int64_t FloatPrec_bind() const { return FloatPrec().first; }
+	[[nodiscard]] _FORCE_INLINE_ bool FloatPrecExact_bind() const { return FloatPrec().second; }
 };

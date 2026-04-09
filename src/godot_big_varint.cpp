@@ -1,6 +1,6 @@
-#include "godot_big_naturals.h"
-#include "godot_big_int.h"
 #include "godot_big_float.h"
+#include "godot_big_int.h"
+#include "godot_big_naturals.h"
 #include "godot_big_rat.h"
 
 #include <bit>
@@ -9,7 +9,7 @@ using namespace godot;
 
 PackedByteArray BigNat::to_uvarint() const {
 	if (array.is_empty()) {
-		return PackedByteArray{0};
+		return PackedByteArray{ 0 };
 	}
 
 	BigWord upper = 0;
@@ -23,7 +23,7 @@ PackedByteArray BigNat::to_uvarint() const {
 		bits_remaining += 64;
 
 		while (bits_remaining > 7) {
-			bytes.append(uint8_t(lower | 128));
+			bytes.append(static_cast<uint8_t>(lower | 128));
 			lower >>= 7;
 			lower |= upper << (64 - 7);
 			upper >>= 7;
@@ -37,7 +37,7 @@ PackedByteArray BigNat::to_uvarint() const {
 	bits_remaining += 64 - std::countl_zero(w);
 
 	while (bits_remaining > 7) {
-		bytes.append(uint8_t(lower | 128));
+		bytes.append(static_cast<uint8_t>(lower | 128));
 		lower >>= 7;
 		lower |= upper << (64 - 7);
 		upper >>= 7;
@@ -51,12 +51,13 @@ PackedByteArray BigNat::to_uvarint() const {
 }
 
 uint64_t BigNat::from_uvarint(const Span<uint8_t> &p_bytes) {
-	BigNat total, current;
+	BigNat total;
+	BigNat current;
 	for (uint64_t advance = 0; advance < p_bytes.size(); advance++) {
 		current.setUint64(p_bytes[advance] & 0x7f);
 		current.lsh(current, advance * 7);
 		total.add(total, current);
-		if (!(p_bytes[advance] & 0x80)) {
+		if ((p_bytes[advance] & 0x80) == 0) {
 			array = total.array;
 			return advance + 1;
 		}
@@ -85,7 +86,7 @@ PackedByteArray BigInt::to_svarint() const {
 	BigNat zigzag;
 	zigzag.lsh(_abs, 1);
 	if (_neg) {
-		zigzag.sub(zigzag, BigNat{{1}});
+		zigzag.sub1(zigzag);
 	}
 	return zigzag.to_uvarint();
 }
@@ -97,7 +98,7 @@ int64_t BigInt::from_svarint(const PackedByteArray &p_bytes, int64_t p_offset) {
 		const bool neg = !abs.array.is_empty() && (abs[0] & 1) != 0;
 		abs.rsh(abs, 1);
 		if (neg) {
-			abs.add(abs, BigNat{{1}});
+			abs.add1(abs);
 		}
 
 		if (_neg != neg || _abs.array != abs.array) {
@@ -119,12 +120,12 @@ PackedByteArray BigFloat::to_bytes() const {
 	if (_form == FORM_FINITE) {
 		mantissa_len = _mant.array.size();
 		// size cannot be negative (we would have run out of virtual memory space) or zero (invalid float)
-		BigNat n{{mantissa_len}};
+		BigNat n{ { mantissa_len } };
 		mantissa_len_encoded = n.to_uvarint();
 	}
 
 	PackedByteArray b;
-	b.resize(1 + 4 + (_form == FORM_FINITE ? 4 + mantissa_len_encoded.size() + mantissa_len * 8 : 0));
+	b.resize(1 + 4 + (_form == FORM_FINITE ? 4 + mantissa_len_encoded.size() + (mantissa_len * 8) : 0));
 	// first byte is packed with _mode, _acc+1, _form, and _neg as bits: mmmaaffn
 	b[0] = ((_mode & 7) << 5) | (((_acc + 1) & 3) << 3) | ((_form & 3) << 1) | (_neg ? 1 : 0);
 	// next four bytes are precision (little endian)
@@ -160,7 +161,7 @@ int64_t BigFloat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 	ERR_FAIL_COND_V_MSG(((first_byte >> 5) & 7) > 5, 0, "invalid rounding mode");
 	const RoundingMode mode = static_cast<RoundingMode>((first_byte >> 5) & 7);
 	ERR_FAIL_COND_V_MSG(((first_byte >> 3) & 3) > 2, 0, "invalid accuracy");
-	const BigAccuracy acc = static_cast<BigAccuracy>(int((first_byte >> 3) & 3) - 1);
+	const BigAccuracy acc = static_cast<BigAccuracy>(((first_byte >> 3) & 3) - 1);
 	ERR_FAIL_COND_V_MSG(((first_byte >> 1) & 3) > 2, 0, "invalid form");
 	const Form form = static_cast<Form>((first_byte >> 1) & 3);
 	const bool neg = (first_byte & 1) == 1;
@@ -190,7 +191,7 @@ int64_t BigFloat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 	const uint64_t mantissa_len_advance = mantissa_len.from_uvarint(Span(p_bytes.ptr() + p_offset + advance, p_bytes.size() - p_offset - advance));
 	ERR_FAIL_COND_V_MSG(mantissa_len_advance == 0 || mantissa_len.array.size() != 1, 0, "invalid mantissa length");
 	advance += mantissa_len_advance;
-	ERR_FAIL_COND_V_MSG(p_bytes.size() < p_offset + advance + mantissa_len[0] * 8, 0, "buffer ends during mantissa");
+	ERR_FAIL_COND_V_MSG(p_bytes.size() < p_offset + advance + (mantissa_len[0] * 8), 0, "buffer ends during mantissa");
 
 	const int32_t exp = p_bytes.decode_s32(p_offset + 1 + 4);
 
@@ -224,8 +225,7 @@ int64_t BigFloat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 
 // { svarint numerator; uvarint denominator }
 PackedByteArray BigRat::to_bytes() const {
-	Ref<BigInt> n;
-	n.instantiate();
+	Ref<BigInt> n{ memnew(BigInt) };
 	n->_neg = _neg;
 	n->_abs = _a;
 
@@ -238,8 +238,7 @@ PackedByteArray BigRat::to_bytes() const {
 	return numerator + denominator;
 }
 int64_t BigRat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
-	Ref<BigInt> n;
-	n.instantiate();
+	Ref<BigInt> n{ memnew(BigInt) };
 
 	const int64_t advance_num = n->from_svarint(p_bytes, p_offset);
 	if (unlikely(advance_num == 0)) {

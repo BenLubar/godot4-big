@@ -33,10 +33,10 @@ class BigFloat;
 // The zero value for decimal represents a ready-to-use 0.0.
 struct BigDecimal {
 	godot::PackedByteArray mant; // mantissa ASCII digits, big-endian
-	int64_t exp = 0;             // exponent
+	int64_t exp = 0; // exponent
 
 	// at returns the i'th mantissa digit, starting with the most significant digit at 0.
-	inline char at(int64_t i) const {
+	[[nodiscard]] inline char at(int64_t i) const {
 		if (0 <= i && i < mant.size()) {
 			return mant[i];
 		}
@@ -71,14 +71,14 @@ struct BigDecimal {
 		// decimal format (since that is likely slower).
 		if (shift < 0) {
 			const uint64_t ntz = m.trailingZeroBits();
-			const uint64_t s = godot::Math::min(uint64_t(-shift), ntz); // shift at most ntz bits
+			const uint64_t s = godot::Math::min(static_cast<uint64_t>(-shift), ntz); // shift at most ntz bits
 			m.rsh(m, s);
-			shift += int64_t(s);
+			shift += static_cast<int64_t>(s);
 		}
 
 		// Do any shift left in binary representation.
 		if (shift > 0) {
-			m.lsh(m, uint64_t(shift));
+			m.lsh(m, static_cast<uint64_t>(shift));
 			shift = 0;
 		}
 
@@ -100,7 +100,7 @@ struct BigDecimal {
 				shift += maxShift;
 			}
 
-			rsh(uint64_t(-shift));
+			rsh(static_cast<uint64_t>(-shift));
 		}
 	}
 
@@ -112,9 +112,9 @@ struct BigDecimal {
 		int64_t r = 0; // read index
 		BigWord n = 0;
 		while ((n >> s) == 0 && r < mant.size()) {
-			const BigWord ch = BigWord(mant[r]);
+			const BigWord ch = static_cast<BigWord>(mant[r]);
 			r++;
-			n = n * 10 + ch - '0';
+			n = (n * 10) + ch - '0';
 		}
 		if (n == 0) {
 			// x == 0; shouldn't get here, but handle anyway
@@ -130,22 +130,22 @@ struct BigDecimal {
 
 		// read a digit, write a digit
 		int64_t w = 0; // write index
-		const BigWord mask = (BigWord(1) << s) - 1;
+		const BigWord mask = (static_cast<BigWord>(1) << s) - 1;
 		while (r < mant.size()) {
-			const BigWord ch = BigWord(mant[r]);
+			const BigWord ch = static_cast<BigWord>(mant[r]);
 			r++;
 			const BigWord d = n >> s;
 			n &= mask; // n -= d << s
-			mant[w] = uint8_t(d + '0');
+			mant[w] = static_cast<uint8_t>(d + '0');
 			w++;
-			n = n * 10 + ch - '0';
+			n = (n * 10) + ch - '0';
 		}
 
 		// write extra digits that still fit
 		while (n > 0 && w < mant.size()) {
 			const BigWord d = n >> s;
 			n &= mask;
-			mant[w] = uint8_t(d + '0');
+			mant[w] = static_cast<uint8_t>(d + '0');
 			w++;
 			n *= 10;
 		}
@@ -155,7 +155,7 @@ struct BigDecimal {
 		while (n > 0) {
 			const BigWord d = n >> s;
 			n &= mask;
-			mant.append(uint8_t(d + '0'));
+			mant.append(static_cast<uint8_t>(d + '0'));
 			n *= 10;
 		}
 
@@ -165,7 +165,7 @@ struct BigDecimal {
 	// shouldRoundUp reports if x should be rounded up
 	// if shortened to n digits. n must be a valid index
 	// for x.mant.
-	inline bool shouldRoundUp(int64_t n) const {
+	[[nodiscard]] inline bool shouldRoundUp(int64_t n) const {
 		if (mant[n] == '5' && n + 1 == mant.size()) {
 			// exactly halfway - round to even
 			return n > 0 && ((mant[n - 1] - '0') & 1) != 0;

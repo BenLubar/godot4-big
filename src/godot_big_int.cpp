@@ -8,7 +8,11 @@
 // This file implements signed multi-precision integers.
 
 #include "godot_big_int.h"
+
 #include "godot_big_float.h"
+
+#include <algorithm>
+#include <bit>
 
 using namespace godot;
 
@@ -46,7 +50,7 @@ void BigInt::SetInt64(int64_t p_x) {
 		p_x = -p_x;
 	}
 
-	_abs.setUint64(uint64_t(p_x));
+	_abs.setUint64(static_cast<uint64_t>(p_x));
 	_neg = neg;
 	emit_changed();
 }
@@ -60,8 +64,7 @@ void BigInt::SetUint64(uint64_t p_x) {
 
 // NewInt allocates and returns a new [Int] set to x.
 Ref<BigInt> BigInt::NewInt(int64_t p_x) {
-	Ref<BigInt> n;
-	n.instantiate();
+	Ref<BigInt> n{ memnew(BigInt) };
 	n->SetInt64(p_x);
 
 	return n;
@@ -182,12 +185,12 @@ void BigInt::MulRange(int64_t p_a, int64_t p_b) {
 	bool neg = false;
 	if (p_a < 0) {
 		neg = ((p_b - p_a) & 1) == 0;
-		SWAP(p_a, p_b);
+		std::swap(p_a, p_b);
 		p_a = -p_a;
 		p_b = -p_b;
 	}
 
-	_abs.mulRange(uint64_t(p_a), uint64_t(p_b));
+	_abs.mulRange(static_cast<uint64_t>(p_a), static_cast<uint64_t>(p_b));
 	_neg = neg;
 	emit_changed();
 }
@@ -200,9 +203,7 @@ void BigInt::Binomial(int64_t p_n, int64_t p_k) {
 	}
 
 	// reduce the number of multiplications by reducing k
-	if (p_k > p_n - p_k) {
-		p_k = p_n - p_k; // C(n, k) == C(n, n-k)
-	}
+	p_k = std::min(p_k, p_n - p_k); // C(n, k) == C(n, n-k)
 
 	// C(n, k) == n * (n-1) * ... * (n-k+1) / k * (k-1) * ... * 1
 	//         == n * (n-1) * ... * (n-k+1) / 1 * (1+1) * ... * k
@@ -225,12 +226,11 @@ void BigInt::Binomial(int64_t p_n, int64_t p_k) {
 	//     i++
 	//     z /= i
 	// }
-	Ref<BigInt> N, K, i, t, one;
-	N.instantiate();
-	K.instantiate();
-	i.instantiate();
-	t.instantiate();
-	one.instantiate();
+	Ref<BigInt> N{ memnew(BigInt) };
+	Ref<BigInt> K{ memnew(BigInt) };
+	Ref<BigInt> i{ memnew(BigInt) };
+	Ref<BigInt> t{ memnew(BigInt) };
+	Ref<BigInt> one{ memnew(BigInt) };
 
 	N->SetInt64(p_n);
 	K->SetInt64(p_k);
@@ -315,8 +315,7 @@ Error BigInt::Div(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 
 	const bool y_neg = p_y->_neg; // z may be an alias for y
 
-	Ref<BigInt> r;
-	r.instantiate();
+	Ref<BigInt> r{ memnew(BigInt) };
 
 	QuoRem(p_x, p_y, r);
 
@@ -345,8 +344,7 @@ Error BigInt::Mod(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 		y->Set(p_y);
 	}
 
-	Ref<BigInt> q;
-	q.instantiate();
+	Ref<BigInt> q{ memnew(BigInt) };
 	q->QuoRem(p_x, p_y, this);
 
 	if (_neg) {
@@ -438,7 +436,7 @@ uint32_t BigNat::low32() const {
 		return 0;
 	}
 
-	return uint32_t(array[0]);
+	return static_cast<uint32_t>(array[0]);
 }
 
 // low64 returns the least significant 64 bits of x.
@@ -447,13 +445,13 @@ uint64_t BigNat::low64() const {
 		return 0;
 	}
 
-	return uint64_t(array[0]);
+	return static_cast<uint64_t>(array[0]);
 }
 
 // Int64 returns the int64 representation of x.
 // If x cannot be represented in an int64, the result is undefined.
 int64_t BigInt::Int64() const {
-	int64_t v = int64_t(_abs.low64());
+	int64_t v = static_cast<int64_t>(_abs.low64());
 	if (_neg) {
 		v = -v;
 	}
@@ -469,7 +467,7 @@ uint64_t BigInt::Uint64() const {
 // IsInt64 reports whether x can be represented as an int64.
 bool BigInt::IsInt64() const {
 	if (_abs.array.size() <= 1) {
-		const int64_t w = int64_t(_abs.low64());
+		const int64_t w = static_cast<int64_t>(_abs.low64());
 		return w >= 0 || (_neg && w == -w);
 	}
 	return false;
@@ -485,20 +483,19 @@ bool BigInt::IsUint64() const {
 Pair<double, BigAccuracy> BigInt::Float64() const {
 	const int64_t n = _abs.bitLen();
 	if (n == 0) {
-		return {0.0, ACC_EXACT};
+		return { 0.0, ACC_EXACT };
 	}
 
 	// Fast path: no more than 53 significant bits.
-	if (n <= 53 || (n < 64 && n - int64_t(_abs.trailingZeroBits()) <= 53)) {
-		double f = double(_abs.low64());
+	if (n <= 53 || (n < 64 && n - static_cast<int64_t>(_abs.trailingZeroBits()) <= 53)) {
+		double f = static_cast<double>(_abs.low64());
 		if (_neg) {
 			f = -f;
 		}
-		return {f, ACC_EXACT};
+		return { f, ACC_EXACT };
 	}
 
-	Ref<BigFloat> f;
-	f.instantiate();
+	Ref<BigFloat> f{ memnew(BigFloat) };
 	f->SetInt(const_cast<BigInt *>(this));
 	return f->Float64();
 }
@@ -562,7 +559,7 @@ void BigInt::FillBytes(PackedByteArray &r_buf) const {
 	// Clear whole buffer.
 	r_buf.fill(0);
 
-	_abs.bytes(r_buf);
+	(void)_abs.bytes(r_buf);
 }
 
 // BitLen returns the length of the absolute value of x in bits.
@@ -601,8 +598,7 @@ Error BigInt::_exp(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y, const Ref<Big
 		}
 
 		// for y < 0: x**y mod m == (x**(-1))**|y| mod m
-		Ref<BigInt> inverse;
-		inverse.instantiate();
+		Ref<BigInt> inverse{ memnew(BigInt) };
 		const Error err = inverse->ModInverse(p_x, p_m);
 		if (err != OK) {
 			return err;
@@ -691,7 +687,10 @@ void BigInt::GCD(const Ref<BigInt> &r_x, const Ref<BigInt> &r_y, const Ref<BigIn
 // For odd  iterations: u0, v1 <= 0 && u1, v0 >= 0
 void BigInt::_lehmerSimulate(const Ref<BigInt> &A, const Ref<BigInt> &B, BigWord &u0, BigWord &u1, BigWord &v0, BigWord &v1, bool &even) {
 	// initialize the digits
-	BigWord a1 = 0, a2 = 0, u2 = 0, v2 = 0;
+	BigWord a1 = 0;
+	BigWord a2 = 0;
+	BigWord u2 = 0;
+	BigWord v2 = 0;
 
 	const int64_t m = B->_abs.array.size(); // m >= 2
 	const int64_t n = A->_abs.array.size(); // n >= m >= 2
@@ -733,8 +732,8 @@ void BigInt::_lehmerSimulate(const Ref<BigInt> &A, const Ref<BigInt> &B, BigWord
 		a1 = a2;
 		a2 = r;
 
-		std::tie(u0, u1, u2) = std::make_tuple(u1, u2, u1 + q * u2);
-		std::tie(v0, v1, v2) = std::make_tuple(v1, v2, v1 + q * v2);
+		std::tie(u0, u1, u2) = std::make_tuple(u1, u2, u1 + (q * u2));
+		std::tie(v0, v1, v2) = std::make_tuple(v1, v2, v1 + (q * v2));
 		even = !even;
 	}
 }
@@ -773,7 +772,7 @@ void BigInt::_euclidUpdate(Ref<BigInt> &A, Ref<BigInt> &B, Ref<BigInt> &Ua, Ref<
 	if (extended) {
 		// Ua, Ub = Ub, Ua-q*Ub
 		q->Mul(q, Ub);
-		SWAP(Ua, Ub);
+		std::swap(Ua, Ub);
 		Ub->Sub(Ub, q);
 	}
 
@@ -794,9 +793,10 @@ void BigInt::_euclidUpdate(Ref<BigInt> &A, Ref<BigInt> &B, Ref<BigInt> &Ua, Ref<
 // The cosequences are updated according to Algorithm 10.45 from
 // Cohen et al. "Handbook of Elliptic and Hyperelliptic Curve Cryptography" pp 192.
 void BigInt::_lehmerGCD(const Ref<BigInt> &r_x, const Ref<BigInt> &r_y, const Ref<BigInt> &p_a, const Ref<BigInt> &p_b) {
-	Ref<BigInt> A, B, Ua, Ub;
-	A.instantiate();
-	B.instantiate();
+	Ref<BigInt> A{ memnew(BigInt) };
+	Ref<BigInt> B{ memnew(BigInt) };
+	Ref<BigInt> Ua;
+	Ref<BigInt> Ub;
 	A->Abs(p_a);
 	B->Abs(p_b);
 
@@ -810,20 +810,22 @@ void BigInt::_lehmerGCD(const Ref<BigInt> &r_x, const Ref<BigInt> &r_y, const Re
 	}
 
 	// temp variables for multiprecision update
-	Ref<BigInt> q, r;
-	q.instantiate();
-	r.instantiate();
+	Ref<BigInt> q{ memnew(BigInt) };
+	Ref<BigInt> r{ memnew(BigInt) };
 
 	// ensure A >= B
 	if (A->CmpAbs(B) < 0) {
-		SWAP(A, B);
-		SWAP(Ua, Ub);
+		std::swap(A, B);
+		std::swap(Ua, Ub);
 	}
 
 	// loop invariant A >= B
 	while (B->_abs.array.size() > 1) {
 		// Attempt to calculate in single-precision using leading words of A and B.
-		BigWord u0, u1, v0, v1;
+		BigWord u0;
+		BigWord u1;
+		BigWord v0;
+		BigWord v1;
 		bool even;
 		_lehmerSimulate(A, B, u0, u1, v0, v1, even);
 
@@ -858,8 +860,10 @@ void BigInt::_lehmerGCD(const Ref<BigInt> &r_x, const Ref<BigInt> &r_y, const Re
 			BigWord aWord = A->_abs[0];
 			BigWord bWord = B->_abs[0];
 			if (extended) {
-				BigWord ua = 1, ub = 0;
-				BigWord va = 0, vb = 1;
+				BigWord ua = 1;
+				BigWord ub = 0;
+				BigWord va = 0;
+				BigWord vb = 1;
 				bool even = true;
 				while (bWord != 0) {
 					const BigWord q = aWord / bWord;
@@ -868,8 +872,8 @@ void BigInt::_lehmerGCD(const Ref<BigInt> &r_x, const Ref<BigInt> &r_y, const Re
 					aWord = bWord;
 					bWord = r;
 
-					std::tie(ua, ub) = std::make_tuple(ub, ua + q * ub);
-					std::tie(va, vb) = std::make_tuple(vb, va + q * vb);
+					std::tie(ua, ub) = std::make_tuple(ub, ua + (q * ub));
+					std::tie(va, vb) = std::make_tuple(vb, va + (q * vb));
 
 					even = !even;
 				}
@@ -934,10 +938,12 @@ void BigInt::Rand(const std::function<uint32_t()> &p_rnd, const Ref<BigInt> &p_n
 	emit_changed();
 }
 
-void BigInt::_Rand_bind(const Callable &p_rnd, const Ref<BigInt> &p_n) {
-	Rand([p_rnd]() -> uint32_t {
-		return p_rnd.call();
-	}, p_n);
+void BigInt::Rand_bind(const Callable &p_rnd, const Ref<BigInt> &p_n) {
+	Rand(
+			[p_rnd]() -> uint32_t {
+				return p_rnd.call();
+			},
+			p_n);
 }
 
 // ModInverse sets z to the multiplicative inverse of g in the ring ℤ/nℤ
@@ -960,9 +966,8 @@ Error BigInt::ModInverse(const Ref<BigInt> &p_g, const Ref<BigInt> &p_n) {
 		g.instantiate();
 		g->Mod(p_g, n);
 	}
-	Ref<BigInt> d, x;
-	d.instantiate();
-	x.instantiate();
+	Ref<BigInt> d{ memnew(BigInt) };
+	Ref<BigInt> x{ memnew(BigInt) };
 	d->GCD(x, nullptr, g, n);
 
 	// if and only if d==1, g and n are relatively prime
@@ -983,14 +988,15 @@ Error BigInt::ModInverse(const Ref<BigInt> &p_g, const Ref<BigInt> &p_n) {
 
 Error BigNat::modInverse(BigNat g, BigNat n) {
 	// TODO(rsc): ModInverse should be implemented in terms of this function.
-	Ref<BigInt> z, gi, ni;
-	z.instantiate();
-	gi.instantiate();
-	ni.instantiate();
+	Ref<BigInt> z{ memnew(BigInt) };
+	Ref<BigInt> gi{ memnew(BigInt) };
+	Ref<BigInt> ni{ memnew(BigInt) };
 
 	z->_abs = *this;
+	// NOLINTBEGIN(performance-unnecessary-value-param)
 	gi->_abs = g;
 	ni->_abs = n;
+	// NOLINTEND(performance-unnecessary-value-param)
 
 	const Error err = z->ModInverse(gi, ni);
 	*this = z->_abs;
@@ -1009,10 +1015,9 @@ int BigInt::Jacobi(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	// "The Yacas Book of Algorithms":
 	// http://yacas.sourceforge.net/Algo.book.pdf
 
-	Ref<BigInt> a, b, c;
-	a.instantiate();
-	b.instantiate();
-	c.instantiate();
+	Ref<BigInt> a{ memnew(BigInt) };
+	Ref<BigInt> b{ memnew(BigInt) };
+	Ref<BigInt> c{ memnew(BigInt) };
 	a->Set(p_x);
 	b->Set(p_y);
 	int j = 1;
@@ -1065,11 +1070,10 @@ int BigInt::Jacobi(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 // to calculate the square root of any quadratic residue mod p quickly for 3
 // mod 4 primes.
 void BigInt::_modSqrt3Mod4Prime(const Ref<BigInt> &p_x, const Ref<BigInt> &p_p) {
-	Ref<BigInt> e;
-	e.instantiate();
+	Ref<BigInt> e{ memnew(BigInt) };
 	e->Add(p_p, *intOne); // e = p + 1
-	e->Rsh(e, 2);         // e = (p + 1) / 4
-	Exp(p_x, e, p_p);     // z = x^e mod p
+	e->Rsh(e, 2); // e = (p + 1) / 4
+	Exp(p_x, e, p_p); // z = x^e mod p
 }
 
 // modSqrt5Mod8Prime uses Atkin's observation that 2 is not a square mod p
@@ -1083,12 +1087,11 @@ void BigInt::_modSqrt3Mod4Prime(const Ref<BigInt> &p_x, const Ref<BigInt> &p_p) 
 void BigInt::_modSqrt5Mod8Prime(const Ref<BigInt> &p_x, const Ref<BigInt> &p_p) {
 	// p == 5 mod 8 implies p = e*8 + 5
 	// e is the quotient and 5 the remainder on division by 8
-	Ref<BigInt> e, tx, alpha, beta;
-	e.instantiate();
-	tx.instantiate();
-	alpha.instantiate();
-	beta.instantiate();
-	e->Rsh(p_p, 3);  // e = (p - 5) / 8
+	Ref<BigInt> e{ memnew(BigInt) };
+	Ref<BigInt> tx{ memnew(BigInt) };
+	Ref<BigInt> alpha{ memnew(BigInt) };
+	Ref<BigInt> beta{ memnew(BigInt) };
+	e->Rsh(p_p, 3); // e = (p - 5) / 8
 	tx->Lsh(p_x, 1); // tx = 2*x
 	alpha->Exp(tx, e, p_p);
 	beta->Mul(alpha, alpha);
@@ -1096,7 +1099,7 @@ void BigInt::_modSqrt5Mod8Prime(const Ref<BigInt> &p_x, const Ref<BigInt> &p_p) 
 	beta->Mul(beta, tx);
 	beta->Mod(beta, p_p);
 	beta->Sub(beta, *intOne);
-	beta->Mul(beta, p_x);
+	beta->Mul(beta, p_x); // NOLINT(readability-suspicious-call-argument)
 	beta->Mod(beta, p_p);
 	beta->Mul(beta, alpha);
 	Mod(beta, p_p);
@@ -1106,8 +1109,7 @@ void BigInt::_modSqrt5Mod8Prime(const Ref<BigInt> &p_x, const Ref<BigInt> &p_p) 
 // root of a quadratic residue modulo any prime.
 void BigInt::_modSqrtTonelliShanks(const Ref<BigInt> &p_x, const Ref<BigInt> &p_p) {
 	// Break p-1 into s*2^e such that s is odd.
-	Ref<BigInt> s;
-	s.instantiate();
+	Ref<BigInt> s{ memnew(BigInt) };
 	s->Sub(p_p, *intOne);
 	const uint64_t e = s->_abs.trailingZeroBits();
 	s->Rsh(s, e);
@@ -1122,17 +1124,16 @@ void BigInt::_modSqrtTonelliShanks(const Ref<BigInt> &p_x, const Ref<BigInt> &p_
 	// section 6 of "Square roots from 1; 24, 51, 10 to Dan Shanks" by Ezra
 	// Brown:
 	// https://www.maa.org/sites/default/files/pdf/upload_library/22/Polya/07468342.di020786.02p0470a.pdf
-	Ref<BigInt> y, b, g, t;
-	y.instantiate();
-	b.instantiate();
-	g.instantiate();
-	t.instantiate();
+	Ref<BigInt> y{ memnew(BigInt) };
+	Ref<BigInt> b{ memnew(BigInt) };
+	Ref<BigInt> g{ memnew(BigInt) };
+	Ref<BigInt> t{ memnew(BigInt) };
 
 	y->Add(s, *intOne);
 	y->Rsh(y, 1);
 	y->Exp(p_x, y, p_p); // y = x^((s+1)/2)
 	b->Exp(p_x, s, p_p); // b = x^s
-	g->Exp(n, s, p_p);   // g = n^s
+	g->Exp(n, s, p_p); // g = n^s
 	uint64_t r = e;
 	while (true) {
 		// find the least m such that ord_p(b) = 2^m
@@ -1150,7 +1151,7 @@ void BigInt::_modSqrtTonelliShanks(const Ref<BigInt> &p_x, const Ref<BigInt> &p_
 		}
 
 		t->SetUint64(0);
-		t->SetBit(t, int64_t(r - m - 1), 1);
+		t->SetBit(t, static_cast<int64_t>(r - m - 1), 1);
 		t->Exp(g, t, p_p);
 		// t = g^(2^(r-m-1)) mod p
 		g->Mul(t, t);
@@ -1172,13 +1173,13 @@ Error BigInt::ModSqrt(const Ref<BigInt> &p_x, const Ref<BigInt> &p_p) {
 	ERR_FAIL_NULL_V(*p_p, ERR_INVALID_PARAMETER);
 
 	switch (Jacobi(p_x, p_p)) {
-	case -1:
-		return ERR_PARAMETER_RANGE_ERROR; // x is not a square mod p
-	case 0:
-		SetUint64(0); // sqrt(0) mod p = 0
-		return OK;
-	case 1:
-		break;
+		case -1:
+			return ERR_PARAMETER_RANGE_ERROR; // x is not a square mod p
+		case 0:
+			SetUint64(0); // sqrt(0) mod p = 0
+			return OK;
+		case 1:
+			break;
 	}
 
 	Ref<BigInt> x = p_x;
@@ -1219,9 +1220,9 @@ void BigInt::Rsh(const Ref<BigInt> &p_x, uint64_t p_n) {
 
 	if (p_x->_neg) {
 		// (-x) >> s == ^(x-1) >> s == ^((x-1) >> s) == -(((x-1) >> s) + 1)
-		_abs.sub(p_x->_abs, BigNat{{1}}); // no underflow because |x| > 0
+		_abs.sub1(p_x->_abs); // no underflow because |x| > 0
 		_abs.rsh(_abs, p_n);
-		_abs.add(_abs, BigNat{{1}});
+		_abs.add1(_abs);
 		_neg = true; // z cannot be zero if x is negative
 		emit_changed();
 		return;
@@ -1240,18 +1241,18 @@ uint64_t BigInt::Bit(int64_t p_i) const {
 		if (_abs.array.is_empty()) {
 			return 0;
 		}
-		return uint64_t(_abs[0] & 1); // bit 0 is same for -x
+		return static_cast<uint64_t>(_abs[0] & 1); // bit 0 is same for -x
 	}
 
 	ERR_FAIL_COND_V_MSG(p_i < 0, 0, "negative bit index");
 
 	if (_neg) {
 		BigNat t;
-		t.sub(_abs, BigNat{{1}});
-		return t.bit(uint64_t(p_i)) ^ 1;
+		t.sub1(_abs);
+		return t.bit(static_cast<uint64_t>(p_i)) ^ 1;
 	}
 
-	return _abs.bit(uint64_t(p_i));
+	return _abs.bit(static_cast<uint64_t>(p_i));
 }
 
 // SetBit sets z to x, with x's i'th bit set to b (0 or 1).
@@ -1263,15 +1264,15 @@ void BigInt::SetBit(const Ref<BigInt> &p_x, int64_t p_i, uint64_t p_b) {
 	ERR_FAIL_COND_MSG(p_i < 0, "negative bit index");
 
 	if (p_x->_neg) {
-		_abs.sub(p_x->_abs, BigNat{{1}});
-		_abs.setBit(_abs, uint64_t(p_i), p_b ^ 1);
-		_abs.add(_abs, BigNat{{1}});
+		_abs.sub1(p_x->_abs);
+		_abs.setBit(_abs, static_cast<uint64_t>(p_i), p_b ^ 1);
+		_abs.add1(_abs);
 		_neg = !_abs.array.is_empty();
 		emit_changed();
 		return;
 	}
 
-	_abs.setBit(p_x->_abs, uint64_t(p_i), p_b);
+	_abs.setBit(p_x->_abs, static_cast<uint64_t>(p_i), p_b);
 	_neg = false;
 	emit_changed();
 }
@@ -1284,11 +1285,12 @@ void BigInt::And(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	if (p_x->_neg == p_y->_neg) {
 		if (p_x->_neg) {
 			// (-x) & (-y) == ^(x-1) & ^(y-1) == ^((x-1) | (y-1)) == -(((x-1) | (y-1)) + 1)
-			BigNat x1, y1;
-			x1.sub(p_x->_abs, BigNat{{1}});
-			y1.sub(p_y->_abs, BigNat{{1}});
+			BigNat x1;
+			BigNat y1;
+			x1.sub1(p_x->_abs);
+			y1.sub1(p_y->_abs);
 			_abs.or_(x1, y1);
-			_abs.add(_abs, BigNat{{1}});
+			_abs.add1(_abs);
 			_neg = true; // z cannot be zero if x and y are negative
 			emit_changed();
 			return;
@@ -1302,14 +1304,15 @@ void BigInt::And(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	}
 
 	// x.neg != y.neg
-	Ref<BigInt> x = p_x, y = p_y;
+	Ref<BigInt> x = p_x;
+	Ref<BigInt> y = p_y;
 	if (x->_neg) {
-		SWAP(x, y); // & is symmetric
+		std::swap(x, y); // & is symmetric
 	}
 
 	// x & (-y) == x & ^(y-1) == x &^ (y-1)
 	BigNat y1;
-	y1.sub(y->_abs, BigNat{{1}});
+	y1.sub1(y->_abs);
 	_abs.andNot(x->_abs, y1);
 	_neg = false;
 	emit_changed();
@@ -1323,9 +1326,10 @@ void BigInt::AndNot(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	if (p_x->_neg == p_y->_neg) {
 		if (p_x->_neg) {
 			// (-x) &^ (-y) == ^(x-1) &^ ^(y-1) == ^(x-1) & (y-1) == (y-1) &^ (x-1)
-			BigNat x1, y1;
-			x1.sub(p_x->_abs, BigNat{{1}});
-			y1.sub(p_y->_abs, BigNat{{1}});
+			BigNat x1;
+			BigNat y1;
+			x1.sub1(p_x->_abs);
+			y1.sub1(p_y->_abs);
 			_abs.andNot(y1, x1);
 			_neg = false;
 			emit_changed();
@@ -1342,9 +1346,9 @@ void BigInt::AndNot(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	if (p_x->_neg) {
 		// (-x) &^ y == ^(x-1) &^ y == ^(x-1) & ^y == ^((x-1) | y) == -(((x-1) | y) + 1)
 		BigNat x1;
-		x1.sub(p_x->_abs, BigNat{{1}});
+		x1.sub1(p_x->_abs);
 		_abs.or_(x1, p_y->_abs);
-		_abs.add(_abs, BigNat{{1}});
+		_abs.add1(_abs);
 		_neg = true; // z cannot be zero if x is negative and y is positive
 		emit_changed();
 		return;
@@ -1352,7 +1356,7 @@ void BigInt::AndNot(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 
 	// x &^ (-y) == x &^ ^(y-1) == x & (y-1)
 	BigNat y1;
-	y1.sub(p_y->_abs, BigNat{{1}});
+	y1.sub1(p_y->_abs);
 	_abs.and_(p_x->_abs, y1);
 	_neg = false;
 	emit_changed();
@@ -1366,11 +1370,12 @@ void BigInt::Or(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	if (p_x->_neg == p_y->_neg) {
 		if (p_x->_neg) {
 			// (-x) | (-y) == ^(x-1) | ^(y-1) == ^((x-1) & (y-1)) == -(((x-1) & (y-1)) + 1)
-			BigNat x1, y1;
-			x1.sub(p_x->_abs, BigNat{{1}});
-			y1.sub(p_y->_abs, BigNat{{1}});
+			BigNat x1;
+			BigNat y1;
+			x1.sub1(p_x->_abs);
+			y1.sub1(p_y->_abs);
 			_abs.and_(x1, y1);
-			_abs.add(_abs, BigNat{{1}});
+			_abs.add1(_abs);
 			_neg = true; // z cannot be zero if x and y are negative
 			emit_changed();
 			return;
@@ -1384,16 +1389,17 @@ void BigInt::Or(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	}
 
 	// x.neg != y.neg
-	Ref<BigInt> x = p_x, y = p_y;
+	Ref<BigInt> x = p_x;
+	Ref<BigInt> y = p_y;
 	if (x->_neg) {
-		SWAP(x, y); // | is symmetric
+		std::swap(x, y); // | is symmetric
 	}
 
 	// x | (-y) == x | ^(y-1) == ^((y-1) &^ x) == -(^((y-1) &^ x) + 1)
 	BigNat y1;
-	y1.sub(y->_abs, BigNat{{1}});
+	y1.sub1(y->_abs);
 	_abs.andNot(y1, p_x->_abs);
-	_abs.add(_abs, BigNat{{1}});
+	_abs.add1(_abs);
 	_neg = true; // z cannot be zero if one of x or y is negative
 	emit_changed();
 }
@@ -1406,9 +1412,10 @@ void BigInt::Xor(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	if (p_x->_neg == p_y->_neg) {
 		if (p_x->_neg) {
 			// (-x) ^ (-y) == ^(x-1) ^ ^(y-1) == (x-1) ^ (y-1)
-			BigNat x1, y1;
-			x1.sub(p_x->_abs, BigNat{{1}});
-			y1.sub(p_y->_abs, BigNat{{1}});
+			BigNat x1;
+			BigNat y1;
+			x1.sub1(p_x->_abs);
+			y1.sub1(p_y->_abs);
 			_abs.xor_(x1, y1);
 			_neg = false;
 			emit_changed();
@@ -1423,16 +1430,17 @@ void BigInt::Xor(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	}
 
 	// x.neg != y.neg
-	Ref<BigInt> x = p_x, y = p_y;
+	Ref<BigInt> x = p_x;
+	Ref<BigInt> y = p_y;
 	if (x->_neg) {
-		SWAP(x, y); // ^ is symmetric
+		std::swap(x, y); // ^ is symmetric
 	}
 
 	// x ^ (-y) == x ^ ^(y-1) == ^(x ^ (y-1)) == -((x ^ (y-1)) + 1)
 	BigNat y1;
-	y1.sub(y->_abs, BigNat{{1}});
+	y1.sub1(y->_abs);
 	_abs.xor_(x->_abs, y1);
-	_abs.add(_abs, BigNat{{1}});
+	_abs.add1(_abs);
 	_neg = true; // z cannot be zero if only one of x or y is negative
 	emit_changed();
 }
@@ -1443,11 +1451,11 @@ void BigInt::Not(const Ref<BigInt> &p_x) {
 
 	if (p_x->_neg) {
 		// ^(-x) == ^(^(x-1)) == x-1
-		_abs.sub(p_x->_abs, BigNat{{1}});
+		_abs.sub1(p_x->_abs);
 		_neg = false;
 	} else {
 		// ^x == -x-1 == -(x+1)
-		_abs.add(p_x->_abs, BigNat{{1}});
+		_abs.add1(p_x->_abs);
 		_neg = true; // z cannot be zero if x is positive
 	}
 

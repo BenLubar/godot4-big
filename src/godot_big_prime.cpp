@@ -44,9 +44,9 @@ bool BigInt::ProbablyPrime(int64_t p_n) const {
 	}
 
 	// primeBitMask records the primes < 64.
-	constexpr uint64_t primeBitMask = (1LLU<<2) | (1LLU<<3) | (1LLU<<5) | (1LLU<<7) |
-		(1LLU<<11) | (1LLU<<13) | (1LLU<<17) | (1LLU<<19) | (1LLU<<23) | (1LLU<<29) | (1LLU<<31) |
-		(1LLU<<37) | (1LLU<<41) | (1LLU<<43) | (1LLU<<47) | (1LLU<<53) | (1LLU<<59) | (1LLU<<61);
+	constexpr uint64_t primeBitMask = (1LLU << 2) | (1LLU << 3) | (1LLU << 5) | (1LLU << 7) |
+			(1LLU << 11) | (1LLU << 13) | (1LLU << 17) | (1LLU << 19) | (1LLU << 23) | (1LLU << 29) | (1LLU << 31) |
+			(1LLU << 37) | (1LLU << 41) | (1LLU << 43) | (1LLU << 47) | (1LLU << 53) | (1LLU << 59) | (1LLU << 61);
 
 	BigWord w = _abs[0];
 	if (_abs.array.size() == 1 && w < 64) {
@@ -61,11 +61,11 @@ bool BigInt::ProbablyPrime(int64_t p_n) const {
 	constexpr uint64_t primesB = 29LLU * 31LLU * 41LLU * 43LLU * 47LLU * 53LLU;
 
 	const BigWord r = _abs.modW(primesA * primesB);
-	uint32_t rA = uint32_t(r % primesA);
-	uint32_t rB = uint32_t(r % primesB);
+	uint32_t rA = static_cast<uint32_t>(r % primesA);
+	uint32_t rB = static_cast<uint32_t>(r % primesB);
 
-	if (rA%3 == 0 || rA%5 == 0 || rA%7 == 0 || rA%11 == 0 || rA%13 == 0 || rA%17 == 0 || rA%19 == 0 || rA%23 == 0 || rA%37 == 0 ||
-		rB%29 == 0 || rB%31 == 0 || rB%41 == 0 || rB%43 == 0 || rB%47 == 0 || rB%53 == 0) {
+	if (rA % 3 == 0 || rA % 5 == 0 || rA % 7 == 0 || rA % 11 == 0 || rA % 13 == 0 || rA % 17 == 0 || rA % 19 == 0 || rA % 23 == 0 || rA % 37 == 0 ||
+			rB % 29 == 0 || rB % 31 == 0 || rB % 41 == 0 || rB % 43 == 0 || rB % 47 == 0 || rB % 53 == 0) {
 		return false;
 	}
 
@@ -79,20 +79,21 @@ bool BigInt::ProbablyPrime(int64_t p_n) const {
 // The number n is known to be non-zero.
 bool BigNat::probablyPrimeMillerRabin(int64_t p_reps, bool p_force2) const {
 	BigNat nm1;
-	nm1.sub(*this, BigNat{{1}});
+	nm1.sub1(*this);
 	// determine q, k such that nm1 = q << k
 	uint64_t k = nm1.trailingZeroBits();
 	BigNat q;
 	q.rsh(nm1, k);
 
 	BigNat nm3;
-	nm3.sub(nm1, BigNat{{2}});
+	nm3.sub(nm1, BigNat{ { 2 } });
 
-	Ref<RandomNumberGenerator> rand;
-	rand.instantiate();
+	Ref<RandomNumberGenerator> rand{ memnew(RandomNumberGenerator) };
 	rand->set_seed(VariantHasher::hash(array));
 
-	BigNat x, y, quotient;
+	BigNat x;
+	BigNat y;
+	BigNat quotient;
 	int64_t nm3Len = nm3.bitLen();
 
 	for (int64_t i = 0; i < p_reps; i++) {
@@ -100,11 +101,11 @@ bool BigNat::probablyPrimeMillerRabin(int64_t p_reps, bool p_force2) const {
 			x.setUint64(2);
 		} else {
 			x.random([rand]() -> uint32_t { return rand->randi(); }, nm3, nm3Len);
-			x.add(x, BigNat{{2}});
+			x.add(x, BigNat{ { 2 } });
 		}
 
 		y.expNN(x, q, *this, false);
-		if (y.cmp(BigNat{{1}}) == 0 || y.cmp(nm1) == 0) {
+		if (y.cmp1() == 0 || y.cmp(nm1) == 0) {
 			continue;
 		}
 
@@ -116,14 +117,13 @@ bool BigNat::probablyPrimeMillerRabin(int64_t p_reps, bool p_force2) const {
 				goto NextRandom;
 			}
 
-			if (y.cmp(BigNat{{1}}) == 0) {
+			if (y.cmp1() == 0) {
 				return false;
 			}
 		}
 
 		return false;
-NextRandom:
-		;
+	NextRandom:;
 	}
 
 	return true;
@@ -155,14 +155,14 @@ NextRandom:
 // Springer, 2005.
 bool BigNat::probablyPrimeLucas() const {
 	// Discard 0, 1.
-	if (cmp(BigNat{{1}}) <= 0) {
+	if (cmp(BigNat{ { 1 } }) <= 0) {
 		return false;
 	}
 
 	// Two is the only even prime.
 	// Already checked by caller, but here to allow testing in isolation.
 	if ((array[0] & 1) == 0) {
-		return cmp(BigNat{{2}}) == 0;
+		return cmp(BigNat{ { 2 } }) == 0;
 	}
 
 	// Baillie-OEIS "method C" for choosing D, P, Q,
@@ -174,17 +174,17 @@ bool BigNat::probablyPrimeLucas() const {
 	// (which would cause Jacobi(D, n) = 1 for all D not dividing n).
 	BigWord p = 3;
 	BigNat t1; // temp
-	Ref<BigInt> intD, intN;
-	intD.instantiate();
-	intD->_abs = BigNat{{1}};
-	intN.instantiate();
+	Ref<BigInt> intN{ memnew(BigInt) };
+	Ref<BigInt> intD{ memnew(BigInt) };
 	intN->_abs = *this;
+	intD->SetUint64(1);
+	BigNat &n = intN->_abs;
 	BigNat &d = intD->_abs;
-	for (; ; p++) {
+	for (;; p++) {
 		// This is widely believed to be impossible.
 		// If we get a report, we'll want the exact number n.
 		CRASH_COND_MSG(p > 10000, "math/big: internal error: cannot find (D/n) = -1 for " + intN->String());
-		d[0] = p * p - 4;
+		d[0] = (p * p) - 4;
 		int j = BigInt::Jacobi(intD, intN);
 		if (j == -1) {
 			break;
@@ -203,9 +203,9 @@ bool BigNat::probablyPrimeLucas() const {
 			// We'll never find (d/n) = -1 if n is a square.
 			// If n is a non-square we expect to find a d in just a few attempts on average.
 			// After 40 attempts, take a moment to check if n is indeed a square.
-			t1.sqrt(*this);
+			t1.sqrt(n);
 			t1.sqr(t1);
-			if (t1.cmp(*this) == 0) {
+			if (t1.cmp(n) == 0) {
 				return false;
 			}
 		}
@@ -223,11 +223,12 @@ bool BigNat::probablyPrimeLucas() const {
 	// We know gcd(n, 2) = 1 because n is odd.
 	//
 	// Arrange s = (n - Jacobi(Δ, n)) / 2^r = (n+1) / 2^r.
-	BigNat s, nm2;
-	s.add(*this, BigNat{{1}});
+	BigNat s;
+	BigNat nm2;
+	s.add1(n);
 	int64_t r = s.trailingZeroBits();
-	s.rsh(s, uint64_t(r));
-	nm2.sub(*this, BigNat{{2}}); // n-2
+	s.rsh(s, static_cast<uint64_t>(r));
+	nm2.sub(n, BigNat{ { 2 } }); // n-2
 
 	// We apply the "almost extra strong" test, which checks the above conditions
 	// except for U_s ≡ 0 mod n, which allows us to avoid computing any U_k values.
@@ -257,38 +258,41 @@ bool BigNat::probablyPrimeLucas() const {
 	//	V(2k+1) = V(k) V(k+1) - P
 	//
 	// We can therefore start with k=0 and build up to k=s in log₂(s) steps.
-	BigNat natP, vk, vk1, t2;
+	BigNat natP;
+	BigNat vk;
+	BigNat vk1;
+	BigNat t2;
 	natP.setUint64(p);
 	vk.setUint64(2);
 	vk1.setUint64(p);
 	for (int64_t i = s.bitLen(); i >= 0; i--) {
-		if (s.bit(uint64_t(i)) != 0) {
+		if (s.bit(static_cast<uint64_t>(i)) != 0) {
 			// k' = 2k+1
 			// V(k') = V(2k+1) = V(k) V(k+1) - P.
 			t1.mul(vk, vk1);
-			t1.add(t1, *this);
+			t1.add(t1, n);
 			t1.sub(t1, natP);
-			t2.div(vk, t1, *this);
+			t2.div(vk, t1, n);
 			// V(k'+1) = V(2k+2) = V(k+1)² - 2.
 			t1.sqr(vk1);
 			t1.add(t1, nm2);
-			t2.div(vk1, t1, *this);
+			t2.div(vk1, t1, n);
 		} else {
 			// k' = 2k
 			// V(k'+1) = V(2k+1) = V(k) V(k+1) - P.
 			t1.mul(vk, vk1);
-			t1.add(t1, *this);
+			t1.add(t1, n);
 			t1.sub(t1, natP);
-			t2.div(vk1, t1, *this);
+			t2.div(vk1, t1, n);
 			// V(k') = V(2k) = V(k)² - 2
 			t1.sqr(vk);
 			t1.add(t1, nm2);
-			t2.div(vk, t1, *this);
+			t2.div(vk, t1, n);
 		}
 	}
 
 	// Now k=s, so vk = V(s). Check V(s) ≡ ±2 (mod n).
-	if (vk.cmp(BigNat{{2}}) == 0 || vk.cmp(nm2) == 0) {
+	if (vk.cmp(BigNat{ { 2 } }) == 0 || vk.cmp(nm2) == 0) {
 		// Check U(s) ≡ 0.
 		// As suggested by Jacobsen, apply Crandall and Pomerance equation 3.13:
 		//
@@ -299,7 +303,7 @@ bool BigNat::probablyPrimeLucas() const {
 		t1.mul(vk, natP);
 		t2.lsh(vk1, 1);
 		if (t1.cmp(t2) < 0) {
-			SWAP(t1, t2);
+			std::swap(t1, t2);
 		}
 		t1.sub(t1, t2);
 		BigNat &t3 = vk1; // steal vk1, no longer needed below
@@ -322,7 +326,7 @@ bool BigNat::probablyPrimeLucas() const {
 		// k' = 2k
 		// V(k') = V(2k) = V(k)² - 2
 		t1.sqr(vk);
-		t1.sub(t1, BigNat{{2}});
+		t1.sub(t1, BigNat{ { 2 } });
 		t2.div(vk, t1, *this);
 	}
 

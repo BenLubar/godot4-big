@@ -5,8 +5,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-#include "godot_big_naturals.h"
 #include "godot_big_int.h"
+#include "godot_big_naturals.h"
 
 using namespace godot;
 
@@ -20,12 +20,12 @@ static constexpr int64_t karatsubaThreshold = 40; // see calibrate_test.go
 // Operands that are shorter than basicSqrThreshold are squared using
 // "grade school" multiplication; for operands longer than karatsubaSqrThreshold
 // we use the Karatsuba algorithm optimized for x == y.
-static constexpr int64_t basicSqrThreshold = 12;     // see calibrate_test.go
+static constexpr int64_t basicSqrThreshold = 12; // see calibrate_test.go
 static constexpr int64_t karatsubaSqrThreshold = 80; // see calibrate_test.go
 
 // mul sets z = x*y, using stk for temporary storage.
 // The caller may pass stk == nil to request that mul obtain and release one itself.
-void BigNat::mul(BigNat p_x, BigNat p_y) {
+void BigNat::mul(BigNat p_x, BigNat p_y) { // NOLINT(performance-unnecessary-value-param)
 	const int64_t m = p_x.array.size();
 	const int64_t n = p_y.array.size();
 
@@ -56,13 +56,13 @@ void BigNat::mul(BigNat p_x, BigNat p_y) {
 	// Let x = x1:x0 where x0 is the same length as y.
 	// Compute z = x0*y and then add in x1*y in sections
 	// if needed.
-	karatsuba(*this, BigNat{p_x.array.slice(0, n)}, p_y);
+	karatsuba(*this, BigNat{ p_x.array.slice(0, n) }, p_y);
 
 	if (n < m) {
 		array.resize(m + n);
 		BigNat t;
 		for (int64_t i = n; i < m; i += n) {
-			t.mul(BigNat{p_x.array.slice(i, Math::min(i + n, p_x.array.size()))}, p_y);
+			t.mul(BigNat{ p_x.array.slice(i, Math::min(i + n, p_x.array.size())) }, p_y);
 			addTo(*this, i, t);
 		}
 	}
@@ -120,24 +120,24 @@ void BigNat::basicSqr(BigNat &z, BigNat x) {
 	for (int64_t i = 1; i < n; i++) {
 		const BigWord d = x[i];
 		// z collects the squares x[i] * x[i]
-		mulWW(d, d, z[2 * i + 1], z[2 * i]);
+		mulWW(d, d, z[(2 * i) + 1], z[2 * i]);
 		// t collects the products x[i] * x[j] where j < i
-		BigNat tempt{t.array.slice(i, 2 * i)};
-		t[2 * i] = addMulVVWW(tempt, tempt, BigNat{x.array.slice(0, i)}, d, 0);
+		BigNat tempt{ t.array.slice(i, 2 * i) };
+		t[2 * i] = addMulVVWW(tempt, tempt, BigNat{ x.array.slice(0, i) }, d, 0);
 		for (int64_t j = 0; j < i; j++) {
 			t[i + j] = tempt[j];
 		}
 	}
-	BigNat tempt{t.array.slice(1, 2 * n - 1)};
-	t[2 * n - 1] = lshVU(tempt, tempt, 1); // double the j < i products
-	for (int64_t j = 0; j < 2 * n - 2; j++) {
+	BigNat tempt{ t.array.slice(1, (2 * n) - 1) };
+	t[(2 * n) - 1] = lshVU(tempt, tempt, 1); // double the j < i products
+	for (int64_t j = 0; j < (2 * n) - 2; j++) {
 		t[1 + j] = tempt[j];
 	}
 	addVV(z, z, t); // combine the result
 }
 
 // mulAddWW returns z = x*y + r.
-void BigNat::mulAddWW(BigNat p_x, BigWord p_y, BigWord p_r) {
+void BigNat::mulAddWW(BigNat p_x, BigWord p_y, BigWord p_r) { // NOLINT(performance-unnecessary-value-param)
 	int64_t m = p_x.array.size();
 	if (m == 0 || p_y == 0) {
 		setUint64(p_r); // result is r
@@ -153,14 +153,14 @@ void BigNat::mulAddWW(BigNat p_x, BigWord p_y, BigWord p_r) {
 
 // basicMul multiplies x and y and leaves the result in z.
 // The (non-normalized) result is placed in z[0 : len(x) + len(y)].
-void BigNat::basicMul(BigNat &z, BigNat x, BigNat y) {
+void BigNat::basicMul(BigNat &z, BigNat x, BigNat y) { // NOLINT(performance-unnecessary-value-param)
 	for (int64_t i = 0; i < x.array.size() + y.array.size(); i++) {
 		z[i] = 0; // initialize z
 	}
 	for (int64_t i = 0; i < y.array.size(); i++) {
 		const BigWord d = y[i];
 		if (d != 0) {
-			BigNat tempz{z.array.slice(i, i + x.array.size())};
+			BigNat tempz{ z.array.slice(i, i + x.array.size()) };
 			z[x.array.size() + i] = addMulVVWW(tempz, tempz, x, d, 0);
 			for (int64_t j = 0; j < x.array.size(); j++) {
 				z[i + j] = tempz[j];
@@ -208,7 +208,7 @@ static void trace(const String &name, const Ref<BigInt> &x) {
 // writing the (non-normalized) result to z.
 // x and y must have the same length n,
 // and z must have length twice that.
-void BigNat::karatsuba(BigNat &z, BigNat x, BigNat y) {
+void BigNat::karatsuba(BigNat &z, BigNat x, BigNat y) { // NOLINT(performance-unnecessary-value-param)
 	const int64_t n = y.array.size();
 	CRASH_COND(x.array.size() != n || z.array.size() != 2 * n);
 
@@ -239,16 +239,15 @@ void BigNat::karatsuba(BigNat &z, BigNat x, BigNat y) {
 	//	z1 = (x0-x1)*(y1-y0) + z0 + z2
 
 	const int64_t n2 = (n + 1) / 2;
-	Ref<BigInt> x0, x1, y0, y1, z0, z1, z2, tx, ty;
-	x0.instantiate();
-	x1.instantiate();
-	y0.instantiate();
-	y1.instantiate();
-	z0.instantiate();
-	z1.instantiate();
-	z2.instantiate();
-	tx.instantiate();
-	ty.instantiate();
+	Ref<BigInt> x0{ memnew(BigInt) };
+	Ref<BigInt> x1{ memnew(BigInt) };
+	Ref<BigInt> y0{ memnew(BigInt) };
+	Ref<BigInt> y1{ memnew(BigInt) };
+	Ref<BigInt> z0{ memnew(BigInt) };
+	Ref<BigInt> z1{ memnew(BigInt) };
+	Ref<BigInt> z2{ memnew(BigInt) };
+	Ref<BigInt> tx{ memnew(BigInt) };
+	Ref<BigInt> ty{ memnew(BigInt) };
 
 	x0->_abs.array = x.array.slice(0, n2);
 	x0->_abs.norm();
@@ -307,7 +306,7 @@ void BigNat::karatsuba(BigNat &z, BigNat x, BigNat y) {
 // z must have length 2*len(x).
 // It is analogous to [karatsuba] but can run faster
 // knowing both multiplicands are the same value.
-void BigNat::karatsubaSqr(BigNat &z, BigNat x) {
+void BigNat::karatsubaSqr(BigNat &z, BigNat x) { // NOLINT(performance-unnecessary-value-param)
 	const int64_t n = x.array.size();
 	CRASH_COND(z.array.size() != 2 * n);
 
@@ -334,13 +333,12 @@ void BigNat::karatsubaSqr(BigNat &z, BigNat x) {
 	//	z1 = z0 + z2 - (x0-x1)²
 
 	const int64_t n2 = (n + 1) / 2;
-	Ref<BigInt> x0, x1, z0, z1, z2, tx;
-	x0.instantiate();
-	x1.instantiate();
-	z0.instantiate();
-	z1.instantiate();
-	z2.instantiate();
-	tx.instantiate();
+	Ref<BigInt> x0{ memnew(BigInt) };
+	Ref<BigInt> x1{ memnew(BigInt) };
+	Ref<BigInt> z0{ memnew(BigInt) };
+	Ref<BigInt> z1{ memnew(BigInt) };
+	Ref<BigInt> z2{ memnew(BigInt) };
+	Ref<BigInt> tx{ memnew(BigInt) };
 
 	x0->_abs.array = x.array.slice(0, n2);
 	x0->_abs.norm();

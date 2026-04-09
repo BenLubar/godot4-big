@@ -9,8 +9,8 @@
 // It is closely following the corresponding implementation
 // in strconv/ftoa.go, but modified and simplified for Float.
 
-#include "godot_big_float.h"
 #include "godot_big_decimal.h"
+#include "godot_big_float.h"
 
 using namespace godot;
 
@@ -63,20 +63,20 @@ String BigFloat::String(Format p_format, int64_t p_prec) const {
 		if (!_neg) {
 			buf.append('+');
 		}
-		buf.append_array({'I', 'n', 'f'});
+		buf.append_array({ 'I', 'n', 'f' });
 		return buf.get_string_from_ascii();
 	}
 
 	// pick off easy formats
 	switch (p_format) {
-	case FORMAT_DECIMAL:
-		return _fmtB(buf);
-	case FORMAT_HEX_NORMAL:
-		return _fmtP(buf);
-	case FORMAT_HEX:
-		return _fmtX(buf, p_prec);
-	default:
-		break;
+		case FORMAT_DECIMAL:
+			return _fmtB(buf);
+		case FORMAT_HEX_NORMAL:
+			return _fmtP(buf);
+		case FORMAT_HEX:
+			return _fmtX(buf, p_prec);
+		default:
+			break;
 	}
 
 	// Algorithm:
@@ -88,7 +88,7 @@ String BigFloat::String(Format p_format, int64_t p_prec) const {
 	BigDecimal d; // == 0.0
 	if (_form == FORM_FINITE) {
 		// x != 0
-		d.init(_mant, int64_t(_exp) - _mant.bitLen());
+		d.init(_mant, static_cast<int64_t>(_exp) - _mant.bitLen());
 	}
 
 	// 2) round to desired precision
@@ -98,81 +98,80 @@ String BigFloat::String(Format p_format, int64_t p_prec) const {
 		d.roundShortest(this);
 		// Precision for shortest representation mode.
 		switch (p_format) {
-		case FORMAT_SCIENTIFIC:
-		case FORMAT_SCIENTIFIC_UPPER:
-			p_prec = d.mant.size() - 1;
-			break;
-		case FORMAT_PLAIN:
-			p_prec = MAX(d.mant.size() - d.exp, 0);
-			break;
-		case FORMAT_AUTO:
-		case FORMAT_AUTO_UPPER:
-			p_prec = d.mant.size();
-			break;
-		default:
-			break;
+			case FORMAT_SCIENTIFIC:
+			case FORMAT_SCIENTIFIC_UPPER:
+				p_prec = d.mant.size() - 1;
+				break;
+			case FORMAT_PLAIN:
+				p_prec = MAX(d.mant.size() - d.exp, 0);
+				break;
+			case FORMAT_AUTO:
+			case FORMAT_AUTO_UPPER:
+				p_prec = d.mant.size();
+				break;
+			default:
+				break;
 		}
 	} else {
 		// round appropriately
 		switch (p_format) {
-		case FORMAT_SCIENTIFIC:
-		case FORMAT_SCIENTIFIC_UPPER:
-			// one digit before and number of digits after decimal point
-			d.round(1 + p_prec);
-			break;
-		case FORMAT_PLAIN:
-			// number of digits before and after decimal point
-			d.round(d.exp + p_prec);
-			break;
-		case FORMAT_AUTO:
-		case FORMAT_AUTO_UPPER:
-			if (p_prec == 0) {
-				p_prec = 1;
-			}
-			d.round(p_prec);
-			break;
-		default:
-			break;
+			case FORMAT_SCIENTIFIC:
+			case FORMAT_SCIENTIFIC_UPPER:
+				// one digit before and number of digits after decimal point
+				d.round(1 + p_prec);
+				break;
+			case FORMAT_PLAIN:
+				// number of digits before and after decimal point
+				d.round(d.exp + p_prec);
+				break;
+			case FORMAT_AUTO:
+			case FORMAT_AUTO_UPPER:
+				if (p_prec == 0) {
+					p_prec = 1;
+				}
+				d.round(p_prec);
+				break;
+			default:
+				break;
 		}
 	}
 
 	// 3) read digits out and format
 	switch (p_format) {
-	case FORMAT_SCIENTIFIC:
-	case FORMAT_SCIENTIFIC_UPPER:
-		return _fmtE(buf, p_format, p_prec, d);
-	case FORMAT_PLAIN:
-		return _fmtF(buf, p_prec, d);
-	case FORMAT_AUTO:
-	case FORMAT_AUTO_UPPER:
-	{
-		// trim trailing fractional zeros in %e format
-		int64_t eprec = p_prec;
-		if (eprec > d.mant.size() && d.mant.size() >= d.exp) {
-			eprec = d.mant.size();
-		}
+		case FORMAT_SCIENTIFIC:
+		case FORMAT_SCIENTIFIC_UPPER:
+			return _fmtE(buf, p_format, p_prec, d);
+		case FORMAT_PLAIN:
+			return _fmtF(buf, p_prec, d);
+		case FORMAT_AUTO:
+		case FORMAT_AUTO_UPPER: {
+			// trim trailing fractional zeros in %e format
+			int64_t eprec = p_prec;
+			if (eprec > d.mant.size() && d.mant.size() >= d.exp) {
+				eprec = d.mant.size();
+			}
 
-		// %e is used if the exponent from the conversion
-		// is less than -4 or greater than or equal to the precision.
-		// If precision was the shortest possible, use eprec = 6 for
-		// this decision.
-		if (shortest) {
-			eprec = 6;
-		}
+			// %e is used if the exponent from the conversion
+			// is less than -4 or greater than or equal to the precision.
+			// If precision was the shortest possible, use eprec = 6 for
+			// this decision.
+			if (shortest) {
+				eprec = 6;
+			}
 
-		const int64_t exp = d.exp - 1;
-		if (exp < -4 || exp >= eprec) {
-			return _fmtE(buf, static_cast<Format>(p_format + 'e' - 'g'), MIN(p_prec, d.mant.size()) - 1, d);
-		}
+			const int64_t exp = d.exp - 1;
+			if (exp < -4 || exp >= eprec) {
+				return _fmtE(buf, static_cast<Format>(p_format + 'e' - 'g'), MIN(p_prec, d.mant.size()) - 1, d);
+			}
 
-		if (p_prec > d.exp) {
-			p_prec = d.mant.size();
-		}
+			if (p_prec > d.exp) {
+				p_prec = d.mant.size();
+			}
 
-		return _fmtF(buf, MAX(p_prec - d.exp, 0), d);
-	}
-	default:
-		ERR_FAIL_V_MSG(vformat("%%%c", p_format), "unknown format");
+			return _fmtF(buf, MAX(p_prec - d.exp, 0), d);
+		}
+		default:
+			ERR_FAIL_V_MSG(vformat("%%%c", p_format), "unknown format");
 	}
 }
 
@@ -196,11 +195,11 @@ void BigDecimal::roundShortest(const BigFloat *p_x) {
 	BigNat m;
 	m.set(p_x->_mant);
 	int64_t exp = int64_t(p_x->_exp) - m.bitLen();
-	int64_t s = m.bitLen() - int(p_x->_prec + 1);
+	int64_t s = m.bitLen() - static_cast<int64_t>(p_x->_prec + 1);
 	if (s < 0) {
-		m.lsh(m, uint64_t(-s));
+		m.lsh(m, static_cast<uint64_t>(-s));
 	} else if (s > 0) {
-		m.rsh(m, uint64_t(+s));
+		m.rsh(m, static_cast<uint64_t>(+s));
 	}
 	exp += s;
 	// x = mant * 2**exp with lsb(mant) == 1/2 ulp of x.prec
@@ -208,12 +207,12 @@ void BigDecimal::roundShortest(const BigFloat *p_x) {
 	// 2) Compute lower bound by subtracting 1/2 ulp.
 	BigDecimal lower;
 	BigNat tmp;
-	tmp.sub(m, BigNat{{1}});
+	tmp.sub1(m);
 	lower.init(tmp, exp);
 
 	// 3) Compute upper bound by adding 1/2 ulp.
 	BigDecimal upper;
-	tmp.add(m, BigNat{{1}});
+	tmp.add1(m);
 	upper.init(tmp, exp);
 
 	// The upper and lower bounds are possible outputs only if
@@ -257,7 +256,7 @@ void BigDecimal::roundShortest(const BigFloat *p_x) {
 }
 
 // %e: d.ddddde±dd
-String BigFloat::_fmtE(PackedByteArray &buf, Format fmt, int64_t prec, BigDecimal &d) const {
+String BigFloat::_fmtE(PackedByteArray &buf, Format fmt, int64_t prec, BigDecimal &d) {
 	// first digit
 	char ch = '0';
 	if (!d.mant.is_empty()) {
@@ -302,7 +301,7 @@ String BigFloat::_fmtE(PackedByteArray &buf, Format fmt, int64_t prec, BigDecima
 }
 
 // %f: ddddddd.ddddd
-String BigFloat::_fmtF(PackedByteArray &buf, int64_t prec, BigDecimal &d) const {
+String BigFloat::_fmtF(PackedByteArray &buf, int64_t prec, BigDecimal &d) {
 	// integer, padded with zeros as needed
 	if (d.exp > 0) {
 		int64_t m = Math::min(d.mant.size(), d.exp);
@@ -343,7 +342,7 @@ String BigFloat::_fmtB(PackedByteArray &buf) const {
 
 	// adjust mantissa to use exactly x.prec bits
 	BigNat m = _mant;
-	uint32_t w = uint32_t(m.array.size() * 64);
+	uint32_t w = static_cast<uint32_t>(m.array.size() * 64);
 	if (w < _prec) {
 		m.lsh(m, _prec - w);
 	} else if (w > _prec) {
@@ -352,7 +351,7 @@ String BigFloat::_fmtB(PackedByteArray &buf) const {
 
 	buf.append_array(m.utoa(10).to_ascii_buffer());
 	buf.append('p');
-	int64_t e = int64_t(_exp) - int64_t(_prec);
+	int64_t e = static_cast<int64_t>(_exp) - static_cast<int64_t>(_prec);
 	if (e >= 0) {
 		buf.append('+');
 	}
@@ -367,14 +366,14 @@ String BigFloat::_fmtB(PackedByteArray &buf) const {
 // (The caller handles Inf before invoking fmtX.)
 String BigFloat::_fmtX(PackedByteArray &buf, int64_t prec) const {
 	if (_form == FORM_ZERO) {
-		buf.append_array({'0', 'x', '0'});
+		buf.append_array({ '0', 'x', '0' });
 		if (prec > 0) {
 			buf.append('.');
 			for (int64_t i = 0; i < prec; i++) {
 				buf.append('0');
 			}
 		}
-		buf.append_array({'p', '+', '0', '0'});
+		buf.append_array({ 'p', '+', '0', '0' });
 		return buf.get_string_from_ascii();
 	}
 
@@ -383,13 +382,12 @@ String BigFloat::_fmtX(PackedByteArray &buf, int64_t prec) const {
 	// round mantissa to n bits
 	uint64_t n = 0;
 	if (prec < 0) {
-		n = 1 + (MinPrec() - 1 + 3) / 4 * 4; // round MinPrec up to 1 mod 4
+		n = 1 + ((MinPrec() - 1 + 3) / 4 * 4); // round MinPrec up to 1 mod 4
 	} else {
-		n = 1 + 4*uint64_t(prec);
+		n = 1 + (4 * static_cast<uint64_t>(prec));
 	}
 	// n%4 == 1
-	Ref<BigFloat> x;
-	x.instantiate();
+	Ref<BigFloat> x{ memnew(BigFloat) };
 	x->SetPrec(n);
 	x->SetMode(_mode);
 	x->Set(const_cast<BigFloat *>(this));
@@ -402,11 +400,11 @@ String BigFloat::_fmtX(PackedByteArray &buf, int64_t prec) const {
 	} else if (w > n) {
 		m.rsh(m, w - n);
 	}
-	int64_t exp64 = int64_t(_exp) - 1; // avoid wrap-around
+	int64_t exp64 = static_cast<int64_t>(_exp) - 1; // avoid wrap-around
 
 	const godot::String hm = m.utoa(16);
 	DEV_ASSERT(hm[0] == '1');
-	buf.append_array({'0', 'x', '1'});
+	buf.append_array({ '0', 'x', '1' });
 	if (hm.length() > 1) {
 		buf.append('.');
 		buf.append_array(hm.substr(1).to_ascii_buffer());
@@ -450,7 +448,7 @@ String BigFloat::_fmtP(PackedByteArray &buf) const {
 	}
 	m.array = m.array.slice(i);
 
-	buf.append_array({'0', 'x', '.'});
+	buf.append_array({ '0', 'x', '.' });
 	buf.append_array(m.utoa(16).rstrip("0").to_ascii_buffer());
 	buf.append('p');
 	if (_exp >= 0) {

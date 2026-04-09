@@ -7,8 +7,8 @@
 
 // This file implements rat-to-string conversion functions.
 
-#include "godot_big_rat.h"
 #include "godot_big_int.h"
+#include "godot_big_rat.h"
 
 using namespace godot;
 
@@ -37,9 +37,8 @@ Error BigRat::SetString(const godot::String &p_s) {
 	// parse fraction a/b, if any
 	int64_t sep = p_s.find("/");
 	if (sep >= 0) {
-		Ref<BigInt> n, d;
-		n.instantiate();
-		d.instantiate();
+		Ref<BigInt> n{ memnew(BigInt) };
+		Ref<BigInt> d{ memnew(BigInt) };
 
 		Error err = n->SetString(p_s.substr(0, sep), 0);
 		if (err != OK) {
@@ -109,40 +108,41 @@ Error BigRat::SetString(const godot::String &p_s) {
 	// on the actual floating-point value.
 
 	// determine binary or decimal exponent contribution of radix point
-	int64_t exp2 = 0, exp5 = 0;
+	int64_t exp2 = 0;
+	int64_t exp5 = 0;
 	if (fcount < 0) {
 		// The mantissa has a radix point ddd.dddd; and
 		// -fcount is the number of digits to the right
 		// of '.'. Adjust relevant exponent accordingly.
 		switch (base) {
-		case 10:
-			exp5 = fcount;
-			[[fallthrough]]; // 10**e == 5**e * 2**e
-		case 2:
-			exp2 = fcount;
-			break;
-		case 8:
-			exp2 = fcount * 3; // octal digits are 3 bits each
-			break;
-		case 16:
-			exp2 = fcount * 4; // hexadecimal digits are 4 bits each
-			break;
-		default:
-			CRASH_NOW_MSG("unexpected mantissa base");
+			case 10:
+				exp5 = fcount;
+				[[fallthrough]]; // 10**e == 5**e * 2**e
+			case 2:
+				exp2 = fcount;
+				break;
+			case 8:
+				exp2 = fcount * 3; // octal digits are 3 bits each
+				break;
+			case 16:
+				exp2 = fcount * 4; // hexadecimal digits are 4 bits each
+				break;
+			default:
+				CRASH_NOW_MSG("unexpected mantissa base");
 		}
 		// fcount consumed - not needed anymore
 	}
 
 	// take actual exponent into account
 	switch (ebase) {
-	case 10:
-		exp5 += exp;
-		[[fallthrough]]; // see fallthrough above
-	case 2:
-		exp2 += exp;
-		break;
-	default:
-		CRASH_NOW_MSG("unexpected exponent base");
+		case 10:
+			exp5 += exp;
+			[[fallthrough]]; // see fallthrough above
+		case 2:
+			exp2 += exp;
+			break;
+		default:
+			CRASH_NOW_MSG("unexpected exponent base");
 	}
 	// exp consumed - not needed anymore
 
@@ -211,21 +211,21 @@ Error BigNat::scanExponent(const String &s, int64_t &off, bool base2ok, bool sep
 
 	// exponent char
 	switch (s[off]) {
-	case 'e':
-	case 'E':
-		base = 10;
-		break;
-	case 'p':
-	case 'P':
-		if (base2ok) {
-			base = 2;
-			break; // ok
-		}
-		[[fallthrough]]; // binary exponent not permitted
-	default:
-		exp = 0;
-		base = 10;
-		return OK;
+		case 'e':
+		case 'E':
+			base = 10;
+			break;
+		case 'p':
+		case 'P':
+			if (base2ok) {
+				base = 2;
+				break; // ok
+			}
+			[[fallthrough]]; // binary exponent not permitted
+		default:
+			exp = 0;
+			base = 10;
+			return OK;
 	}
 
 	off++;
@@ -308,10 +308,12 @@ String BigRat::FloatString(int64_t p_prec) const {
 	}
 	// x.b.abs != 0
 
-	BigNat q, r, r2;
+	BigNat q;
+	BigNat r;
+	BigNat r2;
 	q.div(r, _a, _b);
 
-	BigNat p{{1}};
+	BigNat p{ { 1 } };
 	if (p_prec > 0) {
 		p.expWW(10, p_prec);
 	}
@@ -322,9 +324,9 @@ String BigRat::FloatString(int64_t p_prec) const {
 	// see if we need to round up
 	r2.lsh(r2, 1);
 	if (_b.cmp(r2) <= 0) {
-		r.add(r, BigNat{{1}});
+		r.add1(r);
 		if (r.cmp(p) >= 0) {
-			q.add(q, BigNat{{1}});
+			q.add1(q);
 			r.sub(r, p);
 		}
 	}
@@ -387,9 +389,10 @@ Pair<int64_t, bool> BigRat::FloatPrec() const {
 	// divide q anymore. Then use the table to determine
 	// the power of 5 in q.
 	constexpr uint64_t fp = 13; // f == 5^fp
-	LocalVector<BigNat> tab;   // tab[i] == (5^fp)^(2^i) == 5^(fp·2^i)
-	BigNat f{{1220703125}};    // == 5^fp (must fit into a uint32 Word)
-	BigNat t, r;               // temporaries
+	LocalVector<BigNat> tab; // tab[i] == (5^fp)^(2^i) == 5^(fp·2^i)
+	BigNat f{ { 1220703125 } }; // == 5^fp (must fit into a uint32 Word)
+	BigNat t;
+	BigNat r; // temporaries
 	while (true) {
 		t.div(r, q, f);
 		if (!r.array.is_empty()) {
@@ -407,7 +410,7 @@ Pair<int64_t, bool> BigRat::FloatPrec() const {
 	// how f was chosen in the first place.
 	// The same reasoning applies to the subsequent factors.
 	uint64_t p5 = 0;
-	for (int64_t i = int64_t(tab.size()) - 1; i >= 0; i--) {
+	for (int64_t i = tab.size() - 1; i >= 0; i--) {
 		t.div(r, q, tab[i]);
 		if (r.array.is_empty()) {
 			p5 += fp * (1LLU << i); // tab[i] == 5^(fp·2^i)
@@ -417,7 +420,7 @@ Pair<int64_t, bool> BigRat::FloatPrec() const {
 
 	// If fp != 1, we may still have multiples of 5 left.
 	while (true) {
-		t.div(r, q, BigNat{{5}});
+		t.div(r, q, BigNat{ { 5 } });
 		if (!r.array.is_empty()) {
 			break;
 		}
@@ -425,5 +428,5 @@ Pair<int64_t, bool> BigRat::FloatPrec() const {
 		q.set(t);
 	}
 
-	return {int64_t(Math::max(p2, p5)), q.cmp(BigNat{{1}}) == 0};
+	return { static_cast<int64_t>(Math::max(p2, p5)), q.cmp1() == 0 };
 }

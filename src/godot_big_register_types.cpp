@@ -1,12 +1,13 @@
-#include <gdextension_interface.h>
+#include "godot_big_register_types.h"
+
+#include "godot_big_float.h"
+#include "godot_big_int.h"
+#include "godot_big_rat.h"
 
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/defs.hpp>
 
-#include "godot_big_register_types.h"
-#include "godot_big_int.h"
-#include "godot_big_rat.h"
-#include "godot_big_float.h"
+#include <gdextension_interface.h>
 
 using namespace godot;
 

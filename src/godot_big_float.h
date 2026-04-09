@@ -17,16 +17,16 @@ protected:
 public:
 	using Accuracy = BigAccuracy;
 
-	enum RoundingMode {
+	enum RoundingMode : uint8_t {
 		TO_NEAREST_EVEN = 0, // == IEEE 754-2008 roundTiesToEven
 		TO_NEAREST_AWAY = 1, // == IEEE 754-2008 roundTiesToAway
-		TO_ZERO = 2,         // == IEEE 754-2008 roundTowardZero
-		AWAY_FROM_ZERO = 3,  // no IEEE 754-2008 equivalent
+		TO_ZERO = 2, // == IEEE 754-2008 roundTowardZero
+		AWAY_FROM_ZERO = 3, // no IEEE 754-2008 equivalent
 		TO_NEGATIVE_INF = 4, // == IEEE 754-2008 roundTowardNegative
 		TO_POSITIVE_INF = 5, // == IEEE 754-2008 roundTowardPositive
 	};
 
-	enum Form {
+	enum Form : uint8_t {
 		FORM_ZERO = 0,
 		FORM_FINITE = 1,
 		FORM_INF = 2,
@@ -92,17 +92,17 @@ public:
 	void Copy(const godot::Ref<BigFloat> &p_x);
 
 	[[nodiscard]] godot::Pair<uint64_t, BigAccuracy> Uint64() const;
-	[[nodiscard]] _FORCE_INLINE_ uint64_t _Uint64_bind() const { return Uint64().first; }
-	[[nodiscard]] _FORCE_INLINE_ BigAccuracy _Uint64Accuracy_bind() const { return Uint64().second; }
+	[[nodiscard]] _FORCE_INLINE_ uint64_t Uint64_bind() const { return Uint64().first; }
+	[[nodiscard]] _FORCE_INLINE_ BigAccuracy Uint64Accuracy_bind() const { return Uint64().second; }
 	[[nodiscard]] godot::Pair<int64_t, BigAccuracy> Int64() const;
-	[[nodiscard]] _FORCE_INLINE_ int64_t _Int64_bind() const { return Int64().first; }
-	[[nodiscard]] _FORCE_INLINE_ BigAccuracy _Int64Accuracy_bind() const { return Int64().second; }
+	[[nodiscard]] _FORCE_INLINE_ int64_t Int64_bind() const { return Int64().first; }
+	[[nodiscard]] _FORCE_INLINE_ BigAccuracy Int64Accuracy_bind() const { return Int64().second; }
 	[[nodiscard]] godot::Pair<float, BigAccuracy> Float32() const;
-	[[nodiscard]] _FORCE_INLINE_ float _Float32_bind() const { return Float32().first; }
-	[[nodiscard]] _FORCE_INLINE_ BigAccuracy _Float32Accuracy_bind() const { return Float32().second; }
+	[[nodiscard]] _FORCE_INLINE_ float Float32_bind() const { return Float32().first; }
+	[[nodiscard]] _FORCE_INLINE_ BigAccuracy Float32Accuracy_bind() const { return Float32().second; }
 	[[nodiscard]] godot::Pair<double, BigAccuracy> Float64() const;
-	[[nodiscard]] _FORCE_INLINE_ double _Float64_bind() const { return Float64().first; }
-	[[nodiscard]] _FORCE_INLINE_ BigAccuracy _Float64Accuracy_bind() const { return Float64().second; }
+	[[nodiscard]] _FORCE_INLINE_ double Float64_bind() const { return Float64().first; }
+	[[nodiscard]] _FORCE_INLINE_ BigAccuracy Float64Accuracy_bind() const { return Float64().second; }
 	[[nodiscard]] BigAccuracy Int(const godot::Ref<BigInt> &r_z) const;
 	[[nodiscard]] BigAccuracy Rat(const godot::Ref<BigRat> &r_z) const;
 
@@ -134,11 +134,11 @@ public:
 	godot::Error _scan(const godot::String &s, int64_t &off, int64_t &base);
 	void _pow5(uint64_t p_n);
 	godot::Error SetString(const godot::String &p_s, int64_t p_base = 0);
-	godot::String _fmtB(godot::PackedByteArray &buf) const;
-	godot::String _fmtP(godot::PackedByteArray &buf) const;
-	godot::String _fmtX(godot::PackedByteArray &buf, int64_t prec) const;
-	godot::String _fmtE(godot::PackedByteArray &buf, Format fmt, int64_t prec, BigDecimal &d) const;
-	godot::String _fmtF(godot::PackedByteArray &buf, int64_t prec, BigDecimal &d) const;
+	[[nodiscard]] godot::String _fmtB(godot::PackedByteArray &buf) const;
+	[[nodiscard]] godot::String _fmtP(godot::PackedByteArray &buf) const;
+	[[nodiscard]] godot::String _fmtX(godot::PackedByteArray &buf, int64_t prec) const;
+	[[nodiscard]] static godot::String _fmtE(godot::PackedByteArray &buf, Format fmt, int64_t prec, BigDecimal &d);
+	[[nodiscard]] static godot::String _fmtF(godot::PackedByteArray &buf, int64_t prec, BigDecimal &d);
 	[[nodiscard]] godot::String String(Format p_format = FORMAT_AUTO, int64_t p_prec = 10) const;
 	[[nodiscard]] _FORCE_INLINE_ godot::String _to_string() const { return String(); }
 

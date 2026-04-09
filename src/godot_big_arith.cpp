@@ -51,8 +51,8 @@ static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Add(uint64_t x, uint64
 	// is (x | y), and a carry from the lower place happened. If such a carry
 	// happens, the top bit will be 1 + 0 + 1 = 0 (&^ sum).
 	carryout = ((x & y) | ((x | y) & ~out)) >> 63;
-
 #endif
+
 	return std::make_tuple(out, carryout);
 }
 static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Sub(uint64_t x, uint64_t y, uint64_t carry) {
