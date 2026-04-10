@@ -566,7 +566,7 @@ void BigFloat::SetInt(const Ref<BigInt> &p_x) {
 	// x != 0
 	_mant.set(p_x->_abs);
 	_mant.fnorm();
-	_setExpAndRound(int64_t(bits), 0);
+	_setExpAndRound(static_cast<int64_t>(bits), 0);
 	emit_changed();
 }
 
@@ -676,7 +676,7 @@ uint32_t BigNat::msb32() const {
 
 	DEV_ASSERT(((*this)[i] & (1LLU << (64 - 1))) != 0);
 
-	return uint32_t((*this)[i] >> 32);
+	return static_cast<uint32_t>((*this)[i] >> 32);
 }
 
 // msb64 returns the 64 most significant bits of x.
@@ -726,7 +726,7 @@ Pair<uint64_t, BigAccuracy> BigFloat::Uint64() const {
 	// 1 <= x < Inf
 	if (_exp <= 64) {
 		// u = trunc(x) fits into a uint64
-		const uint64_t u = _mant.msb64() >> (64 - uint32_t(_exp));
+		const uint64_t u = _mant.msb64() >> (64 - static_cast<uint32_t>(_exp));
 		if (MinPrec() <= 64) {
 			return { u, ACC_EXACT };
 		}
@@ -771,12 +771,12 @@ Pair<int64_t, BigAccuracy> BigFloat::Int64() const {
 	// 1 <= |x| < +Inf
 	if (_exp <= 63) {
 		// i = trunc(x) fits into an int64 (excluding math.MinInt64)
-		int64_t i = int64_t(_mant.msb64() >> (64 - uint32_t(_exp)));
+		int64_t i = static_cast<int64_t>(_mant.msb64() >> (64 - static_cast<uint32_t>(_exp)));
 		if (_neg) {
 			i = -i;
 		}
 
-		if (MinPrec() <= uint64_t(_exp)) {
+		if (MinPrec() <= static_cast<uint64_t>(_exp)) {
 			return { i, ACC_EXACT };
 		}
 
@@ -908,10 +908,10 @@ Pair<float, BigAccuracy> BigFloat::Float32() const {
 		// and we have eliminated p <= 0 early, we know p > 0.
 		// bexp == 0 for denormals
 		p = mbits + 1 - emin + e;
-		mant = r->_mant.msb32() >> uint32_t(fbits - p);
+		mant = r->_mant.msb32() >> static_cast<uint32_t>(fbits - p);
 	} else {
 		// normal number: emin <= e <= emax
-		bexp = uint32_t(e + bias) << mbits;
+		bexp = static_cast<uint32_t>(e + bias) << mbits;
 		mant = (r->_mant.msb32() >> ebits) & ((1 << mbits) - 1); // cut off msb (implicit 1 bit)
 	}
 
@@ -956,7 +956,7 @@ Pair<double, BigAccuracy> BigFloat::Float64() const {
 	static constexpr int64_t emax = bias; //  1023  largest unbiased exponent (normal)
 
 	// Float mantissa m is 0.5 <= m < 1.0; compute exponent e for float64 mantissa.
-	int64_t e = int64_t(_exp) - 1; // exponent for normal mantissa m with 1.0 <= m < 2.0
+	int64_t e = static_cast<int64_t>(_exp) - 1; // exponent for normal mantissa m with 1.0 <= m < 2.0
 
 	// Compute precision p for float64 mantissa.
 	// If the exponent is too small, we have a denormal number before
@@ -973,7 +973,7 @@ Pair<double, BigAccuracy> BigFloat::Float64() const {
 		// If m > 0.5, it is rounded up to 1.0; i.e., the smallest denormal.
 		// If m == 0.5, it is rounded down to even, i.e., 0.0.
 		// If p < 0, the mantissa value m is <= "0.25" which is never rounded up.
-		if (p < 0 /* m <= 0.25 */ || (p == 0 && _mant.sticky(uint64_t((_mant.array.size() * 64) - 1)) == 0) /* m == 0.5 */) {
+		if (p < 0 /* m <= 0.25 */ || (p == 0 && _mant.sticky(static_cast<uint64_t>((_mant.array.size() * 64) - 1)) == 0) /* m == 0.5 */) {
 			// underflow to ±0
 			if (_neg) {
 				const double z = 0.0;
@@ -997,9 +997,9 @@ Pair<double, BigAccuracy> BigFloat::Float64() const {
 
 	// round
 	Ref<BigFloat> r{ memnew(BigFloat) };
-	r->_prec = uint32_t(p);
+	r->_prec = static_cast<uint32_t>(p);
 	r->Set(const_cast<BigFloat *>(this));
-	e = int64_t(r->_exp) - 1;
+	e = static_cast<int64_t>(r->_exp) - 1;
 
 	// Rounding may have caused r to overflow to ±Inf
 	// (rounding never causes underflows to 0).
@@ -1029,10 +1029,10 @@ Pair<double, BigAccuracy> BigFloat::Float64() const {
 		// and we have eliminated p <= 0 early, we know p > 0.
 		// bexp == 0 for denormals
 		p = mbits + 1 - emin + e;
-		mant = r->_mant.msb64() >> uint64_t(fbits - p);
+		mant = r->_mant.msb64() >> static_cast<uint64_t>(fbits - p);
 	} else {
 		// normal number: emin <= e <= emax
-		bexp = uint64_t(e + bias) << mbits;
+		bexp = static_cast<uint64_t>(e + bias) << mbits;
 		mant = (r->_mant.msb64() >> ebits) & ((1LLU << mbits) - 1); // cut off msb (implicit 1 bit)
 	}
 
@@ -1074,8 +1074,8 @@ BigAccuracy BigFloat::Int(const Ref<BigInt> &r_z) const {
 
 	// 1 <= |x| < +Inf
 	// determine minimum required precision for x
-	const uint64_t allBits = uint64_t(_mant.array.size()) * 64;
-	const uint64_t exp = uint64_t(_exp);
+	const uint64_t allBits = static_cast<uint64_t>(_mant.array.size()) * 64;
+	const uint64_t exp = static_cast<uint64_t>(_exp);
 	if (MinPrec() <= exp) {
 		acc = ACC_EXACT;
 	}
@@ -1120,13 +1120,13 @@ BigAccuracy BigFloat::Rat(const Ref<BigRat> &r_z) const {
 	// build up numerator and denominator
 	r_z->_neg = _neg;
 	if (_exp > allBits) {
-		r_z->_a.lsh(_mant, uint64_t(_exp - allBits));
+		r_z->_a.lsh(_mant, static_cast<uint64_t>(_exp - allBits));
 		r_z->_b.setUint64(1);
 		// z already in normal form
 	} else if (_exp < allBits) {
 		r_z->_a.set(_mant);
 		r_z->_b.setUint64(1);
-		r_z->_b.lsh(r_z->_b, uint64_t(allBits - _exp));
+		r_z->_b.lsh(r_z->_b, static_cast<uint64_t>(allBits - _exp));
 		r_z->_norm();
 	} else {
 		r_z->_a.set(_mant);
@@ -1180,8 +1180,8 @@ void BigFloat::_uadd(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 
 	// compute exponents ex, ey for mantissa with "binary point"
 	// on the right (mantissa.0) - use int64 to avoid overflow
-	int64_t ex = int64_t(p_x->_exp) - (p_x->_mant.array.size() * 64);
-	int64_t ey = int64_t(p_y->_exp) - (p_y->_mant.array.size() * 64);
+	int64_t ex = static_cast<int64_t>(p_x->_exp) - (p_x->_mant.array.size() * 64);
+	int64_t ey = static_cast<int64_t>(p_y->_exp) - (p_y->_mant.array.size() * 64);
 
 	const bool al = this == *p_x || this == *p_y;
 
@@ -1190,19 +1190,19 @@ void BigFloat::_uadd(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 	if (ex < ey) {
 		if (al) {
 			BigNat t;
-			t.lsh(p_y->_mant, uint64_t(ey - ex));
+			t.lsh(p_y->_mant, static_cast<uint64_t>(ey - ex));
 			_mant.add(p_x->_mant, t);
 		} else {
-			_mant.lsh(p_y->_mant, uint64_t(ey - ex));
+			_mant.lsh(p_y->_mant, static_cast<uint64_t>(ey - ex));
 			_mant.add(p_x->_mant, _mant);
 		}
 	} else if (ex > ey) {
 		if (al) {
 			BigNat t;
-			t.lsh(p_x->_mant, uint64_t(ex - ey));
+			t.lsh(p_x->_mant, static_cast<uint64_t>(ex - ey));
 			_mant.add(t, p_y->_mant);
 		} else {
-			_mant.lsh(p_x->_mant, uint64_t(ex - ey));
+			_mant.lsh(p_x->_mant, static_cast<uint64_t>(ex - ey));
 			_mant.add(_mant, p_y->_mant);
 		}
 		ex = ey;
@@ -1226,27 +1226,27 @@ void BigFloat::_usub(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 
 	validateBinaryOperands(p_x, p_y);
 
-	int64_t ex = int64_t(p_x->_exp) - (p_x->_mant.array.size() * 64);
-	int64_t ey = int64_t(p_y->_exp) - (p_y->_mant.array.size() * 64);
+	int64_t ex = static_cast<int64_t>(p_x->_exp) - (p_x->_mant.array.size() * 64);
+	int64_t ey = static_cast<int64_t>(p_y->_exp) - (p_y->_mant.array.size() * 64);
 
 	const bool al = this == *p_x || this == *p_y;
 
 	if (ex < ey) {
 		if (al) {
 			BigNat t;
-			t.lsh(p_y->_mant, uint64_t(ey - ex));
+			t.lsh(p_y->_mant, static_cast<uint64_t>(ey - ex));
 			_mant.sub(p_x->_mant, t);
 		} else {
-			_mant.lsh(p_y->_mant, uint64_t(ey - ex));
+			_mant.lsh(p_y->_mant, static_cast<uint64_t>(ey - ex));
 			_mant.sub(p_x->_mant, _mant);
 		}
 	} else if (ex > ey) {
 		if (al) {
 			BigNat t;
-			t.lsh(p_x->_mant, uint64_t(ex - ey));
+			t.lsh(p_x->_mant, static_cast<uint64_t>(ex - ey));
 			_mant.sub(t, p_y->_mant);
 		} else {
-			_mant.lsh(p_x->_mant, uint64_t(ex - ey));
+			_mant.lsh(p_x->_mant, static_cast<uint64_t>(ex - ey));
 			_mant.sub(_mant, p_y->_mant);
 		}
 		ex = ey;
@@ -1279,7 +1279,7 @@ void BigFloat::_umul(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 	// have the same precision).
 	// TODO(gri) Optimize this for the common case.
 
-	int64_t e = int64_t(p_x->_exp) + int64_t(p_y->_exp);
+	int64_t e = static_cast<int64_t>(p_x->_exp) + static_cast<int64_t>(p_y->_exp);
 	if (p_x == p_y) {
 		_mant.sqr(p_x->_mant);
 	} else {
@@ -1298,7 +1298,7 @@ void BigFloat::_uquo(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 	// mantissa length in words for desired result precision + 1
 	// (at least one extra bit so we get the rounding bit after
 	// the division)
-	int64_t n = int64_t(_prec / 64) + 1;
+	int64_t n = static_cast<int64_t>(_prec / 64) + 1;
 
 	// compute adjusted x.mant such that we get enough result precision
 	BigNat xadj = p_x->_mant;
@@ -1320,7 +1320,7 @@ void BigFloat::_uquo(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 	// divide
 	BigNat r;
 	_mant.div(r, xadj, p_y->_mant);
-	const int64_t e = int64_t(p_x->_exp) - int64_t(p_y->_exp) - ((d - _mant.array.size()) * 64);
+	const int64_t e = static_cast<int64_t>(p_x->_exp) - static_cast<int64_t>(p_y->_exp) - ((d - _mant.array.size()) * 64);
 
 	// The result is long enough to include (at least) the rounding bit.
 	// If there's a non-zero remainder, the corresponding fractional part

@@ -554,15 +554,15 @@ void BigNat::xor_(BigNat p_x, BigNat p_y) {
 void BigNat::random(const std::function<uint32_t()> &p_rnd, BigNat p_limit, int64_t p_n) {
 	array.resize(p_limit.array.size());
 
-	uint64_t bitLengthOfMSW = uint64_t(p_n % 64);
+	uint64_t bitLengthOfMSW = static_cast<uint64_t>(p_n % 64);
 	if (bitLengthOfMSW == 0) {
 		bitLengthOfMSW = 64;
 	}
-	const uint64_t mask = bitLengthOfMSW < 64 ? (BigWord(1) << bitLengthOfMSW) - 1 : UINT64_MAX;
+	const uint64_t mask = bitLengthOfMSW < 64 ? (static_cast<BigWord>(1) << bitLengthOfMSW) - 1 : UINT64_MAX;
 
 	while (true) {
 		for (int64_t i = 0; i < array.size(); i++) {
-			(*this)[i] = BigWord(p_rnd()) | (BigWord(p_rnd()) << 32);
+			(*this)[i] = static_cast<BigWord>(p_rnd()) | (static_cast<BigWord>(p_rnd()) << 32);
 		}
 
 		(*this)[p_limit.array.size() - 1] &= mask;
@@ -796,7 +796,7 @@ void BigNat::expNNWindowed(BigNat x, BigNat y, uint64_t logM) {
 	// Instead of allocating a new y, we start reading y at the right word
 	// and truncate it appropriately at the start of the loop.
 	int64_t i = y.array.size() - 1;
-	int64_t mtop = int64_t((logM - 2) / 64); // -2 because the top word of N bits is the (N-1)/W'th word.
+	int64_t mtop = static_cast<int64_t>((logM - 2) / 64); // -2 because the top word of N bits is the (N-1)/W'th word.
 	BigWord mmask = UINT64_MAX;
 	uint64_t mbits = (logM - 1) & (64 - 1);
 	if (mbits != 0) {
@@ -871,7 +871,7 @@ void BigNat::expNNMontgomery(BigNat x, BigNat y, BigNat m) {
 	BigNat RR;
 	BigNat zz;
 	RR.setUint64(1);
-	zz.lsh(RR, uint64_t(2 * numWords * 64));
+	zz.lsh(RR, static_cast<uint64_t>(2 * numWords * 64));
 	RR.rem(zz, m);
 	if (RR.array.size() < numWords) {
 		RR.array.resize(numWords);
@@ -946,7 +946,7 @@ int64_t BigNat::bytes(PackedByteArray &r_buf) const {
 		for (int j = 0; j < 8; j++) {
 			i--;
 			if (i >= 0) {
-				r_buf[i] = uint8_t(d);
+				r_buf[i] = static_cast<uint8_t>(d);
 			} else {
 				CRASH_COND(uint8_t(d) != 0);
 			}

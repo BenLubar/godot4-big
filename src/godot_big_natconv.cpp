@@ -266,7 +266,7 @@ Error BigNat::scan(const String &s, int64_t &off, int64_t base, bool fracOk, int
 		array.reverse();
 		norm();
 		if (i > 0) {
-			rsh(*this, uint64_t(n - i) * uint64_t(64 / n));
+			rsh(*this, static_cast<uint64_t>(n - i) * static_cast<uint64_t>(64 / n));
 		}
 	} else {
 		if (i > 0) {
@@ -301,7 +301,7 @@ String BigNat::itoa(bool p_neg, int64_t p_base) const {
 	// len(x) > 0
 
 	// allocate buffer for conversion
-	int64_t i = int64_t(double(bitLen()) / std::log2(double(p_base))) + 1; // off by 1 at most
+	int64_t i = static_cast<int64_t>(static_cast<double>(bitLen()) / std::log2(static_cast<double>(p_base))) + 1; // off by 1 at most
 	if (p_neg) {
 		i++;
 	}
@@ -331,16 +331,16 @@ String BigNat::itoa(bool p_neg, int64_t p_base) const {
 			// convert any partial leading digit and advance to next word
 			if (nbits == 0) {
 				// no partial digit remaining, just advance
-				w = BigWord(array[k]);
+				w = static_cast<BigWord>(array[k]);
 				nbits = 64;
 			} else {
 				// partial digit in current word w (== x[k-1]) and next word x[k]
-				w |= BigWord(array[k]) << nbits;
+				w |= static_cast<BigWord>(array[k]) << nbits;
 				i--;
 				s[i] = digits[w & mask];
 
 				// advance
-				w = BigWord(array[k]) >> (shift - nbits);
+				w = static_cast<BigWord>(array[k]) >> (shift - nbits);
 				nbits = 64 - (shift - nbits);
 			}
 		}
@@ -448,7 +448,7 @@ void BigNat::convertWords(uint8_t *r_s, int64_t r_s_size, BigWord p_b, int64_t p
 				// this appears to be faster for BenchmarkString10000Base10
 				// and smaller strings (but a bit slower for larger ones)
 				const BigWord t = r / 10;
-				r_s[i] = '0' + char(r - (t * 10));
+				r_s[i] = '0' + static_cast<char>(r - (t * 10));
 				r = t;
 			}
 		}
@@ -476,7 +476,7 @@ extern std::mutex cacheBase10_mutex;
 
 // expWW computes x**y
 void BigNat::expWW(BigWord p_x, BigWord p_y) {
-	expNN(BigNat{ { int64_t(p_x) } }, BigNat{ { int64_t(p_y) } }, BigNat{}, false);
+	expNN(BigNat{ { static_cast<int64_t>(p_x) } }, BigNat{ { static_cast<int64_t>(p_y) } }, BigNat{}, false);
 }
 
 // construct table of powers of bb*leafSize to use in subdivisions.
@@ -511,7 +511,7 @@ static Vector<BigDivisor> divisors(int64_t p_m, BigWord p_b, int64_t p_ndigits, 
 		for (int64_t i = 0; i < k; i++) {
 			if (table[i].ndigits == 0) {
 				if (i == 0) {
-					table.write[0].bbb.expWW(p_bb, BigWord(leafSize));
+					table.write[0].bbb.expWW(p_bb, static_cast<BigWord>(leafSize));
 					table.write[0].ndigits = p_ndigits * leafSize;
 				} else {
 					table.write[i].bbb.sqr(table[i - 1].bbb);
