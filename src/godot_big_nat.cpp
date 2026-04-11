@@ -1033,7 +1033,7 @@ void BigNat::subMod2N(BigNat x, BigNat y, uint64_t n) {
 	while (array.size() * 64 < n) {
 		array.append(0);
 	}
-	for (long &i : array) {
+	for (int64_t &i : array) {
 		i = ~i;
 	}
 	trunc(*this, n);
