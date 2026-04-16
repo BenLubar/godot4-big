@@ -111,7 +111,7 @@ int64_t BigInt::from_svarint(const PackedByteArray &p_bytes, int64_t p_offset) {
 }
 
 PackedByteArray BigFloat::to_bytes() const {
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 
@@ -177,7 +177,7 @@ int64_t BigFloat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 		_neg = neg;
 		_prec = prec;
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 		_validate();
 #endif
 
@@ -216,7 +216,7 @@ int64_t BigFloat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 	_exp = exp;
 	_mant = mant;
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 

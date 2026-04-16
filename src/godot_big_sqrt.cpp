@@ -23,7 +23,7 @@ extern Ref<BigFloat> *floatThree;
 Error BigFloat::Sqrt(const Ref<BigFloat> &p_x) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 

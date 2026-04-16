@@ -174,7 +174,7 @@ BigAccuracy BigFloat::Acc() const {
 //   - 0 if x is ±0;
 //   - +1 if x > 0.
 int BigFloat::Sign() const {
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 
@@ -205,7 +205,7 @@ int BigFloat::Sign() const {
 // x and mant may be the same in which case x is set to its
 // mantissa value.
 int32_t BigFloat::MantExp(const Ref<BigFloat> &r_mant) const {
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 
@@ -264,7 +264,7 @@ void BigFloat::_setExpAndRound(int64_t p_exp, uint64_t p_sbit) {
 void BigFloat::SetMantExp(const Ref<BigFloat> &p_mant, int64_t p_exp) {
 	ERR_FAIL_NULL(*p_mant);
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 	p_mant->_validate();
 #endif
@@ -292,7 +292,7 @@ bool BigFloat::IsInf() const {
 // IsInt reports whether x is an integer.
 // ±Inf values are not integers.
 bool BigFloat::IsInt() const {
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 
@@ -312,7 +312,7 @@ bool BigFloat::IsInt() const {
 
 // debugging support
 void BigFloat::_validate() const {
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	if (_form == FORM_FINITE) {
 		const int64_t m = _mant.array.size();
 		DEV_ASSERT(m != 0); // nonzero finite number with empty mantissa
@@ -332,7 +332,7 @@ void BigFloat::_validate() const {
 // sign of z. For correct rounding, the sign of z must be set correctly before
 // calling round.
 void BigFloat::_round(uint64_t p_sbit) {
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 
@@ -439,7 +439,7 @@ void BigFloat::_round(uint64_t p_sbit) {
 	// zero out trailing bits in least-significant word
 	_mant[0] &= ~(lsb - 1);
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 }
@@ -618,7 +618,7 @@ void BigFloat::SetInf(bool p_signbit) {
 void BigFloat::Set(const Ref<BigFloat> &p_x) {
 	ERR_FAIL_NULL(*p_x);
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	p_x->validate();
 #endif
 
@@ -647,7 +647,7 @@ void BigFloat::Set(const Ref<BigFloat> &p_x) {
 void BigFloat::Copy(const Ref<BigFloat> &p_x) {
 	ERR_FAIL_NULL(*p_x);
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	p_x->validate();
 #endif
 
@@ -697,7 +697,7 @@ uint64_t BigNat::msb64() const {
 // The result is (0, [Above]) for x < 0, and ([math.MaxUint64], [Below])
 // for x > [math.MaxUint64].
 Pair<uint64_t, BigAccuracy> BigFloat::Uint64() const {
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 
@@ -744,7 +744,7 @@ Pair<uint64_t, BigAccuracy> BigFloat::Uint64() const {
 // The result is ([math.MinInt64], [Above]) for x < [math.MinInt64],
 // and ([math.MaxInt64], [Below]) for x > [math.MaxInt64].
 Pair<int64_t, BigAccuracy> BigFloat::Int64() const {
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 
@@ -802,7 +802,7 @@ Pair<int64_t, BigAccuracy> BigFloat::Int64() const {
 // If x is too large to be represented by a float32 (|x| > [math.MaxFloat32]),
 // the result is (+Inf, [Above]) or (-Inf, [Below]), depending on the sign of x.
 Pair<float, BigAccuracy> BigFloat::Float32() const {
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 
@@ -924,7 +924,7 @@ Pair<float, BigAccuracy> BigFloat::Float32() const {
 // If x is too large to be represented by a float64 (|x| > [math.MaxFloat64]),
 // the result is (+Inf, [Above]) or (-Inf, [Below]), depending on the sign of x.
 Pair<double, BigAccuracy> BigFloat::Float64() const {
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 
@@ -1048,7 +1048,7 @@ Pair<double, BigAccuracy> BigFloat::Float64() const {
 BigAccuracy BigFloat::Int(const Ref<BigInt> &r_z) const {
 	ERR_FAIL_NULL_V(*r_z, ACC_EXACT);
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 
@@ -1101,7 +1101,7 @@ BigAccuracy BigFloat::Int(const Ref<BigInt> &r_z) const {
 BigAccuracy BigFloat::Rat(const Ref<BigRat> &r_z) const {
 	ERR_FAIL_NULL_V(*r_z, ACC_EXACT);
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 #endif
 
@@ -1400,7 +1400,7 @@ Error BigFloat::Add(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	p_x->_validate();
 	p_y->_validate();
 #endif
@@ -1477,7 +1477,7 @@ Error BigFloat::Sub(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	p_x->_validate();
 	p_y->_validate();
 #endif
@@ -1545,7 +1545,7 @@ Error BigFloat::Mul(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	p_x->_validate();
 	p_y->_validate();
 #endif
@@ -1591,7 +1591,7 @@ Error BigFloat::Quo(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	p_x->_validate();
 	p_y->_validate();
 #endif
@@ -1636,7 +1636,7 @@ Error BigFloat::Quo(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 int BigFloat::Cmp(const Ref<BigFloat> &p_y) const {
 	ERR_FAIL_NULL_V(*p_y, 0);
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	_validate();
 	p_y->_validate();
 #endif

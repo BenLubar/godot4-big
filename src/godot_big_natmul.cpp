@@ -169,7 +169,7 @@ void BigNat::basicMul(BigNat &z, BigNat x, BigNat y) { // NOLINT(performance-unn
 	}
 }
 
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 // ifmt returns the debug formatting of the Int x: 0xHEX.
 static String ifmt(const BigNat &x) {
 	String s = x.utoa(16);
@@ -277,7 +277,7 @@ void BigNat::karatsuba(BigNat &z, BigNat x, BigNat y) { // NOLINT(performance-un
 	addTo(z, n2, z1->_abs);
 
 	// Debug mode: double-check answer and print trace on failure.
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	BigNat zz;
 	zz.array.resize(z.array.size());
 	basicMul(zz, x, y);
@@ -363,7 +363,7 @@ void BigNat::karatsubaSqr(BigNat &z, BigNat x) { // NOLINT(performance-unnecessa
 	addTo(z, n2, z1->_abs);
 
 	// Debug mode: double-check answer and print trace on failure.
-#ifdef DBGFLAG_ASSERT
+#ifdef DEBUG_ENABLED
 	BigNat zz;
 	basicSqr(zz, x);
 	if (z.cmp(zz) != 0) {
