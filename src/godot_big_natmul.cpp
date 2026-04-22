@@ -177,6 +177,7 @@ static String ifmt(const BigNat &x) {
 	if (s.is_empty()) { // happens for denormalized zero
 		s = "0x0";
 	}
+	String neg;
 	if (s[0] == '-') {
 		neg = "-";
 		s = s.substr(1);

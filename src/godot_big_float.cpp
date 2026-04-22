@@ -619,7 +619,7 @@ void BigFloat::Set(const Ref<BigFloat> &p_x) {
 	ERR_FAIL_NULL(*p_x);
 
 #ifdef DEBUG_ENABLED
-	p_x->validate();
+	p_x->_validate();
 #endif
 
 	_acc = ACC_EXACT;
@@ -648,7 +648,7 @@ void BigFloat::Copy(const Ref<BigFloat> &p_x) {
 	ERR_FAIL_NULL(*p_x);
 
 #ifdef DEBUG_ENABLED
-	p_x->validate();
+	p_x->_validate();
 #endif
 
 	if (this != *p_x) {
