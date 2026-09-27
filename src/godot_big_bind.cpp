@@ -184,6 +184,39 @@ int32_t BigFloat::_get_exp() const {
 	return _exp;
 }
 
+[[nodiscard]] static bool probablyPrimeLucas_bind(const PackedInt64Array &p_x) {
+	BigNat x{ p_x };
+	return x.probablyPrimeLucas();
+}
+[[nodiscard]] static bool probablyPrimeMillerRabin_bind(const PackedInt64Array &p_x, int64_t p_reps, bool p_force2) {
+	BigNat x{ p_x };
+	return x.probablyPrimeMillerRabin(p_reps, p_force2);
+}
+[[nodiscard]] static PackedInt64Array bits_Add_bind(uint64_t p_x, uint64_t p_y, uint64_t p_carry) {
+	uint64_t out;
+	uint64_t carryout;
+	BigNat::bits_Add(p_x, p_y, p_carry, out, carryout);
+	return { static_cast<int64_t>(out), static_cast<int64_t>(carryout) };
+}
+[[nodiscard]] static PackedInt64Array bits_Sub_bind(uint64_t p_x, uint64_t p_y, uint64_t p_borrow) {
+	uint64_t out;
+	uint64_t borrowout;
+	BigNat::bits_Sub(p_x, p_y, p_borrow, out, borrowout);
+	return { static_cast<int64_t>(out), static_cast<int64_t>(borrowout) };
+}
+[[nodiscard]] static PackedInt64Array bits_Mul_bind(uint64_t p_x, uint64_t p_y) {
+	uint64_t hi;
+	uint64_t lo;
+	BigNat::bits_Mul(p_x, p_y, hi, lo);
+	return { static_cast<int64_t>(hi), static_cast<int64_t>(lo) };
+}
+[[nodiscard]] static PackedInt64Array bits_Div_bind(uint64_t p_hi, uint64_t p_lo, uint64_t p_y) {
+	uint64_t quo;
+	uint64_t rem;
+	BigNat::bits_Div(p_hi, p_lo, p_y, quo, rem);
+	return { static_cast<int64_t>(quo), static_cast<int64_t>(rem) };
+}
+
 void BigInt::_bind_methods() {
 	// serialization (Resource)
 	ClassDB::bind_method(D_METHOD("_set_neg", "neg"), &BigInt::_set_neg);
@@ -272,6 +305,15 @@ void BigInt::_bind_methods() {
 
 	// prime test
 	ClassDB::bind_method(D_METHOD("ProbablyPrime", "n"), &BigInt::ProbablyPrime);
+
+	// internals exported for test suite
+	ClassDB::bind_method(D_METHOD("_lehmerGCD", "x", "y", "a", "b"), &BigInt::_lehmerGCD);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_probablyPrimeLucas", "x"), &probablyPrimeLucas_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_probablyPrimeMillerRabin", "x", "reps", "force2"), &probablyPrimeMillerRabin_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Add", "x", "y", "carry"), &bits_Add_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Sub", "x", "y", "borrow"), &bits_Sub_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Mul", "x", "y"), &bits_Mul_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Div", "hi", "lo", "y"), &bits_Div_bind);
 }
 
 void BigInt::_set_neg(bool p_neg) {

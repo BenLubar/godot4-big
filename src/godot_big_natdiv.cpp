@@ -576,7 +576,7 @@ BigWord BigNat::divWVW(BigNat &z, BigWord xn, BigNat x, BigWord y) {
 	BigWord r = xn;
 	if (x.array.size() == 1) {
 		BigWord rr;
-		BigNat::divWW_basic(r, x[0], y, z[0], rr);
+		BigNat::bits_Div(r, x[0], y, z[0], rr);
 		return rr;
 	}
 
@@ -596,41 +596,44 @@ void BigNat::divLarge(BigNat &r, BigNat uIn, BigNat vIn) { // NOLINT(performance
 	const int64_t n = vIn.array.size();
 	const int64_t m = uIn.array.size() - n;
 
+	// The caller should not pass aliased z and u, since those are
+	// the two different outputs, but correct just in case.
+	BigNat utemp;
+	BigNat &u = unlikely(this == &r) ? utemp : r;
+
 	// Scale the inputs so vIn's top bit is 1 (see “Scaling Inputs” above).
 	// vIn is treated as a read-only input (it may be in use by another
 	// goroutine), so we must make a copy.
 	// uIn is copied to u.
-	uint64_t shift = std::countl_zero(vIn[n - 1]);
+	const uint64_t shift = std::countl_zero(vIn[n - 1]);
 	BigNat v;
 	if (shift == 0) {
 		v = vIn;
-		r = uIn;
-		r.array.append(0);
+		u = uIn;
+		u.array.append(0);
 	} else {
 		v.array.resize(n);
+		u.array.resize(uIn.array.size());
 		lshVU(v, vIn, shift);
-		r.array.resize(uIn.array.size());
-		r.array.append(lshVU(r, uIn, shift));
+		u.array.append(lshVU(u, uIn, shift));
 	}
 
-	// The caller should not pass aliased z and u, since those are
-	// the two different outputs, but correct just in case.
 	array.resize(m + 1);
 
 	// Use basic or recursive long division depending on size.
 	if (n < divRecursiveThreshold) {
-		divBasic(r, v);
+		divBasic(u, v);
 	} else {
-		divRecursive(r, v);
+		divRecursive(u, v);
 	}
 
 	norm();
 
 	// Undo scaling of remainder.
 	if (shift != 0) {
-		rshVU(r, r, shift);
+		rshVU(u, u, shift);
 	}
-	r.norm();
+	u.norm();
 }
 
 // divBasic implements long division as described above.
@@ -643,8 +646,8 @@ void BigNat::divBasic(BigNat &u, BigNat v) {
 	BigNat qhatv;
 
 	// Set up for divWW below, precomputing reciprocal argument.
-	BigWord vn1 = v[n - 1];
-	BigWord rec = reciprocalWord(vn1);
+	const BigWord vn1 = v[n - 1];
+	const BigWord rec = reciprocalWord(vn1);
 
 	// Invent a leading 0 for u, for the first iteration.
 	// Invariant: ujn == u[j+n] in each iteration.
@@ -666,7 +669,7 @@ void BigNat::divBasic(BigNat &u, BigNat v) {
 			const BigWord vn2 = v[n - 2];
 			BigWord x1 = 0;
 			BigWord x0 = 0;
-			mulWW(qhat, vn2, x1, x0);
+			bits_Mul(qhat, vn2, x1, x0);
 			const BigWord ujn2 = u[j + n - 2];
 			while (greaterThan(x1, x0, rhat, ujn2)) { // x1x0 > r̂ u[j+n-2]
 				qhat--;
@@ -679,7 +682,7 @@ void BigNat::divBasic(BigNat &u, BigNat v) {
 				}
 				// TODO(rsc): No need for a full mulWW.
 				// x0 += vn2; if x0 overflows, x1++
-				mulWW(qhat, vn2, x1, x0);
+				bits_Mul(qhat, vn2, x1, x0);
 			}
 		}
 
@@ -694,17 +697,13 @@ void BigNat::divBasic(BigNat &u, BigNat v) {
 		// Subtract q̂·v from the current section of u.
 		// If it underflows, q̂·v > u, which we fix up
 		// by decrementing q̂ and adding v back.
-		BigNat tempu{ u.array.slice(j, j + qhl) };
-		BigWord c = subVV(tempu, tempu, BigNat{ qhatv.array.slice(0, qhl) });
-		for (int64_t i = 0; i < qhl; i++) {
-			u[j + i] = tempu[i];
-		}
+		BigNat utemp{ u.array.slice(j, j + qhl) };
+		BigWord c = subVV(utemp, utemp, { qhatv.array.slice(0, qhl) });
+		memmove(u.array.ptrw() + j, utemp.array.ptr(), qhl * sizeof(BigWord));
 		if (c != 0) {
-			tempu = BigNat{ u.array.slice(j, j + n) };
-			c = addVV(tempu, tempu, v);
-			for (int64_t i = 0; i < n; i++) {
-				u[j + i] = tempu[i];
-			}
+			utemp = { u.array.slice(j, j + n) };
+			c = addVV(utemp, utemp, v);
+			memmove(u.array.ptrw() + j, utemp.array.ptr(), n * sizeof(BigWord));
 			// If n == qhl, the carry from subVV and the carry from addVV
 			// cancel out and don't affect u[j+n].
 			if (n < qhl) {
@@ -777,7 +776,6 @@ void BigNat::divRecursiveStep(BigNat &u, BigNat v, int64_t depth) {
 	// which is something entirely different.
 	// TODO(rsc): Look into whether using ⌈n/2⌉ is better than ⌊n/2⌋.
 	const int64_t B = n / 2;
-
 	const BigNat vtos{ v.array.slice(0, B - 1) };
 	const BigNat vfroms{ v.array.slice(B - 1) };
 
@@ -809,10 +807,8 @@ void BigNat::divRecursiveStep(BigNat &u, BigNat v, int64_t depth) {
 		BigNat qhat;
 		qhat.array.resize(B + 1);
 		BigNat uu{ u.array.slice(j - 1, j + n) };
-		qhat.divRecursiveStep(u, vfroms, depth + 1);
-		for (int64_t i = 0; i < n + 1; i++) {
-			u[j - 1 + i] = i < uu.array.size() ? uu[i] : 0;
-		}
+		qhat.divRecursiveStep(uu, vfroms, depth + 1);
+		memmove(u.array.ptrw() + j - 1, uu.array.ptr(), uu.array.size() * sizeof(BigWord));
 		qhat.norm();
 
 		// Extend to a 3-by-2 quotient and remainder.
@@ -828,27 +824,23 @@ void BigNat::divRecursiveStep(BigNat &u, BigNat v, int64_t depth) {
 		// But we can do the subtraction directly, as in the comment above
 		// and in long division, because we know that q̂ is wrong by at most one.
 		BigNat qhatv;
-		qhatv.mul(qhat, vtos);
+		qhatv.mul(qhat, { v.array.slice(0, s) });
 		for (int64_t i = 0; i < 2; i++) {
-			if (qhatv.cmpnorm(BigNat{ u.array.slice(j - B) }) <= 0) {
+			if (qhatv.cmpnorm({ u.array.slice(j - B) }) <= 0) {
 				break;
 			}
 			subVW(qhat, qhat, 1);
-			BigNat qhatvs{ qhatv.array.slice(s) };
-			qhatv.array.resize(s);
-			BigWord c = subVV(qhatv, qhatv, vtos);
-			subVW(qhatvs, qhatvs, c);
-			qhatv.array.append_array(qhatvs.array);
-			addTo(u, j - B + s, vfroms);
+			const BigWord c = subVVSlice(qhatv, 0, s, vtos);
+			if (qhatv.array.size() > s) {
+				subVWSlice(qhatv, s, qhatv.array.size(), c);
+			}
+			addTo(u, j - 1, { v.array.slice(s) });
 		}
-		CRASH_COND(qhatv.cmpnorm(BigNat{ u.array.slice(j - B) }) > 0);
-		BigNat uu0{ u.array.slice(j - B, j - B + qhatv.array.size()) };
-		BigNat uu1{ u.array.slice(j - B + qhatv.array.size()) };
-		u.array.resize(j - B);
-		BigWord c = subVV(uu0, uu0, qhatv);
-		u.array.append_array(uu0.array);
-		subVW(uu1, uu1, c);
-		u.array.append_array(uu1.array);
+		CRASH_COND(qhatv.cmpnorm({ u.array.slice(j - B) }) > 0);
+		const BigWord c = subVVSlice(u, j - B, j - B + qhatv.array.size(), qhatv);
+		if (c > 0) {
+			subVWSlice(u, j - B + qhatv.array.size(), u.array.size(), c);
+		}
 		addTo(*this, j - B, qhat);
 		j -= B;
 	}
@@ -863,9 +855,7 @@ void BigNat::divRecursiveStep(BigNat &u, BigNat v, int64_t depth) {
 	BigNat us{ u.array.slice(s) };
 	us.norm();
 	qhat.divRecursiveStep(us, vfroms, depth + 1);
-	for (int64_t i = 0; s + i < u.array.size(); i++) {
-		u[s + i] = i < us.array.size() ? us[i] : 0;
-	}
+	memmove(u.array.ptrw() + s, us.array.ptr(), us.array.size() * sizeof(BigWord));
 	qhat.norm();
 	BigNat qhatv;
 	qhatv.mul(qhat, vtos);
@@ -873,22 +863,18 @@ void BigNat::divRecursiveStep(BigNat &u, BigNat v, int64_t depth) {
 	for (int64_t i = 0; i < 2; i++) {
 		if (qhatv.cmpnorm(u) > 0) {
 			subVW(qhat, qhat, 1);
-			BigNat qhatvs{ qhatv.array.slice(s) };
-			qhatv.array.resize(s);
-			BigWord c = subVV(qhatv, qhatv, vtos);
-			subVW(qhatvs, qhatvs, c);
-			qhatv.array.append_array(qhatvs.array);
-			addTo(u, s, vfroms);
+			BigWord c = subVVSlice(qhatv, 0, s, vtos);
+			if (qhatv.array.size() > s) {
+				subVWSlice(qhatv, s, qhatv.array.size(), c);
+			}
+			addTo(u, s, { v.array.slice(s) });
 		}
 	}
 	CRASH_COND(qhatv.cmpnorm(u) > 0);
-	BigNat uqhatv{ u.array.slice(qhatv.array.size()) };
-	u.array.resize(qhatv.array.size());
-	BigWord c = subVV(u, u, qhatv);
+	BigWord c = subVVSlice(u, 0, qhatv.array.size(), qhatv);
 	if (c > 0) {
-		c = subVW(uqhatv, uqhatv, c);
+		c = subVWSlice(u, qhatv.array.size(), u.array.size(), c);
 	}
-	u.array.append_array(uqhatv.array);
 	CRASH_COND(c > 0);
 
 	// Done!

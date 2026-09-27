@@ -81,7 +81,7 @@ void BigNat::sqr(BigNat p_x) {
 
 	if (n == 1) {
 		const BigWord d = p_x[0];
-		mulWW(d, d, (*this)[1], (*this)[0]);
+		bits_Mul(d, d, (*this)[1], (*this)[0]);
 		norm();
 		return;
 	}
@@ -116,11 +116,11 @@ void BigNat::basicSqr(BigNat &z, BigNat x) {
 	BigNat t;
 	t.array.resize(2 * n);
 
-	mulWW(x[0], x[0], z[1], z[0]); // the initial square
+	bits_Mul(x[0], x[0], z[1], z[0]); // the initial square
 	for (int64_t i = 1; i < n; i++) {
 		const BigWord d = x[i];
 		// z collects the squares x[i] * x[i]
-		mulWW(d, d, z[(2 * i) + 1], z[2 * i]);
+		bits_Mul(d, d, z[(2 * i) + 1], z[2 * i]);
 		// t collects the products x[i] * x[j] where j < i
 		BigNat tempt{ t.array.slice(i, 2 * i) };
 		t[2 * i] = addMulVVWW(tempt, tempt, BigNat{ x.array.slice(0, i) }, d, 0);
@@ -250,14 +250,13 @@ void BigNat::karatsuba(BigNat &z, BigNat x, BigNat y) { // NOLINT(performance-un
 	Ref<BigInt> tx{ memnew(BigInt) };
 	Ref<BigInt> ty{ memnew(BigInt) };
 
-	x0->_abs.array = x.array.slice(0, n2);
+	x0->_abs = { x.array.slice(0, n2) };
 	x0->_abs.norm();
-	x1->_abs.array = x.array.slice(n2);
+	x1->_abs = { x.array.slice(n2) };
 	x1->_abs.norm();
-
-	y0->_abs.array = y.array.slice(0, n2);
+	y0->_abs = { y.array.slice(0, n2) };
 	y0->_abs.norm();
-	y1->_abs.array = y.array.slice(n2);
+	y1->_abs = { y.array.slice(n2) };
 	y1->_abs.norm();
 
 	tx->Sub(x0, x1);
@@ -272,9 +271,11 @@ void BigNat::karatsuba(BigNat &z, BigNat x, BigNat y) { // NOLINT(performance-un
 	z.array = z0->_abs.array;
 	DEV_ASSERT(z.array.size() <= 2 * n2);
 	z.array.resize(2 * n2);
+
 	z.array.append_array(z2->_abs.array);
 	DEV_ASSERT(z.array.size() <= 2 * n);
 	z.array.resize(2 * n);
+
 	addTo(z, n2, z1->_abs);
 
 	// Debug mode: double-check answer and print trace on failure.
@@ -341,10 +342,15 @@ void BigNat::karatsubaSqr(BigNat &z, BigNat x) { // NOLINT(performance-unnecessa
 	Ref<BigInt> z2{ memnew(BigInt) };
 	Ref<BigInt> tx{ memnew(BigInt) };
 
-	x0->_abs.array = x.array.slice(0, n2);
+	x0->_abs = { x.array.slice(0, n2) };
 	x0->_abs.norm();
-	x1->_abs.array = x.array.slice(n2);
+	x1->_abs = { x.array.slice(n2) };
 	x1->_abs.norm();
+
+	z0->_abs.array.resize(2 * n2);
+	z1->_abs.array.resize(2 * n2 + 1);
+	z2->_abs.array.resize(2 * n - 2 * n2);
+	tx->_abs.array.resize(n2);
 
 	tx->Sub(x0, x1);
 	z1->_abs.sqr(tx->_abs);
@@ -358,14 +364,17 @@ void BigNat::karatsubaSqr(BigNat &z, BigNat x) { // NOLINT(performance-unnecessa
 	z.array = z0->_abs.array;
 	DEV_ASSERT(z.array.size() <= 2 * n2);
 	z.array.resize(2 * n2);
+
 	z.array.append_array(z2->_abs.array);
 	DEV_ASSERT(z.array.size() <= 2 * n);
 	z.array.resize(2 * n);
+
 	addTo(z, n2, z1->_abs);
 
 	// Debug mode: double-check answer and print trace on failure.
 #ifdef DEBUG_ENABLED
 	BigNat zz;
+	zz.array.resize(x.array.size() * 2);
 	basicSqr(zz, x);
 	if (z.cmp(zz) != 0) {
 		print_line("karatsubaSqr wrong");

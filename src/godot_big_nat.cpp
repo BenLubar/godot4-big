@@ -342,7 +342,7 @@ Pair<uint64_t, bool> BigNat::isPow2() const {
 	while ((*this)[i] == 0) {
 		i++;
 	}
-	if (i == array.size() && ((*this)[i] & ((*this)[i] - 1)) == 0) {
+	if (i == array.size() - 1 && ((*this)[i] & ((*this)[i] - 1)) == 0) {
 		return { static_cast<uint64_t>(i * 64) + std::countr_zero((*this)[i]), true };
 	}
 	return { 0, false };
@@ -371,7 +371,7 @@ void BigNat::lsh(BigNat p_x, uint64_t p_s) {
 	} else {
 		array.resize(n - m);
 		BigNat z;
-		z.array.resize(n - m);
+		z.array.resize(m);
 		z.array.append(lshVU(z, p_x, p_s));
 		array.append_array(z.array);
 	}
@@ -618,7 +618,6 @@ void BigNat::expNN(BigNat x, BigNat y, BigNat m, bool slow) {
 	}
 
 	// y > 1
-
 	if (!m.array.is_empty()) {
 		// We likely end up being as long as the modulus.
 		array.resize(m.array.size());
@@ -645,13 +644,13 @@ void BigNat::expNN(BigNat x, BigNat y, BigNat m, bool slow) {
 		}
 	}
 
-	BigNat &z = *this;
-
-	z.set(x);
+	set(x);
 	BigWord v = y[y.array.size() - 1]; // v > 0 because y is normalized and y > 0
 	uint64_t shift = std::countl_zero(v) + 1;
 	v <<= shift;
 	BigNat q;
+
+	constexpr BigWord mask = 1LLU << (64 - 1);
 
 	// We walk through the bits of the exponent one by one. Each time we
 	// see a bit, we square, thus doubling the power. If the bit is a one,
@@ -660,15 +659,16 @@ void BigNat::expNN(BigNat x, BigNat y, BigNat m, bool slow) {
 	int64_t w = 64 - shift;
 	// zz and r are used to avoid allocating in mul and div as
 	// otherwise the arguments would alias.
+	BigNat z = *this;
 	BigNat zz;
 	BigNat r;
 	for (int64_t j = 0; j < w; j++) {
 		zz.sqr(z);
-		std::swap(zz, z);
+		SWAP(zz, z);
 
-		if (v != 0) {
+		if ((v & mask) != 0) {
 			zz.mul(z, x);
-			std::swap(zz, z);
+			SWAP(zz, z);
 		}
 
 		if (!m.array.is_empty()) {
@@ -684,11 +684,11 @@ void BigNat::expNN(BigNat x, BigNat y, BigNat m, bool slow) {
 
 		for (int64_t j = 0; j < 64; j++) {
 			zz.sqr(z);
-			std::swap(zz, z);
+			SWAP(zz, z);
 
-			if (v != 0) {
+			if ((v & mask) != 0) {
 				zz.mul(z, x);
-				std::swap(zz, z);
+				SWAP(zz, z);
 			}
 
 			if (!m.array.is_empty()) {
@@ -700,6 +700,7 @@ void BigNat::expNN(BigNat x, BigNat y, BigNat m, bool slow) {
 		}
 	}
 
+	*this = z;
 	norm();
 }
 
@@ -713,10 +714,10 @@ void BigNat::expNN(BigNat x, BigNat y, BigNat m, bool slow) {
 // http://www.people.vcu.edu/~jwang3/CMSC691/j34monex.pdf
 void BigNat::expNNMontgomeryEven(BigNat x, BigNat y, BigNat m) {
 	// Split m = m₁ × m₂ where m₁ = 2ⁿ
-	uint64_t n = m.trailingZeroBits();
+	const int64_t n = m.trailingZeroBits();
 	BigNat m1;
 	BigNat m2;
-	m1.lsh(BigNat{ { 1 } }, n);
+	m1.lsh({ { 1 } }, n);
 	m2.rsh(m, n);
 
 	// We want z = x**y mod m.
@@ -775,15 +776,14 @@ void BigNat::expNNWindowed(BigNat x, BigNat y, uint64_t logM) {
 	// the arguments would alias.
 	BigNat zz;
 
-	constexpr int64_t n = 4;
 	// powers[i] contains x^i.
-	std::array<BigNat, 1 << n> powers;
-	powers[0].setUint64(1);
-	powers[1].trunc(x, logM);
-	for (int64_t i = 2; i < (1 << n); i += 2) {
-		BigNat &p2 = powers[i / 2];
-		BigNat &p = powers[i];
-		BigNat &p1 = powers[i + 1];
+	std::array<BigNat, 1 << 4> powers;
+	powers.at(0).set({ { 1 } });
+	powers.at(1).trunc(x, logM);
+	for (int64_t i = 2; i < (1 << 4); i += 2) {
+		const BigNat &p2 = powers.at(i / 2);
+		BigNat &p = powers.at(i);
+		BigNat &p1 = powers.at(i + 1);
 		p.sqr(p2);
 		p.trunc(p, logM);
 		p1.mul(p, x);
@@ -796,22 +796,21 @@ void BigNat::expNNWindowed(BigNat x, BigNat y, uint64_t logM) {
 	// Instead of allocating a new y, we start reading y at the right word
 	// and truncate it appropriately at the start of the loop.
 	int64_t i = y.array.size() - 1;
-	int64_t mtop = static_cast<int64_t>((logM - 2) / 64); // -2 because the top word of N bits is the (N-1)/W'th word.
+	int64_t mtop = (logM - 2) / 64; // -2 because the top word of N bits is the (N-1)/W'th word.
 	BigWord mmask = UINT64_MAX;
-	uint64_t mbits = (logM - 1) & (64 - 1);
+	int64_t mbits = (logM - 1) & (64 - 1);
 	if (mbits != 0) {
 		mmask = (1LLU << mbits) - 1;
 	}
-	i = std::min(i, mtop);
+
 	bool advance = false;
 	setUint64(1);
-	for (; i >= 0; i--) {
+	for (i = MIN(i, mtop); i >= 0; i--) {
 		BigWord yi = y[i];
 		if (i == mtop) {
 			yi &= mmask;
 		}
-
-		for (int64_t j = 0; j < 64; j += n) {
+		for (int64_t j = 0; j < 64; j += 4) {
 			if (advance) {
 				// Account for use of 4 bits in previous iteration.
 				// Unrolled loop for significant performance
@@ -830,10 +829,10 @@ void BigNat::expNNWindowed(BigNat x, BigNat y, uint64_t logM) {
 				trunc(zz, logM);
 			}
 
-			zz.mul(*this, powers[yi >> (64 - n)]);
+			zz.mul(*this, powers.at(yi >> (64 - 4)));
 			trunc(zz, logM);
 
-			yi <<= n;
+			yi <<= 4;
 			advance = true;
 		}
 	}
@@ -868,52 +867,45 @@ void BigNat::expNNMontgomery(BigNat x, BigNat y, BigNat m) {
 	k0 = -k0;
 
 	// RR = 2**(2*_W*len(m)) mod m
-	BigNat RR;
+	BigNat RR{ { 1 } };
 	BigNat zz;
-	RR.setUint64(1);
-	zz.lsh(RR, static_cast<uint64_t>(2 * numWords * 64));
+	zz.lsh(RR, 2 * numWords * 64);
 	RR.rem(zz, m);
 	if (RR.array.size() < numWords) {
 		RR.array.resize(numWords);
 	}
 	// one = 1, with equal length to that of m
-	BigNat one;
+	BigNat one{ { 1 } };
 	one.array.resize(numWords);
-	one[0] = 1;
 
-	constexpr int64_t n = 4;
 	// powers[i] contains x^i
-	std::array<BigNat, 1 << n> powers;
-	powers[0].montgomery(one, RR, m, k0, numWords);
-	powers[1].montgomery(x, RR, m, k0, numWords);
-	for (int64_t i = 2; i < (1 << n); i++) {
-		powers[i].montgomery(powers[i - 1], powers[1], m, k0, numWords);
+	std::array<BigNat, 1 << 4> powers;
+	powers.at(0).montgomery(one, RR, m, k0, numWords);
+	powers.at(1).montgomery(x, RR, m, k0, numWords);
+	for (int64_t i = 2; i < (1 << 4); i++) {
+		powers.at(i).montgomery(powers.at(i - 1), powers.at(1), m, k0, numWords);
 	}
 
 	// initialize z = 1 (Montgomery 1)
-	*this = powers[0];
-
+	*this = powers.at(0);
 	zz.array.resize(numWords);
-
-	BigNat &z = *this;
 
 	// same windowed exponent, but with Montgomery multiplications
 	for (int64_t i = y.array.size() - 1; i >= 0; i--) {
 		BigWord yi = y[i];
-		for (int64_t j = 0; j < 64; j += n) {
+		for (int64_t j = 0; j < 64; j += 4) {
 			if (i != y.array.size() - 1 || j != 0) {
-				zz.montgomery(z, z, m, k0, numWords);
-				z.montgomery(zz, zz, m, k0, numWords);
-				zz.montgomery(z, z, m, k0, numWords);
-				z.montgomery(zz, zz, m, k0, numWords);
+				zz.montgomery(*this, *this, m, k0, numWords);
+				montgomery(zz, zz, m, k0, numWords);
+				zz.montgomery(*this, *this, m, k0, numWords);
+				montgomery(zz, zz, m, k0, numWords);
 			}
-			zz.montgomery(z, powers[yi >> (64 - n)], m, k0, numWords);
-			std::swap(z, zz);
-			yi <<= n;
+			montgomery(*this, powers.at(yi >> (64 - 4)), m, k0, numWords);
+			yi <<= 4;
 		}
 	}
 	// convert to regular number
-	zz.montgomery(z, one, m, k0, numWords);
+	zz.montgomery(*this, one, m, k0, numWords);
 
 	// One last reduction, just in case.
 	// See golang.org/issue/13907.

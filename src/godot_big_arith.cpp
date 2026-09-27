@@ -9,89 +9,6 @@
 
 #include <bit>
 
-#ifdef _MSC_VER
-#include <immintrin.h>
-static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Add(uint64_t x, uint64_t y, uint64_t carry) {
-	uint64_t out;
-	uint8_t carryout1, carryout2;
-	carryout1 = _addcarry_u64(0, x, y, &out);
-	carryout2 = _addcarry_u64(0, out, carry, &out);
-	return std::make_tuple(out, uint64_t(carryout1 + carryout2));
-}
-static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Sub(uint64_t x, uint64_t y, uint64_t carry) {
-	uint64_t out;
-	uint8_t carryout1, carryout2;
-	carryout1 = _subborrow_u64(0, x, y, &out);
-	carryout2 = _subborrow_u64(0, out, carry, &out);
-	return std::make_tuple(out, uint64_t(carryout1 + carryout2));
-}
-static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Mul(uint64_t x, uint64_t y) {
-	uint64_t hi, lo;
-	lo = _umul128(x, y, &hi);
-	return std::make_tuple(hi, lo);
-}
-static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Div(uint64_t hi, uint64_t lo, uint64_t y) {
-	uint64_t quo, rem;
-	quo = _udiv128(hi, lo, y, &rem);
-	return std::make_tuple(quo, rem);
-}
-#else
-static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Add(uint64_t x, uint64_t y, uint64_t carry) {
-	uint64_t out;
-	uint64_t carryout;
-#if __WORDSIZE == 64 && __has_builtin(__builtin_addcl)
-	static_assert(sizeof(uint64_t) == sizeof(unsigned long));
-	out = __builtin_addcl(x, y, carry, &carryout);
-#elif __WORDSIZE == 32 && __has_builtin(__builtin_addcll)
-	static_assert(sizeof(uint64_t) == sizeof(unsigned long long));
-	out = __builtin_addcll(x, y, carry, &carryout);
-#else
-	out = x + y + carry;
-	// The sum will overflow if both top bits are set (x & y) or if one of them
-	// is (x | y), and a carry from the lower place happened. If such a carry
-	// happens, the top bit will be 1 + 0 + 1 = 0 (&^ sum).
-	carryout = ((x & y) | ((x | y) & ~out)) >> 63;
-#endif
-
-	return std::make_tuple(out, carryout);
-}
-static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Sub(uint64_t x, uint64_t y, uint64_t carry) {
-	uint64_t out;
-	uint64_t carryout;
-#if __WORDSIZE == 64 && __has_builtin(__builtin_subcl)
-	static_assert(sizeof(uint64_t) == sizeof(unsigned long));
-	out = __builtin_subcl(x, y, carry, &carryout);
-#elif __WORDSIZE == 32 && __has_builtin(__builtin_subcll)
-	static_assert(sizeof(uint64_t) == sizeof(unsigned long long));
-	out = __builtin_subcll(x, y, carry, &carryout);
-#else
-	out = x - y - carry;
-	// The difference will underflow if the top bit of x is not set and the top
-	// bit of y is set (^x & y) or if they are the same (^(x ^ y)) and a borrow
-	// from the lower place happens. If that borrow happens, the result will be
-	// 1 - 1 - 1 = 0 - 0 - 1 = 1 (& diff).
-	carryout = ((~x & y) | (~(x ^ y) & out)) >> 63;
-#endif
-	return std::make_tuple(out, carryout);
-}
-static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Mul(uint64_t x, uint64_t y) {
-	uint64_t hi;
-	uint64_t lo;
-	const unsigned __int128 product = static_cast<unsigned __int128>(x) * static_cast<unsigned __int128>(y);
-	hi = static_cast<uint64_t>(product >> 64);
-	lo = static_cast<uint64_t>(product);
-	return std::make_tuple(hi, lo);
-}
-static _FORCE_INLINE_ std::tuple<uint64_t, uint64_t> bits_Div(uint64_t hi, uint64_t lo, uint64_t y) {
-	uint64_t quo;
-	uint64_t rem;
-	const unsigned __int128 x = (static_cast<unsigned __int128>(hi) << 64) | static_cast<unsigned __int128>(lo);
-	quo = static_cast<uint64_t>(x / y);
-	rem = static_cast<uint64_t>(x % y);
-	return std::make_tuple(quo, rem);
-}
-#endif
-
 using namespace godot;
 
 // This file provides Go implementations of elementary multi-precision
@@ -113,20 +30,12 @@ using namespace godot;
 //
 // These operations are used by the vector operations below.
 
-// z1<<_W + z0 = x*y
-void BigNat::mulWW(BigWord p_x, BigWord p_y, BigWord &r_z1, BigWord &r_z0) {
-	std::tie(r_z1, r_z0) = bits_Mul(p_x, p_y);
-}
-
 // z1<<_W + z0 = x*y + c
 void BigNat::mulAddWWW(BigWord p_x, BigWord p_y, BigWord p_c, BigWord &r_z1, BigWord &r_z0) {
-	uint64_t hi;
-	uint64_t lo;
-	uint64_t cc;
-	std::tie(hi, lo) = bits_Mul(p_x, p_y);
-	std::tie(lo, cc) = bits_Add(lo, p_c, 0);
-	r_z1 = hi + cc;
-	r_z0 = lo;
+	BigWord carry;
+	bits_Mul(p_x, p_y, r_z1, carry);
+	bits_Add(carry, p_c, 0, r_z0, carry);
+	r_z1 += carry;
 }
 
 // The resulting carry c is either 0 or 1.
@@ -135,7 +44,7 @@ BigWord BigNat::addVV(BigNat &r_z, BigNat p_x, BigNat p_y) {
 
 	BigWord c = 0;
 	for (int64_t i = 0; i < r_z.array.size(); i++) {
-		std::tie(r_z[i], c) = bits_Add(p_x[i], p_y[i], c);
+		bits_Add(p_x[i], p_y[i], c, r_z[i], c);
 	}
 
 	return c;
@@ -147,7 +56,7 @@ BigWord BigNat::subVV(BigNat &r_z, BigNat p_x, BigNat p_y) {
 
 	BigWord c = 0;
 	for (int64_t i = 0; i < r_z.array.size(); i++) {
-		std::tie(r_z[i], c) = bits_Sub(p_x[i], p_y[i], c);
+		bits_Sub(p_x[i], p_y[i], c, r_z[i], c);
 	}
 
 	return c;
@@ -164,7 +73,7 @@ BigWord BigNat::addVW(BigNat &r_z, BigNat p_x, BigWord p_y) {
 	}
 
 	BigWord c;
-	std::tie(r_z[0], c) = bits_Add(p_x[0], p_y, 0);
+	bits_Add(p_x[0], p_y, 0, r_z[0], c);
 	if (c == 0) {
 		memmove(r_z.array.ptrw() + 1, p_x.array.ptr() + 1, (r_z.array.size() - 1) * 8);
 		return 0;
@@ -195,7 +104,7 @@ BigWord BigNat::subVW(BigNat &r_z, BigNat p_x, BigWord p_y) {
 	}
 
 	BigWord c;
-	std::tie(r_z[0], c) = bits_Sub(p_x[0], p_y, 0);
+	bits_Sub(p_x[0], p_y, 0, r_z[0], c);
 	if (c == 0) {
 		memmove(r_z.array.ptrw() + 1, p_x.array.ptr() + 1, (r_z.array.size() - 1) * 8);
 		return 0;
@@ -268,6 +177,20 @@ BigWord BigNat::rshVU(BigNat &r_z, BigNat p_x, uint64_t p_s) {
 	return c;
 }
 
+BigWord BigNat::subVVSlice(BigNat &r_z, int64_t p_begin, int64_t p_end, BigNat p_y) {
+	BigNat z{ r_z.array.slice(p_begin, p_end) };
+	const BigWord c = subVV(z, z, p_y);
+	memmove(r_z.array.ptrw() + p_begin, z.array.ptr(), (p_end - p_begin) * sizeof(BigWord));
+	return c;
+}
+
+BigWord BigNat::subVWSlice(BigNat &r_z, int64_t p_begin, int64_t p_end, BigWord p_y) {
+	BigNat z{ r_z.array.slice(p_begin, p_end) };
+	const BigWord c = subVW(z, z, p_y);
+	memmove(r_z.array.ptrw() + p_begin, z.array.ptr(), (p_end - p_begin) * sizeof(BigWord));
+	return c;
+}
+
 BigWord BigNat::mulAddVWW(BigNat &r_z, BigNat p_x, BigWord p_y, BigWord p_r) {
 	CRASH_COND(p_x.array.size() != r_z.array.size());
 
@@ -286,7 +209,7 @@ BigWord BigNat::addMulVVWW(BigNat &r_z, BigNat p_x, BigNat p_y, BigWord p_m, Big
 		BigWord z1;
 		BigWord z0;
 		mulAddWWW(p_y[i], p_m, p_x[i], z1, z0);
-		std::tie(r_z[i], c) = bits_Add(z0, c, 0);
+		bits_Add(z0, c, 0, r_z[i], c);
 		c += z1;
 	}
 	return c;
@@ -321,9 +244,9 @@ void BigNat::divWW(BigWord x1, BigWord x0, BigWord y, BigWord m, BigWord &q, Big
 	uint64_t t0;
 	uint64_t c;
 	uint64_t discard;
-	std::tie(t1, t0) = bits_Mul(m, x1);
-	std::tie(discard, c) = bits_Add(t0, x0, 0);
-	std::tie(t1, discard) = bits_Add(t1, x1, c);
+	bits_Mul(m, x1, t1, t0);
+	bits_Add(t0, x0, 0, discard, c);
+	bits_Add(t1, x1, c, t1, discard);
 
 	// The quotient is either t1, t1+1, or t1+2.
 	// We'll try t1 and adjust if needed.
@@ -335,9 +258,9 @@ void BigNat::divWW(BigWord x1, BigWord x0, BigWord y, BigWord m, BigWord &q, Big
 	uint64_t r0;
 	uint64_t r1;
 	uint64_t b;
-	std::tie(dq1, dq0) = bits_Mul(d, qq);
-	std::tie(r0, b) = bits_Sub(x0, dq0, 0);
-	std::tie(r1, discard) = bits_Sub(x1, dq1, b);
+	bits_Mul(d, qq, dq1, dq0);
+	bits_Sub(x0, dq0, 0, r0, b);
+	bits_Sub(x1, dq1, b, r1, discard);
 
 	// The remainder we just computed is bounded above by B+d:
 	// r = x1*B + x0 - d*q.
@@ -371,10 +294,6 @@ void BigNat::divWW(BigWord x1, BigWord x0, BigWord y, BigWord m, BigWord &q, Big
 	r = r0 >> s;
 }
 
-void BigNat::divWW_basic(BigWord p_hi, BigWord p_lo, BigWord p_y, BigWord &r_quo, BigWord &r_rem) {
-	std::tie(r_quo, r_rem) = bits_Div(p_hi, p_lo, p_y);
-}
-
 // reciprocalWord return the reciprocal of the divisor. rec = floor(( _B^2 - 1 ) / u - _B). u = d1 << nlz(d1).
 BigWord BigNat::reciprocalWord(BigWord d1) {
 	const uint64_t u = d1 << std::countl_zero(d1);
@@ -383,6 +302,6 @@ BigWord BigNat::reciprocalWord(BigWord d1) {
 
 	uint64_t q;
 	uint64_t r;
-	std::tie(q, r) = bits_Div(x1, x0, u); // (_B^2-1)/U-_B = (_B*(_M-C)+_M)/U
+	bits_Div(x1, x0, u, q, r); // (_B^2-1)/U-_B = (_B*(_M-C)+_M)/U
 	return q;
 }

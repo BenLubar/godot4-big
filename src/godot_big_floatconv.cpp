@@ -176,7 +176,7 @@ static constexpr std::array<uint64_t, 28> pow5tab{
 // pow5 sets z to 5**n and returns z.
 // n must not be negative.
 void BigFloat::_pow5(uint64_t p_n) {
-	constexpr uint64_t m = (sizeof(pow5tab) / sizeof(pow5tab[0])) - 1;
+	constexpr uint64_t m = pow5tab.size() - 1;
 	if (p_n <= m) {
 		SetUint64(pow5tab[p_n]);
 		return;
@@ -188,7 +188,7 @@ void BigFloat::_pow5(uint64_t p_n) {
 
 	// use more bits for f than for z
 	// TODO(gri) what is the right number?
-	Ref<BigFloat> f;
+	Ref<BigFloat> f{ memnew(BigFloat) };
 	f->SetPrec(Prec() + 64);
 	f->SetUint64(5);
 

@@ -67,7 +67,6 @@ struct BigNat {
 	void divBasic(BigNat &r_u, BigNat p_v);
 	void divRecursive(BigNat &r_u, BigNat p_v);
 	void divRecursiveStep(BigNat &r_u, BigNat p_v, int64_t p_depth);
-	static void divWW_basic(BigWord p_hi, BigWord p_lo, BigWord p_y, BigWord &r_quo, BigWord &r_rem);
 	static bool greaterThan(BigWord x1, BigWord x0, BigWord y1, BigWord y0);
 	static BigWord reciprocalWord(BigWord d1);
 
@@ -80,7 +79,7 @@ struct BigNat {
 	static void karatsuba(BigNat &r_z, BigNat p_x, BigNat p_y);
 	static void karatsubaSqr(BigNat &r_z, BigNat p_x);
 
-	[[nodiscard]] bool probablyPrimeMillerRabin(int64_t p_reps, bool force2) const;
+	[[nodiscard]] bool probablyPrimeMillerRabin(int64_t p_reps, bool p_force2) const;
 	[[nodiscard]] bool probablyPrimeLucas() const;
 
 	godot::Error modInverse(BigNat g, BigNat n);
@@ -96,7 +95,6 @@ struct BigNat {
 	[[nodiscard]] uint32_t msb32() const;
 	[[nodiscard]] uint64_t msb64() const;
 
-	static void mulWW(BigWord p_x, BigWord p_y, BigWord &r_z1, BigWord &r_z0);
 	static void mulAddWWW(BigWord p_x, BigWord p_y, BigWord p_c, BigWord &r_z1, BigWord &r_z0);
 	static BigWord mulAddVWW(BigNat &r_z, BigNat p_x, BigWord p_y, BigWord p_r);
 	static BigWord addMulVVWW(BigNat &r_z, BigNat p_x, BigNat p_y, BigWord p_m, BigWord p_a);
@@ -106,6 +104,8 @@ struct BigNat {
 	static BigWord subVW(BigNat &r_z, BigNat p_x, BigWord p_y);
 	static BigWord lshVU(BigNat &r_z, BigNat p_x, uint64_t p_s);
 	static BigWord rshVU(BigNat &r_z, BigNat p_x, uint64_t p_s);
+	static BigWord subVVSlice(BigNat &r_z, int64_t p_begin, int64_t p_end, BigNat p_y);
+	static BigWord subVWSlice(BigNat &r_z, int64_t p_begin, int64_t p_end, BigWord p_y);
 
 	BigWord &operator[](int64_t p_index) {
 		return reinterpret_cast<BigWord &>(array[p_index]);
@@ -121,6 +121,11 @@ struct BigNat {
 	static godot::Error scanExponent(const godot::String &s, int64_t &off, bool base2ok, bool sepOk, int64_t &exp, int64_t &base);
 	static BigWord pow(BigWord x, int64_t n);
 	godot::Error scan(const godot::String &s, int64_t &off, int64_t base, bool fracOk, int64_t &b, int64_t &count);
+
+	static _ALWAYS_INLINE_ void bits_Add(BigWord p_x, BigWord p_y, BigWord p_carry, BigWord &r_out, BigWord &r_carryout);
+	static _ALWAYS_INLINE_ void bits_Sub(BigWord p_x, BigWord p_y, BigWord p_borrow, BigWord &r_out, BigWord &r_borrowout);
+	static _ALWAYS_INLINE_ void bits_Mul(BigWord p_x, BigWord p_y, BigWord &r_hi, BigWord &r_lo);
+	static _ALWAYS_INLINE_ void bits_Div(BigWord p_hi, BigWord p_lo, BigWord p_y, BigWord &r_quo, BigWord &r_rem);
 };
 
 struct BigDivisor {
@@ -128,3 +133,67 @@ struct BigDivisor {
 	int64_t nbits = 0; // bit length of divisor (discounting leading zeros) ~= log2(bbb)
 	int64_t ndigits = 0; // digit length of divisor in terms of output base digits
 };
+
+#ifdef _MSC_VER
+#include <immintrin.h>
+void BigNat::bits_Add(BigWord p_x, BigWord p_y, BigWord p_carry, BigWord &r_out, BigWord &r_carryout) {
+	uint8_t carryout1, carryout2;
+	carryout1 = _addcarry_u64(0, p_x, p_y, &r_out);
+	carryout2 = _addcarry_u64(0, r_out, p_carry, &r_out);
+	r_carryout = static_cast<BigWord>(carryout1 + carryout2);
+}
+void BigNat::bits_Sub(BigWord p_x, BigWord p_y, BigWord p_borrow, BigWord &r_out, BigWord &r_borrowout) {
+	uint8_t borrowout1, borrowout2;
+	borrowout1 = _subborrow_u64(0, p_x, p_y, &r_out);
+	borrowout2 = _subborrow_u64(0, r_out, p_borrow, &r_out);
+	r_borrowout = static_cast<BigWord>(borrowout1 + borrowout2);
+}
+void BigNat::bits_Mul(BigWord p_x, BigWord p_y, BigWord &r_hi BigWord &r_lo) {
+	r_lo = _umul128(p_x, p_y, &r_hi);
+}
+void BigNat::bits_Div(BigWord p_hi, BigWord p_lo, BigWord p_y, BigWord &r_quo, BigWord &r_rem) {
+	r_quo = _udiv128(p_hi, p_lo, p_y, &r_rem);
+}
+#else
+void BigNat::bits_Add(BigWord p_x, BigWord p_y, BigWord p_carry, BigWord &r_out, BigWord &r_carryout) {
+#if __WORDSIZE == 64 && __has_builtin(__builtin_addcl)
+	static_assert(sizeof(BigWord) == sizeof(unsigned long));
+	r_out = __builtin_addcl(p_x, p_y, p_carry, &r_carryout);
+#elif __WORDSIZE == 32 && __has_builtin(__builtin_addcll)
+	static_assert(sizeof(BigWord) == sizeof(unsigned long long));
+	r_out = __builtin_addcll(p_x, p_y, p_carry, &r_carryout);
+#else
+	r_out = p_x + p_y + p_carry;
+	// The sum will overflow if both top bits are set (x & y) or if one of them
+	// is (x | y), and a carry from the lower place happened. If such a carry
+	// happens, the top bit will be 1 + 0 + 1 = 0 (&^ sum).
+	r_carryout = ((p_x & p_y) | ((p_x | p_y) & ~r_out)) >> 63;
+#endif
+}
+void BigNat::bits_Sub(BigWord p_x, BigWord p_y, BigWord p_borrow, BigWord &r_out, BigWord &r_borrowout) {
+#if __WORDSIZE == 64 && __has_builtin(__builtin_subcl)
+	static_assert(sizeof(BigWord) == sizeof(unsigned long));
+	r_out = __builtin_subcl(p_x, p_y, p_borrow, &r_borrowout);
+#elif __WORDSIZE == 32 && __has_builtin(__builtin_subcll)
+	static_assert(sizeof(BigWord) == sizeof(unsigned long long));
+	r_out = __builtin_subcll(p_x, p_y, p_borrow, &r_borrowout);
+#else
+	r_out = p_x - p_y - p_borrow;
+	// The difference will underflow if the top bit of x is not set and the top
+	// bit of y is set (^x & y) or if they are the same (^(x ^ y)) and a borrow
+	// from the lower place happens. If that borrow happens, the result will be
+	// 1 - 1 - 1 = 0 - 0 - 1 = 1 (& diff).
+	r_borrowout = ((~p_x & p_y) | (~(p_x ^ p_y) & r_out)) >> 63;
+#endif
+}
+void BigNat::bits_Mul(BigWord p_x, BigWord p_y, BigWord &r_hi, BigWord &r_lo) {
+	const unsigned __int128 product = static_cast<unsigned __int128>(p_x) * static_cast<unsigned __int128>(p_y);
+	r_hi = static_cast<BigWord>(product >> 64);
+	r_lo = static_cast<BigWord>(product);
+}
+void BigNat::bits_Div(BigWord p_hi, BigWord p_lo, BigWord p_y, BigWord &r_quo, BigWord &r_rem) {
+	const unsigned __int128 x = (static_cast<unsigned __int128>(p_hi) << 64) | static_cast<unsigned __int128>(p_lo);
+	r_quo = static_cast<BigWord>(x / p_y);
+	r_rem = static_cast<BigWord>(x % p_y);
+}
+#endif

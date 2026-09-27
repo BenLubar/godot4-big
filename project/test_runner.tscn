@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://7rdkiuqqpwsu"]
+
+[ext_resource type="Script" uid="uid://c4d4qk8jd4pfa" path="res://test_runner.gd" id="1_td3x5"]
+[ext_resource type="Script" uid="uid://dxq1flryclr3m" path="res://alias_test.gd" id="3_emgfw"]
+[ext_resource type="Script" uid="uid://cvn0s81u02ynl" path="res://bits_test.gd" id="5_i478c"]
+[ext_resource type="Script" uid="uid://xxd4hgbd82w" path="res://decimal_test.gd" id="6_5k0p6"]
+[ext_resource type="Script" uid="uid://b74b4ija25b56" path="res://float_test.gd" id="7_mti7l"]
+[ext_resource type="Script" uid="uid://cgw6u41a20hg0" path="res://floatconv_test.gd" id="8_t8gll"]
+[ext_resource type="Script" uid="uid://uiv0xgy3bgql" path="res://gcd_test.gd" id="9_b8mat"]
+[ext_resource type="Script" uid="uid://dr8g5ou8f0ub3" path="res://hilbert_test.gd" id="10_w0m1v"]
+[ext_resource type="Script" uid="uid://dy0ul6g1r3rf8" path="res://int_test.gd" id="11_yvq1k"]
+[ext_resource type="Script" uid="uid://db1nk868elqgp" path="res://intconv_test.gd" id="12_nd65q"]
+[ext_resource type="Script" uid="uid://bfgpdlvm5dw2b" path="res://nat_test.gd" id="13_w63pn"]
+[ext_resource type="Script" uid="uid://dmc2a75td4tvv" path="res://natconv_test.gd" id="14_frmtx"]
+[ext_resource type="Script" uid="uid://dw5brkymu2yr2" path="res://prime_test.gd" id="15_c3kbx"]
+[ext_resource type="Script" uid="uid://dboxl7xha0g0c" path="res://rat_test.gd" id="16_hyab0"]
+[ext_resource type="Script" uid="uid://c75norfnn7kq7" path="res://ratconv_test.gd" id="17_8g0u6"]
+[ext_resource type="Script" uid="uid://dj0f28jfy5571" path="res://sqrt_test.gd" id="18_gss4m"]
+[ext_resource type="Script" uid="uid://b0an346taqjrr" path="res://example_test.gd" id="19_2v7o5"]
+[ext_resource type="Script" uid="uid://cq7ysca85av7k" path="res://example_rat_test.gd" id="20_q4fhp"]
+[ext_resource type="Script" uid="uid://d0vyru8bk3a8x" path="res://floatexample_test.gd" id="21_7d0wd"]
+
+[node name="TestRunner" type="Control" unique_id=1346376374]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_td3x5")
+suite_scripts = Array[Script]([ExtResource("3_emgfw"), ExtResource("5_i478c"), ExtResource("6_5k0p6"), ExtResource("20_q4fhp"), ExtResource("19_2v7o5"), ExtResource("8_t8gll"), ExtResource("21_7d0wd"), ExtResource("7_mti7l"), ExtResource("9_b8mat"), ExtResource("10_w0m1v"), ExtResource("12_nd65q"), ExtResource("11_yvq1k"), ExtResource("14_frmtx"), ExtResource("13_w63pn"), ExtResource("15_c3kbx"), ExtResource("17_8g0u6"), ExtResource("16_hyab0"), ExtResource("18_gss4m")])
+metadata/_custom_type_script = "uid://c4d4qk8jd4pfa"
+
+[node name="HSplitContainer" type="HSplitContainer" parent="." unique_id=838892222]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Tree" type="Tree" parent="HSplitContainer" unique_id=1685719569]
+unique_name_in_owner = true
+layout_mode = 2
+hide_root = true
