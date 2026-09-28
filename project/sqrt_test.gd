@@ -9,7 +9,7 @@ extends TestSuite
 # behaves like float math.Sqrt.
 func TestFloatSqrt64(t: TestingT) -> void:
 	var rand := RandomNumberGenerator.new()
-	for i in 1e5:
+	for i in 100000:
 		var r := rand.randf()
 
 		var got := BigFloat.new()
@@ -91,8 +91,8 @@ func TestFloatSqrt(t: TestingT) -> void:
 
 func TestFloatSqrtSpecial(t: TestingT) -> void:
 	for test in [
-		[BigFloat.NewFloat(+0), BigFloat.NewFloat(+0)],
-		[BigFloat.NewFloat(-0), BigFloat.NewFloat(-0)],
+		[BigFloat.NewFloat(+0.0), BigFloat.NewFloat(+0.0)],
+		[BigFloat.NewFloat(-0.0), BigFloat.NewFloat(-0.0)],
 		[BigFloat.NewFloat(INF), BigFloat.NewFloat(INF)],
 	]:
 		var got := BigFloat.new()
@@ -104,7 +104,7 @@ func TestFloatSqrtSpecial(t: TestingT) -> void:
 # Benchmarks
 
 func BenchmarkFloatSqrt(b0: TestingB) -> void:
-	for prec in [64, 128, 256, 1e3, 1e4, 1e5, 1e6]:
+	for prec in [64, 128, 256, 1000, 10000, 100000, 1000000]:
 		var x := BigFloat.NewFloat(2)
 		var z := BigFloat.new()
 		z.SetPrec(prec)

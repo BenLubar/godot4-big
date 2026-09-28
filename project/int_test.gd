@@ -141,8 +141,8 @@ const mulRangesZ: Array[Array] = [
 	[0, -1, "1"],                      # empty range
 	[-1, -100, "1"],                   # empty range
 	[-1, 1, "0"],                      # range includes 0
-	[-1e9, 0, "0"],                    # range includes 0
-	[-1e9, 1e9, "0"],                  # range includes 0
+	[-1000000000, 0, "0"],             # range includes 0
+	[-1000000000, 1000000000, "0"],    # range includes 0
 	[-10, -1, "3628800"],              # 10!
 	[-20, -2, "-2432902008176640000"], # -20!
 	[-99, -1, "-933262154439441526816992388562667004907159682643816214685929638952175999932299156089414639761565182862536979208272237582511852109168640000000000000000000000"], # -99!
@@ -939,7 +939,7 @@ const cmpAbsTests: PackedStringArray = [
 func TestCmpAbs(t: TestingT) -> void:
 	var values: Array[BigInt]
 	values.resize(len(cmpAbsTests))
-	var prev: BigInt
+	var prev: BigInt = null
 	for i in len(cmpAbsTests):
 		var s: String = cmpAbsTests[i]
 		var x := BigInt.new()
@@ -962,7 +962,7 @@ func TestCmpAbs(t: TestingT) -> void:
 				var a := BigInt.new()
 				var b := BigInt.new()
 				a.Set(x)
-				b.Set(x)
+				b.Set(y)
 				if (k & 1) != 0:
 					a.Neg(a)
 				if (k & 2) != 0:
@@ -1039,7 +1039,7 @@ const uint64Tests: Array[Array] = [
 	["8589934591", 8589934591],
 	["8589934592", 8589934592],
 	["9223372036854775807", 9223372036854775807],
-	["9223372036854775808", 9223372036854775808],
+	["9223372036854775808", -9223372036854775808],
 	["0x08000000000000000", -0x08000000000000000],
 
 	# not uint64
@@ -1110,20 +1110,20 @@ const bitwiseTests: Array[Array] = [
 	],
 ]
 
-static func testBitFun(t: TestingT, msg: String, f: Callable, x: BigInt, y: BigInt, exp: String) -> void:
+static func testBitFun(t: TestingT, msg: String, f: Callable, x: BigInt, y: BigInt, exp_: String) -> void:
 	var expected := BigInt.new()
-	expected.SetString(exp)
+	expected.SetString(exp_)
 
 	var out := BigInt.new()
 	f.call(out, x, y)
 	if out.Cmp(expected) != 0:
 		t.Error("%s: got %s want %s" % [msg, out, expected])
 
-static func testBitFunSelf(t: TestingT, msg: String, f: Callable, x: BigInt, y: BigInt, exp: String) -> void:
+static func testBitFunSelf(t: TestingT, msg: String, f: Callable, x: BigInt, y: BigInt, exp_: String) -> void:
 	var z := BigInt.new()
 	z.Set(x)
 	var expected := BigInt.new()
-	expected.SetString(exp)
+	expected.SetString(exp_)
 
 	f.call(z, z, y)
 	if z.Cmp(expected) != 0:
@@ -1307,20 +1307,20 @@ func BenchmarkModSqrt231_5Mod8(b: TestingB) -> void:
 		x._modSqrt5Mod8Prime(x, p)
 
 func TestBitwise(t: TestingT) -> void:
-	var x := BigInt.new()
-	var y := BigInt.new()
+	var x0 := BigInt.new()
+	var y0 := BigInt.new()
 	for test in bitwiseTests:
-		x.SetString(test[0])
-		y.SetString(test[1])
+		x0.SetString(test[0])
+		y0.SetString(test[1])
 
-		testBitFun(t, "and", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.And(x, y), x, y, test[2])
-		testBitFunSelf(t, "and", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.And(x, y), x, y, test[2])
-		testBitFun(t, "andNot", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.AndNot(x, y), x, y, test[3])
-		testBitFunSelf(t, "andNot", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.AndNot(x, y), x, y, test[3])
-		testBitFun(t, "or", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.Or(x, y), x, y, test[4])
-		testBitFunSelf(t, "or", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.Or(x, y), x, y, test[4])
-		testBitFun(t, "xor", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.Xor(x, y), x, y, test[5])
-		testBitFunSelf(t, "xor", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.Xor(x, y), x, y, test[5])
+		testBitFun(t, "and", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.And(x, y), x0, y0, test[2])
+		testBitFunSelf(t, "and", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.And(x, y), x0, y0, test[2])
+		testBitFun(t, "andNot", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.AndNot(x, y), x0, y0, test[5])
+		testBitFunSelf(t, "andNot", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.AndNot(x, y), x0, y0, test[5])
+		testBitFun(t, "or", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.Or(x, y), x0, y0, test[3])
+		testBitFunSelf(t, "or", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.Or(x, y), x0, y0, test[3])
+		testBitFun(t, "xor", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.Xor(x, y), x0, y0, test[4])
+		testBitFunSelf(t, "xor", func(z: BigInt, x: BigInt, y: BigInt) -> void: z.Xor(x, y), x0, y0, test[4])
 
 const notTests: Array[Array] = [
 	["0", "-1"],
@@ -1405,36 +1405,36 @@ func BenchmarkModInverse(b: TestingB) -> void:
 
 # testModSqrt is a helper for TestModSqrt,
 # which checks that ModSqrt can compute a square-root of elt^2.
-static func testModSqrt(t: TestingT, elt: BigInt, mod: BigInt, sq: BigInt, sqrt: BigInt) -> bool:
+static func testModSqrt(t: TestingT, elt: BigInt, mod: BigInt, sq: BigInt, sqrt_: BigInt) -> bool:
 	var sqChk := BigInt.new()
 	var sqrtChk := BigInt.new()
 	var sqrtsq := BigInt.new()
 	sq.Mul(elt, elt)
 	sq.Mod(sq, mod)
-	sqrt.ModSqrt(sq, mod)
+	sqrt_.ModSqrt(sq, mod)
 
 	# test ModSqrt arguments outside the range [0,mod)
 	sqChk.Add(sq, mod)
 	var err := sqrtChk.ModSqrt(sqChk, mod)
-	if err != OK or sqrtChk.Cmp(sqrt) != 0:
+	if err != OK or sqrtChk.Cmp(sqrt_) != 0:
 		t.Error("ModSqrt returned inconsistent value %s" % [sqrtChk])
 
 	sqChk.Sub(sq, mod)
 	err = sqrtChk.ModSqrt(sqChk, mod)
-	if err != OK or sqrtChk.Cmp(sqrt) != 0:
+	if err != OK or sqrtChk.Cmp(sqrt_) != 0:
 		t.Error("ModSqrt returned inconsistent value %s" % [sqrtChk])
 
 	# test x aliasing z
 	sqrtChk.Set(sq)
 	err = sqrtChk.ModSqrt(sqrtChk, mod)
-	if err != OK or sqrtChk.Cmp(sqrt) != 0:
+	if err != OK or sqrtChk.Cmp(sqrt_) != 0:
 		t.Error("ModSqrt returned inconsistent value %s" % [sqrtChk])
 
 	# make sure we actually got a square root
-	if sqrt.Cmp(elt) == 0:
+	if sqrt_.Cmp(elt) == 0:
 		return true # we found the "desired" square root
 
-	sqrtsq.Mul(sqrt, sqrt) # make sure we found the "other" one
+	sqrtsq.Mul(sqrt_, sqrt_) # make sure we found the "other" one
 	sqrtsq.Mod(sqrtsq, mod)
 	return sq.Cmp(sqrtsq) == 0
 
@@ -1443,7 +1443,7 @@ func TestModSqrt(t: TestingT) -> void:
 	var mod := BigInt.new()
 	var modx4 := BigInt.new()
 	var sq := BigInt.new()
-	var sqrt := BigInt.new()
+	var sqrt_ := BigInt.new()
 
 	var r := RandomNumberGenerator.new()
 	r.seed = 9
@@ -1457,8 +1457,8 @@ func TestModSqrt(t: TestingT) -> void:
 		for x in range(1, 5):
 			elt.Rand(r.randi, modx4)
 			elt.Sub(elt, mod) # test range [-mod, 3*mod)
-			if not testModSqrt(t, elt, mod, sq, sqrt):
-				t.Error("#%d: failed (sqrt(e) = %s)" % [i, sqrt])
+			if not testModSqrt(t, elt, mod, sq, sqrt_):
+				t.Error("#%d: failed (sqrt(e) = %s)" % [i, sqrt_])
 
 	# exhaustive test for small values
 	for n in range(3, 100):
@@ -1472,17 +1472,17 @@ func TestModSqrt(t: TestingT) -> void:
 		# test all the squares
 		for x in range(1, n):
 			elt.SetInt64(x)
-			if not testModSqrt(t, elt, mod, sq, sqrt):
-				t.Error("#%d: failed (sqrt(%s,%s) = %s)" % [x, elt, mod, sqrt])
+			if not testModSqrt(t, elt, mod, sq, sqrt_):
+				t.Error("#%d: failed (sqrt(%s,%s) = %s)" % [x, elt, mod, sqrt_])
 
 			isSquare[sq.Uint64()] = true
 
 		# test all non-squares
 		for x in range(1, n):
 			sq.SetInt64(x)
-			var err := sqrt.ModSqrt(sq, mod)
+			var err := sqrt_.ModSqrt(sq, mod)
 			if not isSquare[x] and err == OK:
-				t.Error("#%d: failed (sqrt(%s,%s) = nil)" % [x, sqrt, mod])
+				t.Error("#%d: failed (sqrt(%s,%s) = nil)" % [x, sqrt_, mod])
 
 func TestJacobi(t: TestingT) -> void:
 	const testCases: Array[Array] = [
@@ -1518,7 +1518,7 @@ func TestJacobi(t: TestingT) -> void:
 		if actual != expected:
 			t.Errorf("#%d: Jacobi(%d, %d) = %d, but expected %d", i, test[0], test[1], actual, expected)
 
-func TestIssue2607(t: TestingT) -> void:
+func TestIssue2607(_t: TestingT) -> void:
 	# This code sequence used to hang.
 	var n := BigInt.NewInt(10)
 	var rand := RandomNumberGenerator.new()
@@ -1542,9 +1542,9 @@ func TestSqrt(t: TestingT) -> void:
 		n.SetString("1" + "0".repeat(i), 10)
 		r.Sqrt(n)
 		var r2 := BigInt.new()
-		r2.SetString("1" + "0".repeat(i / 2), 10)
+		r2.SetString("1" + "0".repeat(i >> 1), 10)
 		if r.Cmp(r2) != 0:
-			t.Error("Sqrt(1e%d) = %s, want 1e%d" % [i, r, i / 2])
+			t.Error("Sqrt(1e%d) = %s, want 1e%d" % [i, r, i >> 1])
 
 	# Test aliasing.
 	r.SetInt64(100)
@@ -1612,7 +1612,7 @@ static func benchmarkDiv(b: TestingB, aSize: int, bSize: int) -> void:
 func BenchmarkDiv(b0: TestingB) -> void:
 	for i: int in [
 		10, 20, 50, 100, 200, 500, 1000,
-		1e4, 1e5, 1e6, 1e7,
+		10000, 100000, 1000000, 10000000,
 	]:
 		var j := 2 * i
 		b0.Run("%d/%d" % [j, i], benchmarkDiv.bind(j, i))
@@ -1625,6 +1625,12 @@ func TestNewIntMinInt64(t: TestingT) -> void:
 		t.Error("wanted %d, got %d" % [want, got])
 
 func TestFloat64(t: TestingT) -> void:
+	# Godot parses -4503599627370495.000000 as -4503599627370494.500000
+	var godot_parser_bug_workaround: PackedByteArray
+	godot_parser_bug_workaround.resize(8)
+	godot_parser_bug_workaround.encode_u32(0, 0xfffffffe)
+	godot_parser_bug_workaround.encode_u32(4, 0xc32fffff)
+
 	for test in [
 		["-1000000000000000000000000000000000000000000000000000000", -1000000000000000078291540404596243842305360299886116864.000000, BigFloat.ACC_BELOW],
 		["-9223372036854775809", INT64_MIN, BigFloat.ACC_ABOVE],
@@ -1638,15 +1644,15 @@ func TestFloat64(t: TestingT) -> void:
 		["-9007199254740991", -9007199254740991.000000, BigFloat.ACC_EXACT],
 		["-4503599627370497", -4503599627370497.000000, BigFloat.ACC_EXACT],
 		["-4503599627370496", -4503599627370496.000000, BigFloat.ACC_EXACT], # -2^52
-		["-4503599627370495", -4503599627370495.000000, BigFloat.ACC_EXACT],
+		["-4503599627370495", godot_parser_bug_workaround.decode_double(0), BigFloat.ACC_EXACT],
 		["-12345", -12345, BigFloat.ACC_EXACT],
 		["-1", -1, BigFloat.ACC_EXACT],
 		["0", 0, BigFloat.ACC_EXACT],
 		["1", 1, BigFloat.ACC_EXACT],
 		["12345", 12345, BigFloat.ACC_EXACT],
 		["0x1010000000000000", 0x1010000000000000, BigFloat.ACC_EXACT], # >2^53 but exact nonetheless
-		["9223372036854775807", 9223372036854775808, BigFloat.ACC_ABOVE],
-		["9223372036854775808", 9223372036854775808, BigFloat.ACC_EXACT], # +2^63
+		["9223372036854775807", 9223372036854775808.0, BigFloat.ACC_ABOVE],
+		["9223372036854775808", 9223372036854775808.0, BigFloat.ACC_EXACT], # +2^63
 		["1000000000000000000000000000000000000000000000000000000", 1000000000000000078291540404596243842305360299886116864.000000, BigFloat.ACC_ABOVE],
 	]:
 		var i := BigInt.new()

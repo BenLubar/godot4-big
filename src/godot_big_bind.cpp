@@ -1,3 +1,4 @@
+#include "godot_big_decimal.h"
 #include "godot_big_float.h"
 #include "godot_big_int.h"
 #include "godot_big_rat.h"
@@ -118,6 +119,11 @@ void BigFloat::_bind_methods() {
 
 	// square root!
 	ClassDB::bind_method(D_METHOD("Sqrt", "x"), &BigFloat::Sqrt);
+
+	// internals exported for test suite
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_decimal_raw_string", "mant", "exp"), &BigDecimal::test_raw_string_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_decimal_string", "x", "shift"), &BigDecimal::test_string_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_decimal_round_string", "x", "shift", "n", "round_direction"), &BigDecimal::test_round_string_bind);
 }
 
 void BigFloat::_set_prec(uint32_t p_prec) {
@@ -308,12 +314,15 @@ void BigInt::_bind_methods() {
 
 	// internals exported for test suite
 	ClassDB::bind_method(D_METHOD("_lehmerGCD", "x", "y", "a", "b"), &BigInt::_lehmerGCD);
+	ClassDB::bind_method(D_METHOD("_test_mul_range_unsigned", "a", "b"), &BigInt::_test_mul_range_unsigned);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_probablyPrimeLucas", "x"), &probablyPrimeLucas_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_probablyPrimeMillerRabin", "x", "reps", "force2"), &probablyPrimeMillerRabin_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Add", "x", "y", "carry"), &bits_Add_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Sub", "x", "y", "borrow"), &bits_Sub_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Mul", "x", "y"), &bits_Mul_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Div", "hi", "lo", "y"), &bits_Div_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_mul", "karatsuba_threshold", "x", "y"), &BigNat::test_mul_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_sqr", "basic_sqr_threshold", "karatsuba_sqr_threshold", "x"), &BigNat::test_sqr_bind);
 }
 
 void BigInt::_set_neg(bool p_neg) {

@@ -18,6 +18,7 @@ func recur(n: int, lim: int) -> BigRat:
 	if n % 3 != 1:
 		term.SetInt64(1)
 	else:
+		@warning_ignore("integer_division")
 		term.SetInt64((n - 1) / 3 * 2)
 
 	if n > lim:

@@ -54,9 +54,13 @@ func _ready() -> void:
 	for queued in _queued_tests:
 		queued.tree_item = tests_root.create_child()
 		queued.tree_item.set_text(0, queued.name)
+		queued.tree_item.set_text(1, tr(&"..."))
+		queued.tree_item.set_selectable(1, false)
 	for queued in _queued_examples:
 		queued.tree_item = tests_root.create_child()
 		queued.tree_item.set_text(0, queued.name)
+		queued.tree_item.set_text(1, tr(&"..."))
+		queued.tree_item.set_selectable(1, false)
 
 	var benchmarks_root := true_root.create_child()
 	benchmarks_root.set_text(0, "Benchmarks")
@@ -64,8 +68,16 @@ func _ready() -> void:
 	for queued in _queued_benchmarks:
 		queued.tree_item = benchmarks_root.create_child()
 		queued.tree_item.set_text(0, queued.name)
+		queued.tree_item.set_text(1, tr(&"..."))
+		queued.tree_item.set_selectable(1, false)
 
-	_tests_and_examples_task = WorkerThreadPool.add_group_task(_run_test_or_example, len(_queued_tests) + len(_queued_examples), -1, true, "run tests and examples")
+	if false:
+		for i in len(_queued_tests) + len(_queued_examples):
+			_run_test_or_example(i)
+		for i in len(_queued_benchmarks):
+			_run_benchmark(i)
+	else:
+		_tests_and_examples_task = WorkerThreadPool.add_group_task(_run_test_or_example, len(_queued_tests) + len(_queued_examples), -1, true, "run tests and examples")
 
 func _process(_delta: float) -> void:
 	if _tests_and_examples_task != -1 and WorkerThreadPool.is_group_task_completed(_tests_and_examples_task):
@@ -114,10 +126,32 @@ func _run_benchmark(i: int) -> void:
 	_on_benchmark_finished.call_deferred(i)
 
 func _on_test_finished(i: int) -> void:
-	pass # TODO
+	var test := _queued_tests[i]
+	_mutex.lock()
+	if test.test_result.failed:
+		test.tree_item.set_text(1, tr(&"FAIL"))
+		test.tree_item.set_custom_color(1, Color.RED)
+		if test.test_result.errors == PackedStringArray(["TODO"]):
+			test.tree_item.set_text(1, "TODO")
+			test.tree_item.set_custom_color(1, Color.YELLOW)
+	else:
+		test.tree_item.set_text(1, tr(&"PASS"))
+		test.tree_item.set_custom_color(1, Color.GREEN)
+	_mutex.unlock()
+	# TODO
 
 func _on_example_finished(i: int) -> void:
-	pass # TODO
+	var example := _queued_examples[i]
+	_mutex.lock()
+	if example.example_result.failed:
+		example.tree_item.set_text(1, tr(&"FAIL"))
+		example.tree_item.set_custom_color(1, Color.RED)
+	else:
+		example.tree_item.set_text(1, tr(&"PASS"))
+		example.tree_item.set_custom_color(1, Color.GREEN)
+	_mutex.unlock()
+	# TODO
 
 func _on_benchmark_finished(i: int) -> void:
-	pass # TODO
+	var _benchmark := _queued_benchmarks[i]
+	# TODO

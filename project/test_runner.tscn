@@ -42,4 +42,5 @@ grow_vertical = 2
 [node name="Tree" type="Tree" parent="HSplitContainer" unique_id=1685719569]
 unique_name_in_owner = true
 layout_mode = 2
+columns = 2
 hide_root = true

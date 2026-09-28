@@ -7,7 +7,8 @@ extends TestSuite
 
 const zero_ := 0.0
 
-#func TestFloatSetFloat64String(t *testing.T) {
+func TestFloatSetFloat64String(t: TestingT) -> void:
+	t.Error("TODO")
 #	inf := math.Inf(0)
 #	nan := math.NaN()
 #
@@ -189,8 +190,9 @@ const zero_ := 0.0
 #	below1e23 = 99999999999999974834176
 #	above1e23 = 100000000000000008388608
 #)
-#
-#func TestFloat64Text(t *testing.T) {
+
+func TestFloat64Text(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x      float64
 #		format byte
@@ -365,8 +367,7 @@ const zero_ := 0.0
 #			t.Errorf("%v: got %s; want %s (strconv)", test, got, want)
 #		}
 #	}
-#}
-#
+
 ## actualPrec returns the number of actually used mantissa bits.
 #func actualPrec(x float64) uint {
 #	if mant := math.Float64bits(x); x != 0 && mant&(0x7ff<<52) == 0 {
@@ -375,8 +376,9 @@ const zero_ := 0.0
 #	}
 #	return 53
 #}
-#
-#func TestFloatText(t *testing.T) {
+
+func TestFloatText(t: TestingT) -> void:
+	t.Error("TODO")
 #	const defaultRound = ^RoundingMode(0)
 #
 #	for _, test := range []struct {
@@ -563,9 +565,9 @@ const zero_ := 0.0
 #			}
 #		}
 #	}
-#}
-#
-#func TestFloatFormat(t *testing.T) {
+
+func TestFloatFormat(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		format string
 #		value  any # float32, float64, or string (== 512bit *Float)
@@ -699,8 +701,7 @@ const zero_ := 0.0
 #			t.Errorf("%v: got %q; want %q", test, got, test.want)
 #		}
 #	}
-#}
-#
+
 #func BenchmarkParseFloatSmallExp(b *testing.B) {
 #	for i := 0; i < b.N; i++ {
 #		for _, s := range []string{
@@ -764,8 +765,9 @@ const zero_ := 0.0
 #		}
 #	}
 #}
-#
-#func TestFloatScan(t *testing.T) {
+
+func TestFloatScan(t: TestingT) -> void:
+	t.Error("TODO")
 #	var floatScanTests = []struct {
 #		input     string
 #		format    string
@@ -814,4 +816,3 @@ const zero_ := 0.0
 #			t.Errorf("#%d got %d bytes remaining; want %d", i, buf.Len(), test.remaining)
 #		}
 #	}
-#}

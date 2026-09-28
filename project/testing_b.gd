@@ -2,5 +2,6 @@ class_name TestingB
 
 var N: int
 
-func Run(_name: String, _benchmark: Callable) -> void:
-	pass # TODO
+func Run(_sub_name: String, benchmark: Callable) -> void:
+	benchmark.call(self)
+	# TODO

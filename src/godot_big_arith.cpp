@@ -179,7 +179,7 @@ BigWord BigNat::rshVU(BigNat &r_z, BigNat p_x, uint64_t p_s) {
 
 BigWord BigNat::subVVSlice(BigNat &r_z, int64_t p_begin, int64_t p_end, BigNat p_y) {
 	BigNat z{ r_z.array.slice(p_begin, p_end) };
-	const BigWord c = subVV(z, z, p_y);
+	const BigWord c = subVV(z, z, p_y); // NOLINT(performance-unnecessary-value-param)
 	memmove(r_z.array.ptrw() + p_begin, z.array.ptr(), (p_end - p_begin) * sizeof(BigWord));
 	return c;
 }

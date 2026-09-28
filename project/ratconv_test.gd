@@ -51,8 +51,9 @@ extends TestSuite
 #	{"e_0", false, true, 0, 10, errInvalSep, 0},
 #	{"e-1_2__3", false, true, -123, 10, errInvalSep, 0},
 #}
-#
-#func TestScanExponent(t *testing.T) {
+
+func TestScanExponent(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, a := range exponentTests {
 #		r := strings.NewReader(a.s)
 #		x, b, err := scanExponent(r, a.base2ok, a.sepOk)
@@ -74,105 +75,100 @@ extends TestSuite
 #			t.Errorf("scanExponent%+v\n\tgot next = %q; want %q", a, next, a.next)
 #		}
 #	}
-#}
-#
-#type StringTest struct {
-#	in, out string
-#	ok      bool
-#}
-#
-#var setStringTests = []StringTest{
-#	# invalid
-#	{in: "1e"},
-#	{in: "1.e"},
-#	{in: "1e+14e-5"},
-#	{in: "1e4.5"},
-#	{in: "r"},
-#	{in: "a/b"},
-#	{in: "a.b"},
-#	{in: "1/0"},
-#	{in: "4/3/2"}, # issue 17001
-#	{in: "4/3/"},
-#	{in: "4/3."},
-#	{in: "4/"},
-#	{in: "13e-9223372036854775808"}, # CVE-2022-23772
-#
-#	# valid
-#	{"0", "0", true},
-#	{"-0", "0", true},
-#	{"1", "1", true},
-#	{"-1", "-1", true},
-#	{"1.", "1", true},
-#	{"1e0", "1", true},
-#	{"1.e1", "10", true},
-#	{"-0.1", "-1/10", true},
-#	{"-.1", "-1/10", true},
-#	{"2/4", "1/2", true},
-#	{".25", "1/4", true},
-#	{"-1/5", "-1/5", true},
-#	{"8129567.7690E14", "812956776900000000000", true},
-#	{"78189e+4", "781890000", true},
-#	{"553019.8935e+8", "55301989350000", true},
-#	{"98765432109876543210987654321e-10", "98765432109876543210987654321/10000000000", true},
-#	{"9877861857500000E-7", "3951144743/4", true},
-#	{"2169378.417e-3", "2169378417/1000000", true},
-#	{"884243222337379604041632732738665534", "884243222337379604041632732738665534", true},
-#	{"53/70893980658822810696", "53/70893980658822810696", true},
-#	{"106/141787961317645621392", "53/70893980658822810696", true},
-#	{"204211327800791583.81095", "4084226556015831676219/20000", true},
-#	{"0e9999999999", "0", true}, # issue #16176
-#}
-#
-## These are not supported by fmt.Fscanf.
-#var setStringTests2 = []StringTest{
-#	# invalid
-#	{in: "4/3x"},
-#	{in: "0/-1"},
-#	{in: "-1/-1"},
-#
-#	# invalid with separators
-#	# (smoke tests only - a comprehensive set of tests is in natconv_test.go)
-#	{in: "10_/1"},
-#	{in: "_10/1"},
-#	{in: "1/1__0"},
-#
-#	# valid
-#	{"0b1000/3", "8/3", true},
-#	{"0B1000/0x8", "1", true},
-#	{"-010/1", "-8", true}, # 0-prefix indicates octal in this case
-#	{"-010.0", "-10", true},
-#	{"-0o10/1", "-8", true},
-#	{"0x10/1", "16", true},
-#	{"0x10/0x20", "1/2", true},
-#
-#	{"0010", "10", true}, # 0-prefix is ignored in this case (not a fraction)
-#	{"0x10.0", "16", true},
-#	{"0x1.8", "3/2", true},
-#	{"0X1.8p4", "24", true},
-#	{"0x1.1E2", "2289/2048", true}, # E is part of hex mantissa, not exponent
-#	{"0b1.1E2", "150", true},
-#	{"0B1.1P3", "12", true},
-#	{"0o10e-2", "2/25", true},
-#	{"0O10p-3", "1", true},
-#
-#	# valid with separators
-#	# (smoke tests only - a comprehensive set of tests is in natconv_test.go)
-#	{"0b_1000/3", "8/3", true},
-#	{"0B_10_00/0x8", "1", true},
-#	{"0xdead/0B1101_1110_1010_1101", "1", true},
-#	{"0B1101_1110_1010_1101/0XD_E_A_D", "1", true},
-#	{"1_000.0", "1000", true},
-#
-#	{"0x_10.0", "16", true},
-#	{"0x1_0.0", "16", true},
-#	{"0x1.8_0", "3/2", true},
-#	{"0X1.8p0_4", "24", true},
-#	{"0b1.1_0E2", "150", true},
-#	{"0o1_0e-2", "2/25", true},
-#	{"0O_10p-3", "1", true},
-#}
-#
-#func TestRatSetString(t *testing.T) {
+
+const setStringTests: Array[Array] = [
+	# invalid
+	["1e", "", false],
+	["1.e", "", false],
+	["1e+14e-5", "", false],
+	["1e4.5", "", false],
+	["r", "", false],
+	["a/b", "", false],
+	["a.b", "", false],
+	["1/0", "", false],
+	["4/3/2", "", false], # issue 17001
+	["4/3/", "", false],
+	["4/3.", "", false],
+	["4/", "", false],
+	["13e-9223372036854775808", "", false], # CVE-2022-23772
+
+	# valid
+	["0", "0", true],
+	["-0", "0", true],
+	["1", "1", true],
+	["-1", "-1", true],
+	["1.", "1", true],
+	["1e0", "1", true],
+	["1.e1", "10", true],
+	["-0.1", "-1/10", true],
+	["-.1", "-1/10", true],
+	["2/4", "1/2", true],
+	[".25", "1/4", true],
+	["-1/5", "-1/5", true],
+	["8129567.7690E14", "812956776900000000000", true],
+	["78189e+4", "781890000", true],
+	["553019.8935e+8", "55301989350000", true],
+	["98765432109876543210987654321e-10", "98765432109876543210987654321/10000000000", true],
+	["9877861857500000E-7", "3951144743/4", true],
+	["2169378.417e-3", "2169378417/1000000", true],
+	["884243222337379604041632732738665534", "884243222337379604041632732738665534", true],
+	["53/70893980658822810696", "53/70893980658822810696", true],
+	["106/141787961317645621392", "53/70893980658822810696", true],
+	["204211327800791583.81095", "4084226556015831676219/20000", true],
+	["0e9999999999", "0", true], # issue #16176
+]
+
+# These are not supported by fmt.Fscanf.
+const setStringTests2: Array[Array] = [
+	# invalid
+	["4/3x", "", false],
+	["0/-1", "", false],
+	["-1/-1", "", false],
+
+	# invalid with separators
+	# (smoke tests only - a comprehensive set of tests is in natconv_test.go)
+	["10_/1", "", false],
+	["_10/1", "", false],
+	["1/1__0", "", false],
+
+	# valid
+	["0b1000/3", "8/3", true],
+	["0B1000/0x8", "1", true],
+	["-010/1", "-8", true], # 0-prefix indicates octal in this case
+	["-010.0", "-10", true],
+	["-0o10/1", "-8", true],
+	["0x10/1", "16", true],
+	["0x10/0x20", "1/2", true],
+
+	["0010", "10", true], # 0-prefix is ignored in this case (not a fraction)
+	["0x10.0", "16", true],
+	["0x1.8", "3/2", true],
+	["0X1.8p4", "24", true],
+	["0x1.1E2", "2289/2048", true], # E is part of hex mantissa, not exponent
+	["0b1.1E2", "150", true],
+	["0B1.1P3", "12", true],
+	["0o10e-2", "2/25", true],
+	["0O10p-3", "1", true],
+
+	# valid with separators
+	# (smoke tests only - a comprehensive set of tests is in natconv_test.go)
+	["0b_1000/3", "8/3", true],
+	["0B_10_00/0x8", "1", true],
+	["0xdead/0B1101_1110_1010_1101", "1", true],
+	["0B1101_1110_1010_1101/0XD_E_A_D", "1", true],
+	["1_000.0", "1000", true],
+
+	["0x_10.0", "16", true],
+	["0x1_0.0", "16", true],
+	["0x1.8_0", "3/2", true],
+	["0X1.8p0_4", "24", true],
+	["0b1.1_0E2", "150", true],
+	["0o1_0e-2", "2/25", true],
+	["0O_10p-3", "1", true],
+]
+
+func TestRatSetString(t: TestingT) -> void:
+	t.Error("TODO")
 #	var tests []StringTest
 #	tests = append(tests, setStringTests...)
 #	tests = append(tests, setStringTests2...)
@@ -194,17 +190,17 @@ extends TestSuite
 #			}
 #		}
 #	}
-#}
-#
-#func TestRatSetStringZero(t *testing.T) {
+
+func TestRatSetStringZero(t: TestingT) -> void:
+	t.Error("TODO")
 #	got, _ := new(Rat).SetString("0")
 #	want := new(Rat).SetInt64(0)
 #	if !reflect.DeepEqual(got, want) {
 #		t.Errorf("got %#+v, want %#+v", got, want)
 #	}
-#}
-#
-#func TestRatScan(t *testing.T) {
+
+func TestRatScan(t: TestingT) -> void:
+	t.Error("TODO")
 #	var buf bytes.Buffer
 #	for i, test := range setStringTests {
 #		x := new(Rat)
@@ -224,7 +220,6 @@ extends TestSuite
 #			t.Errorf("#%d got %s want %s", i, x.RatString(), test.out)
 #		}
 #	}
-#}
 
 const floatStringTests: Array[Array] = [
 	["0", 0, "0"],
@@ -246,15 +241,16 @@ const floatStringTests: Array[Array] = [
 	[".55", -1, "1"],
 ]
 
-#func TestFloatString(t *testing.T) {
-#	for i, test := range floatStringTests {
-#		x, _ := new(Rat).SetString(test.in)
-#
-#		if x.FloatString(test.prec) != test.out {
-#			t.Errorf("#%d got %s want %s", i, x.FloatString(test.prec), test.out)
-#		}
-#	}
-#}
+func TestFloatString(t: TestingT) -> void:
+	for i in len(floatStringTests):
+		var test := floatStringTests[i]
+
+		var x := BigRat.new()
+		x.SetString(test[0])
+
+		var s := x.FloatString(test[1])
+		if s != test[2]:
+			t.Error("#%d got %s want %s" % [i, s, test[2]])
 
 # Test inputs to Rat.SetString. The prefix "long:" causes the test
 # to be skipped except in -long mode.  (The threshold is about 500us.)
@@ -459,8 +455,9 @@ static var float64inputs: PackedStringArray = [
 #func isFinite(f float64) bool {
 #	return math.Abs(f) <= math.MaxFloat64
 #}
-#
-#func TestFloat32SpecialCases(t *testing.T) {
+
+func TestFloat32SpecialCases(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, input := range float64inputs {
 #		if strings.HasPrefix(input, "long:") {
 #			if !*long {
@@ -514,9 +511,9 @@ static var float64inputs: PackedStringArray = [
 #			t.Errorf("Rat.SetString(%q).Float32().exact = %t, want %t", input, exact, wasExact)
 #		}
 #	}
-#}
-#
-#func TestFloat64SpecialCases(t *testing.T) {
+
+func TestFloat64SpecialCases(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, input := range float64inputs {
 #		if strings.HasPrefix(input, "long:") {
 #			if !*long {
@@ -569,9 +566,9 @@ static var float64inputs: PackedStringArray = [
 #			t.Errorf("Rat.SetString(%q).Float64().exact = %t, want %t", input, exact, wasExact)
 #		}
 #	}
-#}
-#
-#func TestIssue31184(t *testing.T) {
+
+func TestIssue31184(t: TestingT) -> void:
+	t.Error("TODO")
 #	var x Rat
 #	for _, want := range []string{
 #		"-213.090",
@@ -584,9 +581,9 @@ static var float64inputs: PackedStringArray = [
 #			t.Errorf("got %s, want %s", got, want)
 #		}
 #	}
-#}
-#
-#func TestIssue45910(t *testing.T) {
+
+func TestIssue45910(t: TestingT) -> void:
+	t.Error("TODO")
 #	var x Rat
 #	for _, test := range []struct {
 #		input string
@@ -609,8 +606,9 @@ static var float64inputs: PackedStringArray = [
 #			t.Errorf("SetString(%s) got ok = %v; want %v", test.input, got, test.want)
 #		}
 #	}
-#}
-#func TestFloatPrec(t *testing.T) {
+
+func TestFloatPrec(t: TestingT) -> void:
+	t.Error("TODO")
 #	var tests = []struct {
 #		f    string
 #		prec int
@@ -681,10 +679,9 @@ static var float64inputs: PackedStringArray = [
 #			}
 #		}
 #	}
-#}
-#
+
 #func BenchmarkFloatPrecExact(b *testing.B) {
-#	for _, n := range []int{1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6} {
+#	for _, n := range []int{1, 10, 100, 1000, 10000, 100000, 1000000} {
 #		# d := 5^n
 #		d := NewInt(5)
 #		p := NewInt(int64(n))
@@ -706,7 +703,7 @@ static var float64inputs: PackedStringArray = [
 #}
 #
 #func BenchmarkFloatPrecMixed(b *testing.B) {
-#	for _, n := range []int{1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6} {
+#	for _, n := range []int{1, 10, 100, 1000, 10000, 100000, 1000000} {
 #		# d := (3·5·7·11)^n
 #		d := NewInt(3 * 5 * 7 * 11)
 #		p := NewInt(int64(n))
@@ -728,7 +725,7 @@ static var float64inputs: PackedStringArray = [
 #}
 #
 #func BenchmarkFloatPrecInexact(b *testing.B) {
-#	for _, n := range []int{1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6} {
+#	for _, n := range []int{1, 10, 100, 1000, 10000, 100000, 1000000} {
 #		# d := 5^n + 1
 #		d := NewInt(5)
 #		p := NewInt(int64(n))

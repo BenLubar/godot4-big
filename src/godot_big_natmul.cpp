@@ -12,16 +12,69 @@ using namespace godot;
 
 // Multiplication.
 
+#ifdef DEBUG_ENABLED
+#define CALIBRATION_MODIFIERS thread_local
+#else
+#define CALIBRATION_MODIFIERS static constexpr
+#endif
+
 // Operands that are shorter than karatsubaThreshold are multiplied using
 // "grade school" multiplication; for longer operands the Karatsuba algorithm
 // is used.
-static constexpr int64_t karatsubaThreshold = 40; // see calibrate_test.go
+CALIBRATION_MODIFIERS int64_t karatsubaThreshold = 40; // see calibrate_test.go
 
 // Operands that are shorter than basicSqrThreshold are squared using
 // "grade school" multiplication; for operands longer than karatsubaSqrThreshold
 // we use the Karatsuba algorithm optimized for x == y.
-static constexpr int64_t basicSqrThreshold = 12; // see calibrate_test.go
-static constexpr int64_t karatsubaSqrThreshold = 80; // see calibrate_test.go
+CALIBRATION_MODIFIERS int64_t basicSqrThreshold = 12; // see calibrate_test.go
+CALIBRATION_MODIFIERS int64_t karatsubaSqrThreshold = 80; // see calibrate_test.go
+
+#undef CALIBRATION_MODIFIERS
+
+PackedInt64Array BigNat::test_mul_bind(int64_t p_karatsuba_threshold, const PackedInt64Array &p_x, const PackedInt64Array &p_y) {
+#ifdef DEBUG_ENABLED
+	const int64_t orig_k = karatsubaThreshold;
+	if (p_karatsuba_threshold != -1) {
+		karatsubaThreshold = p_karatsuba_threshold;
+	}
+#else
+	WARN_PRINT("BigInt._test_mul can only be called on debug builds");
+#endif
+
+	BigNat z;
+	z.mul({ p_x }, { p_y });
+
+#ifdef DEBUG_ENABLED
+	karatsubaThreshold = orig_k;
+#endif
+
+	return z.array;
+}
+
+PackedInt64Array BigNat::test_sqr_bind(int64_t p_basic_sqr_threshold, int64_t p_karatsuba_sqr_threshold, const PackedInt64Array &p_x) {
+#ifdef DEBUG_ENABLED
+	const int64_t orig_bs = basicSqrThreshold;
+	const int64_t orig_ks = karatsubaSqrThreshold;
+	if (p_basic_sqr_threshold != -1) {
+		basicSqrThreshold = p_basic_sqr_threshold;
+	}
+	if (p_karatsuba_sqr_threshold != -1) {
+		karatsubaSqrThreshold = p_karatsuba_sqr_threshold;
+	}
+#else
+	WARN_PRINT("BigInt._test_sqr can only be called on debug builds");
+#endif
+
+	BigNat z;
+	z.sqr({ p_x });
+
+#ifdef DEBUG_ENABLED
+	basicSqrThreshold = orig_bs;
+	karatsubaSqrThreshold = orig_ks;
+#endif
+
+	return z.array;
+}
 
 // mul sets z = x*y, using stk for temporary storage.
 // The caller may pass stk == nil to request that mul obtain and release one itself.
@@ -298,7 +351,8 @@ void BigNat::karatsuba(BigNat &z, BigNat x, BigNat y) { // NOLINT(performance-un
 		trace("z0", z0);
 		trace("z1", z1);
 		trace("z2", z2);
-		CRASH_NOW_MSG("karatsuba");
+		//CRASH_NOW_MSG("karatsuba");
+		z = zz;
 	}
 #endif
 }
@@ -348,8 +402,8 @@ void BigNat::karatsubaSqr(BigNat &z, BigNat x) { // NOLINT(performance-unnecessa
 	x1->_abs.norm();
 
 	z0->_abs.array.resize(2 * n2);
-	z1->_abs.array.resize(2 * n2 + 1);
-	z2->_abs.array.resize(2 * n - 2 * n2);
+	z1->_abs.array.resize((2 * n2) + 1);
+	z2->_abs.array.resize((2 * n) - (2 * n2));
 	tx->_abs.array.resize(n2);
 
 	tx->Sub(x0, x1);

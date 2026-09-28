@@ -195,6 +195,12 @@ void BigInt::MulRange(int64_t p_a, int64_t p_b) {
 	emit_changed();
 }
 
+void BigInt::_test_mul_range_unsigned(uint64_t p_a, uint64_t p_b) {
+	_abs.mulRange(p_a, p_b);
+	_neg = false;
+	emit_changed();
+}
+
 // Binomial sets z to the binomial coefficient C(n, k) and returns z.
 void BigInt::Binomial(int64_t p_n, int64_t p_k) {
 	if (p_k > p_n) {
@@ -468,7 +474,7 @@ uint64_t BigInt::Uint64() const {
 bool BigInt::IsInt64() const {
 	if (_abs.array.size() <= 1) {
 		const int64_t w = static_cast<int64_t>(_abs.low64());
-		return w >= 0 || (_neg && w == -w);
+		return w >= 0 || (_neg && w == INT64_MIN);
 	}
 	return false;
 }
@@ -1398,7 +1404,7 @@ void BigInt::Or(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	// x | (-y) == x | ^(y-1) == ^((y-1) &^ x) == -(^((y-1) &^ x) + 1)
 	BigNat y1;
 	y1.sub1(y->_abs);
-	_abs.andNot(y1, p_x->_abs);
+	_abs.andNot(y1, x->_abs);
 	_abs.add1(_abs);
 	_neg = true; // z cannot be zero if one of x or y is negative
 	emit_changed();

@@ -26,8 +26,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #	}
 #	return i
 #}
-#
-#func TestFloatZeroValue(t *testing.T) {
+
+func TestFloatZeroValue(t: TestingT) -> void:
+	t.Error("TODO")
 #	# zero (uninitialized) value is a ready-to-use 0.0
 #	var x Float
 #	if s := x.Text('f', 1); s != "0.0" {
@@ -85,8 +86,7 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #	}
 #
 #	# TODO(gri) test how precision is set for zero value results
-#}
-#
+
 #func makeFloat(s string) *Float {
 #	x, _, err := ParseFloat(s, 0, 1000, ToNearestEven)
 #	if err != nil {
@@ -94,8 +94,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #	}
 #	return x
 #}
-#
-#func TestFloatSetPrec(t *testing.T) {
+
+func TestFloatSetPrec(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x    string
 #		prec uint
@@ -119,8 +120,8 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #		# just a few regular cases - general rounding is tested elsewhere
 #		{"1.5", 1, "2", Above},
 #		{"-1.5", 1, "-2", Below},
-#		{"123", 1e6, "123", Exact},
-#		{"-123", 1e6, "-123", Exact},
+#		{"123", 1000000, "123", Exact},
+#		{"-123", 1000000, "-123", Exact},
 #	} {
 #		x := makeFloat(test.x).SetPrec(test.prec)
 #		prec := test.prec
@@ -134,9 +135,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("%s.SetPrec(%d) = %s (%s); want %s (%s)", test.x, test.prec, got, acc, test.want, test.acc)
 #		}
 #	}
-#}
-#
-#func TestFloatMinPrec(t *testing.T) {
+
+func TestFloatMinPrec(t: TestingT) -> void:
+	t.Error("TODO")
 #	const max = 100
 #	for _, test := range []struct {
 #		x    string
@@ -159,9 +160,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("%s.MinPrec() = %d; want %d", test.x, got, test.want)
 #		}
 #	}
-#}
-#
-#func TestFloatSign(t *testing.T) {
+
+func TestFloatSign(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x string
 #		s int
@@ -179,8 +180,7 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("%s.Sign() = %d; want %d", test.x, s, test.s)
 #		}
 #	}
-#}
-#
+
 ## alike(x, y) is like x.Cmp(y) == 0 but also considers the sign of 0 (0 != -0).
 #func alike(x, y *Float) bool {
 #	return x.Cmp(y) == 0 && x.Signbit() == y.Signbit()
@@ -195,8 +195,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #	# we can ignore NaNs
 #	return x == y && math.Signbit(x) == math.Signbit(y)
 #}
-#
-#func TestFloatMantExp(t *testing.T) {
+
+func TestFloatMantExp(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x    string
 #		mant string
@@ -220,9 +221,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("%s.MantExp() = %s, %d; want %s, %d", test.x, m.Text('g', 10), e, test.mant, test.exp)
 #		}
 #	}
-#}
-#
-#func TestFloatMantExpAliasing(t *testing.T) {
+
+func TestFloatMantExpAliasing(t: TestingT) -> void:
+	t.Error("TODO")
 #	x := makeFloat("0.5p10")
 #	if e := x.MantExp(x); e != 10 {
 #		t.Fatalf("Float.MantExp aliasing error: got %d; want 10", e)
@@ -230,9 +231,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #	if want := makeFloat("0.5"); !alike(x, want) {
 #		t.Fatalf("Float.MantExp aliasing error: got %s; want %s", x.Text('g', 10), want.Text('g', 10))
 #	}
-#}
-#
-#func TestFloatSetMantExp(t *testing.T) {
+
+func TestFloatSetMantExp(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		frac string
 #		exp  int
@@ -268,9 +269,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("Inverse property not satisfied: got %s; want %s", z.Text('g', 10), test.z)
 #		}
 #	}
-#}
-#
-#func TestFloatPredicates(t *testing.T) {
+
+func TestFloatPredicates(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x            string
 #		sign         int
@@ -294,9 +295,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("(%s).IsInf() = %v; want %v", test.x, got, test.inf)
 #		}
 #	}
-#}
-#
-#func TestFloatIsInt(t *testing.T) {
+
+func TestFloatIsInt(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []string{
 #		"0 int",
 #		"-0 int",
@@ -319,8 +320,7 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("%s.IsInt() == %t", s, got)
 #		}
 #	}
-#}
-#
+
 #func fromBinary(s string) int64 {
 #	x, err := strconv.ParseInt(s, 2, 64)
 #	if err != nil {
@@ -414,9 +414,10 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #		return
 #	}
 #}
-#
-## TestFloatRound tests basic rounding.
-#func TestFloatRound(t *testing.T) {
+
+# TestFloatRound tests basic rounding.
+func TestFloatRound(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		prec                        uint
 #		x, zero, neven, naway, away string # input, results rounded to prec bits
@@ -511,12 +512,12 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #		testFloatRound(t, -x, -a, prec, ToNegativeInf)
 #		testFloatRound(t, -x, -z, prec, ToPositiveInf)
 #	}
-#}
-#
-## TestFloatRound24 tests that rounding a float64 to 24 bits
-## matches IEEE 754 rounding to nearest when converting a
-## float64 to a float32 (excluding denormal numbers).
-#func TestFloatRound24(t *testing.T) {
+
+# TestFloatRound24 tests that rounding a float64 to 24 bits
+# matches IEEE 754 rounding to nearest when converting a
+# float64 to a float32 (excluding denormal numbers).
+func TestFloatRound24(t: TestingT) -> void:
+	t.Error("TODO")
 #	const x0 = 1<<26 - 0x10 # 11...110000 (26 bits)
 #	for d := 0; d <= 0x10; d++ {
 #		x := float64(x0 + d)
@@ -527,9 +528,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("Round(%g, 24) = %g; want %g", x, got, want)
 #		}
 #	}
-#}
-#
-#func TestFloatSetUint64(t *testing.T) {
+
+func TestFloatSetUint64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, want := range []uint64{
 #		0,
 #		1,
@@ -557,9 +558,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("got %#x (%s); want %#x", got, f.Text('p', 0), want)
 #		}
 #	}
-#}
-#
-#func TestFloatSetInt64(t *testing.T) {
+
+func TestFloatSetInt64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, want := range []int64{
 #		0,
 #		1,
@@ -592,9 +593,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("got %#x (%s); want %#x", got, f.Text('p', 0), want)
 #		}
 #	}
-#}
-#
-#func TestFloatSetFloat64(t *testing.T) {
+
+func TestFloatSetFloat64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, want := range []float64{
 #		0,
 #		1,
@@ -646,9 +647,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #	f.SetFloat64(math.NaN())
 #	# should not reach here
 #	t.Errorf("got %s; want ErrNaN panic", f.Text('p', 0))
-#}
-#
-#func TestFloatSetInt(t *testing.T) {
+
+func TestFloatSetInt(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, want := range []string{
 #		"0",
 #		"1",
@@ -684,9 +685,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #	}
 #
 #	# TODO(gri) test basic rounding behavior
-#}
-#
-#func TestFloatSetRat(t *testing.T) {
+
+func TestFloatSetRat(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, want := range []string{
 #		"0",
 #		"1",
@@ -724,9 +725,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("got %s (%s); want %s", got, f2.Text('p', 0), want)
 #		}
 #	}
-#}
-#
-#func TestFloatSetInf(t *testing.T) {
+
+func TestFloatSetInf(t: TestingT) -> void:
+	t.Error("TODO")
 #	var f Float
 #	for _, test := range []struct {
 #		signbit bool
@@ -743,9 +744,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("SetInf(%v) = %s (prec = %d); want %s (prec = %d)", test.signbit, got, x.Prec(), test.want, test.prec)
 #		}
 #	}
-#}
-#
-#func TestFloatUint64(t *testing.T) {
+
+func TestFloatUint64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x   string
 #		out uint64
@@ -773,9 +774,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("%s: got %d (%s); want %d (%s)", test.x, out, acc, test.out, test.acc)
 #		}
 #	}
-#}
-#
-#func TestFloatInt64(t *testing.T) {
+
+func TestFloatInt64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x   string
 #		out int64
@@ -813,9 +814,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("%s: got %d (%s); want %d (%s)", test.x, out, acc, test.out, test.acc)
 #		}
 #	}
-#}
-#
-#func TestFloatFloat32(t *testing.T) {
+
+func TestFloatFloat32(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x   string
 #		out float32
@@ -926,9 +927,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			}
 #		}
 #	}
-#}
-#
-#func TestFloatFloat64(t *testing.T) {
+
+func TestFloatFloat64(t: TestingT) -> void:
+	t.Error("TODO")
 #	const smallestNormalFloat64 = 2.2250738585072014e-308 # 1p-1022
 #	for _, test := range []struct {
 #		x   string
@@ -1033,9 +1034,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			}
 #		}
 #	}
-#}
-#
-#func TestFloatInt(t *testing.T) {
+
+func TestFloatInt(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x    string
 #		want string
@@ -1078,9 +1079,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("(%s).Int is not using supplied *Int", f)
 #		}
 #	}
-#}
-#
-#func TestFloatRat(t *testing.T) {
+
+func TestFloatRat(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x, want string
 #		acc     Accuracy
@@ -1132,9 +1133,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("(%s).Rat is not using supplied *Rat", f)
 #		}
 #	}
-#}
-#
-#func TestFloatAbs(t *testing.T) {
+
+func TestFloatAbs(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []string{
 #		"0",
 #		"1",
@@ -1156,9 +1157,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("-%s: got %s; want %s", test, a.Text('g', 10), test)
 #		}
 #	}
-#}
-#
-#func TestFloatNeg(t *testing.T) {
+
+func TestFloatNeg(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []string{
 #		"0",
 #		"1",
@@ -1179,9 +1180,9 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("%s: got %s; want %s", test, p2.Text('g', 10), p1.Text('g', 10))
 #		}
 #	}
-#}
-#
-#func TestFloatInc(t *testing.T) {
+
+func TestFloatInc(t: TestingT) -> void:
+	t.Error("TODO")
 #	const n = 10
 #	for _, prec := range precList {
 #		if 1<<prec < n {
@@ -1197,7 +1198,6 @@ const accuracyName: Dictionary[BigFloat.Accuracy, String] = {
 #			t.Errorf("prec = %d: got %s; want %d", prec, &x, n)
 #		}
 #	}
-#}
 
 # Selected precisions with which to run various tests.
 const precList: PackedInt64Array = [1, 2, 5, 8, 10, 16, 23, 24, 32, 50, 53, 64, 100, 128, 500, 511, 512, 513, 1000, 10000]
@@ -1216,11 +1216,12 @@ const bitsList: Array[Array] = [
 	# TODO(gri) add more test cases
 ]
 
-## TestFloatAdd tests Float.Add/Sub by comparing the result of a "manual"
-## addition/subtraction of arguments represented by Bits values with the
-## respective Float addition/subtraction for a variety of precisions
-## and rounding modes.
-#func TestFloatAdd(t *testing.T) {
+# TestFloatAdd tests Float.Add/Sub by comparing the result of a "manual"
+# addition/subtraction of arguments represented by Bits values with the
+# respective Float addition/subtraction for a variety of precisions
+# and rounding modes.
+func TestFloatAdd(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, xbits := range bitsList {
 #		for _, ybits := range bitsList {
 #			# exact values
@@ -1249,12 +1250,12 @@ const bitsList: Array[Array] = [
 #			}
 #		}
 #	}
-#}
-#
-## TestFloatAddRoundZero tests Float.Add/Sub rounding when the result is exactly zero.
-## x + (-x) or x - x for non-zero x should be +0 in all cases except when
-## the rounding mode is ToNegativeInf in which case it should be -0.
-#func TestFloatAddRoundZero(t *testing.T) {
+
+# TestFloatAddRoundZero tests Float.Add/Sub rounding when the result is exactly zero.
+# x + (-x) or x - x for non-zero x should be +0 in all cases except when
+# the rounding mode is ToNegativeInf in which case it should be -0.
+func TestFloatAddRoundZero(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, mode := range [...]RoundingMode{ToNearestEven, ToNearestAway, ToZero, AwayFromZero, ToPositiveInf, ToNegativeInf} {
 #		x := NewFloat(5.0)
 #		y := new(Float).Neg(x)
@@ -1274,12 +1275,12 @@ const bitsList: Array[Array] = [
 #				mode, x, x, got, want)
 #		}
 #	}
-#}
-#
-## TestFloatAdd32 tests that Float.Add/Sub of numbers with
-## 24bit mantissa behaves like float32 addition/subtraction
-## (excluding denormal numbers).
-#func TestFloatAdd32(t *testing.T) {
+
+# TestFloatAdd32 tests that Float.Add/Sub of numbers with
+# 24bit mantissa behaves like float32 addition/subtraction
+# (excluding denormal numbers).
+func TestFloatAdd32(t: TestingT) -> void:
+	t.Error("TODO")
 #	# chose base such that we cross the mantissa precision limit
 #	const base = 1<<26 - 0x10 # 11...110000 (26 bits)
 #	for d := 0; d <= 0x10; d++ {
@@ -1308,11 +1309,11 @@ const bitsList: Array[Array] = [
 #			}
 #		}
 #	}
-#}
-#
-## TestFloatAdd64 tests that Float.Add/Sub of numbers with
-## 53bit mantissa behaves like float64 addition/subtraction.
-#func TestFloatAdd64(t *testing.T) {
+
+# TestFloatAdd64 tests that Float.Add/Sub of numbers with
+# 53bit mantissa behaves like float64 addition/subtraction.
+func TestFloatAdd64(t: TestingT) -> void:
+	t.Error("TODO")
 #	# chose base such that we cross the mantissa precision limit
 #	const base = 1<<55 - 0x10 # 11...110000 (55 bits)
 #	for d := 0; d <= 0x10; d++ {
@@ -1341,9 +1342,9 @@ const bitsList: Array[Array] = [
 #			}
 #		}
 #	}
-#}
-#
-#func TestIssue20490(t *testing.T) {
+
+func TestIssue20490(t: TestingT) -> void:
+	t.Error("TODO")
 #	var tests = []struct {
 #		a, b float64
 #	}{
@@ -1369,13 +1370,13 @@ const bitsList: Array[Array] = [
 #		}
 #
 #	}
-#}
-#
-## TestFloatMul tests Float.Mul/Quo by comparing the result of a "manual"
-## multiplication/division of arguments represented by Bits values with the
-## respective Float multiplication/division for a variety of precisions
-## and rounding modes.
-#func TestFloatMul(t *testing.T) {
+
+# TestFloatMul tests Float.Mul/Quo by comparing the result of a "manual"
+# multiplication/division of arguments represented by Bits values with the
+# respective Float multiplication/division for a variety of precisions
+# and rounding modes.
+func TestFloatMul(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, xbits := range bitsList {
 #		for _, ybits := range bitsList {
 #			# exact values
@@ -1407,11 +1408,11 @@ const bitsList: Array[Array] = [
 #			}
 #		}
 #	}
-#}
-#
-## TestFloatMul64 tests that Float.Mul/Quo of numbers with
-## 53bit mantissa behaves like float64 multiplication/division.
-#func TestFloatMul64(t *testing.T) {
+
+# TestFloatMul64 tests that Float.Mul/Quo of numbers with
+# 53bit mantissa behaves like float64 multiplication/division.
+func TestFloatMul64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x, y float64
 #	}{
@@ -1458,9 +1459,9 @@ const bitsList: Array[Array] = [
 #			}
 #		}
 #	}
-#}
-#
-#func TestIssue6866(t *testing.T) {
+
+func TestIssue6866(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, prec := range precList {
 #		two := new(Float).SetPrec(prec).SetInt64(2)
 #		one := new(Float).SetPrec(prec).SetInt64(1)
@@ -1492,9 +1493,9 @@ const bitsList: Array[Array] = [
 #			t.Errorf("prec %d: got z2 = %v; want 0", prec, z2)
 #		}
 #	}
-#}
-#
-#func TestFloatQuo(t *testing.T) {
+
+func TestFloatQuo(t: TestingT) -> void:
+	t.Error("TODO")
 #	# TODO(gri) make the test vary these precisions
 #	preci := 200 # precision of integer part
 #	precf := 20  # precision of fractional part
@@ -1540,11 +1541,11 @@ const bitsList: Array[Array] = [
 #			}
 #		}
 #	}
-#}
-#
-## TestFloatQuoSmoke tests all divisions x/y for values x, y in the range [-n, +n];
-## it serves as a smoke test for basic correctness of division.
-#func TestFloatQuoSmoke(t *testing.T) {
+
+# TestFloatQuoSmoke tests all divisions x/y for values x, y in the range [-n, +n];
+# it serves as a smoke test for basic correctness of division.
+func TestFloatQuoSmoke(t: TestingT) -> void:
+	t.Error("TODO")
 #	n := 10
 #	if *long {
 #		n = 1000
@@ -1581,12 +1582,12 @@ const bitsList: Array[Array] = [
 #			}
 #		}
 #	}
-#}
-#
-## TestFloatArithmeticSpecialValues tests that Float operations produce the
-## correct results for combinations of zero (±0), finite (±1 and ±2.71828),
-## and infinite (±Inf) operands.
-#func TestFloatArithmeticSpecialValues(t *testing.T) {
+
+# TestFloatArithmeticSpecialValues tests that Float operations produce the
+# correct results for combinations of zero (±0), finite (±1 and ±2.71828),
+# and infinite (±Inf) operands.
+func TestFloatArithmeticSpecialValues(t: TestingT) -> void:
+	t.Error("TODO")
 #	zero := 0.0
 #	args := []float64{math.Inf(-1), -2.71828, -1, -zero, zero, 1, 2.71828, math.Inf(1)}
 #	xx := new(Float)
@@ -1657,9 +1658,9 @@ const bitsList: Array[Array] = [
 #			}
 #		}
 #	}
-#}
-#
-#func TestFloatArithmeticOverflow(t *testing.T) {
+
+func TestFloatArithmeticOverflow(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		prec       uint
 #		mode       RoundingMode
@@ -1719,16 +1720,16 @@ const bitsList: Array[Array] = [
 #			)
 #		}
 #	}
-#}
-#
-## TODO(gri) Add tests that check correctness in the presence of aliasing.
-#
-## For rounding modes ToNegativeInf and ToPositiveInf, rounding is affected
-## by the sign of the value to be rounded. Test that rounding happens after
-## the sign of a result has been set.
-## This test uses specific values that are known to fail if rounding is
-## "factored" out before setting the result sign.
-#func TestFloatArithmeticRounding(t *testing.T) {
+
+# TODO(gri) Add tests that check correctness in the presence of aliasing.
+
+# For rounding modes ToNegativeInf and ToPositiveInf, rounding is affected
+# by the sign of the value to be rounded. Test that rounding happens after
+# the sign of a result has been set.
+# This test uses specific values that are known to fail if rounding is
+# "factored" out before setting the result sign.
+func TestFloatArithmeticRounding(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		mode       RoundingMode
 #		prec       uint
@@ -1773,12 +1774,12 @@ const bitsList: Array[Array] = [
 #			)
 #		}
 #	}
-#}
-#
-## TestFloatCmpSpecialValues tests that Cmp produces the correct results for
-## combinations of zero (±0), finite (±1 and ±2.71828), and infinite (±Inf)
-## operands.
-#func TestFloatCmpSpecialValues(t *testing.T) {
+
+# TestFloatCmpSpecialValues tests that Cmp produces the correct results for
+# combinations of zero (±0), finite (±1 and ±2.71828), and infinite (±Inf)
+# operands.
+func TestFloatCmpSpecialValues(t: TestingT) -> void:
+	t.Error("TODO")
 #	zero := 0.0
 #	args := []float64{math.Inf(-1), -2.71828, -1, -zero, zero, 1, 2.71828, math.Inf(1)}
 #	xx := new(Float)
@@ -1808,42 +1809,35 @@ const bitsList: Array[Array] = [
 #			}
 #		}
 #	}
-#}
-#
-#func BenchmarkFloatAdd(b *testing.B) {
-#	x := new(Float)
-#	y := new(Float)
-#	z := new(Float)
-#
-#	for _, prec := range []uint{10, 1e2, 1e3, 1e4, 1e5} {
-#		x.SetPrec(prec).SetRat(NewRat(1, 3))
-#		y.SetPrec(prec).SetRat(NewRat(1, 6))
-#		z.SetPrec(prec)
-#
-#		b.Run(fmt.Sprintf("%v", prec), func(b *testing.B) {
-#			b.ReportAllocs()
-#			for i := 0; i < b.N; i++ {
-#				z.Add(x, y)
-#			}
-#		})
-#	}
-#}
-#
-#func BenchmarkFloatSub(b *testing.B) {
-#	x := new(Float)
-#	y := new(Float)
-#	z := new(Float)
-#
-#	for _, prec := range []uint{10, 1e2, 1e3, 1e4, 1e5} {
-#		x.SetPrec(prec).SetRat(NewRat(1, 3))
-#		y.SetPrec(prec).SetRat(NewRat(1, 6))
-#		z.SetPrec(prec)
-#
-#		b.Run(fmt.Sprintf("%v", prec), func(b *testing.B) {
-#			b.ReportAllocs()
-#			for i := 0; i < b.N; i++ {
-#				z.Sub(x, y)
-#			}
-#		})
-#	}
-#}
+
+func BenchmarkFloatAdd(b0: TestingB) -> void:
+	var x := BigFloat.new()
+	var y := BigFloat.new()
+	var z := BigFloat.new()
+
+	for prec in [10, 100, 1000, 10000, 100000]:
+		x.SetPrec(prec)
+		x.SetRat(BigRat.NewRat(1, 3))
+		y.SetPrec(prec)
+		y.SetRat(BigRat.NewRat(1, 6))
+		z.SetPrec(prec)
+
+		b0.Run("%d" % [prec], func(b: TestingB) -> void:
+			for i in b.N:
+				z.Add(x, y))
+
+func BenchmarkFloatSub(b0: TestingB) -> void:
+	var x := BigFloat.new()
+	var y := BigFloat.new()
+	var z := BigFloat.new()
+
+	for prec in [10, 100, 1000, 10000, 100000]:
+		x.SetPrec(prec)
+		x.SetRat(BigRat.NewRat(1, 3))
+		y.SetPrec(prec)
+		y.SetRat(BigRat.NewRat(1, 6))
+		z.SetPrec(prec)
+
+		b0.Run("%d" % [prec], func(b: TestingB) -> void:
+			for i in b.N:
+				z.Sub(x, y))

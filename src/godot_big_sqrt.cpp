@@ -90,10 +90,10 @@ void BigFloat::_sqrtInverse(const Ref<BigFloat> &p_x) {
 	//   t2 = t - g(t) = ½t(3 - xt²)
 	Ref<BigFloat> u{ memnew(BigFloat) };
 	Ref<BigFloat> v{ memnew(BigFloat) };
-
-	const Pair<double, BigAccuracy> xf = p_x->Float64();
 	Ref<BigFloat> t{ memnew(BigFloat) };
-	t->SetFloat64(1.0 / Math::sqrt(xf.first));
+
+	const double xf = p_x->Float64().first;
+	t->SetFloat64(1.0 / Math::sqrt(xf));
 	for (uint32_t prec = _prec + 32; t->_prec < prec;) {
 		t->_prec *= 2;
 		u->_prec = t->_prec;
@@ -105,7 +105,7 @@ void BigFloat::_sqrtInverse(const Ref<BigFloat> &p_x) {
 		u->_exp--; //   = ½t(3 - xt²)
 		t->Set(u);
 	}
-	// sqi = 1/√x
+	// t = 1/√x
 
 	// x/√x = √x
 	Mul(p_x, t);

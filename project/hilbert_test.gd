@@ -9,148 +9,120 @@
 class_name HilbertTest
 extends TestSuite
 
-#type matrix struct {
-#	n, m int
-#	a    []*Rat
-#}
-#
-#func (a *matrix) at(i, j int) *Rat {
-#	if !(0 <= i && i < a.n && 0 <= j && j < a.m) {
-#		panic("index out of range")
-#	}
-#	return a.a[i*a.m+j]
-#}
-#
-#func (a *matrix) set(i, j int, x *Rat) {
-#	if !(0 <= i && i < a.n && 0 <= j && j < a.m) {
-#		panic("index out of range")
-#	}
-#	a.a[i*a.m+j] = x
-#}
-#
-#func newMatrix(n, m int) *matrix {
-#	if !(0 <= n && 0 <= m) {
-#		panic("illegal matrix")
-#	}
-#	a := new(matrix)
-#	a.n = n
-#	a.m = m
-#	a.a = make([]*Rat, n*m)
-#	return a
-#}
-#
-#func newUnit(n int) *matrix {
-#	a := newMatrix(n, n)
-#	for i := 0; i < n; i++ {
-#		for j := 0; j < n; j++ {
-#			x := NewRat(0, 1)
-#			if i == j {
-#				x.SetInt64(1)
-#			}
-#			a.set(i, j, x)
-#		}
-#	}
-#	return a
-#}
-#
-#func newHilbert(n int) *matrix {
-#	a := newMatrix(n, n)
-#	for i := 0; i < n; i++ {
-#		for j := 0; j < n; j++ {
-#			a.set(i, j, NewRat(1, int64(i+j+1)))
-#		}
-#	}
-#	return a
-#}
-#
-#func newInverseHilbert(n int) *matrix {
-#	a := newMatrix(n, n)
-#	for i := 0; i < n; i++ {
-#		for j := 0; j < n; j++ {
-#			x1 := new(Rat).SetInt64(int64(i + j + 1))
-#			x2 := new(Rat).SetInt(new(Int).Binomial(int64(n+i), int64(n-j-1)))
-#			x3 := new(Rat).SetInt(new(Int).Binomial(int64(n+j), int64(n-i-1)))
-#			x4 := new(Rat).SetInt(new(Int).Binomial(int64(i+j), int64(i)))
-#
-#			x1.Mul(x1, x2)
-#			x1.Mul(x1, x3)
-#			x1.Mul(x1, x4)
-#			x1.Mul(x1, x4)
-#
-#			if (i+j)&1 != 0 {
-#				x1.Neg(x1)
-#			}
-#
-#			a.set(i, j, x1)
-#		}
-#	}
-#	return a
-#}
-#
-#func (a *matrix) mul(b *matrix) *matrix {
-#	if a.m != b.n {
-#		panic("illegal matrix multiply")
-#	}
-#	c := newMatrix(a.n, b.m)
-#	for i := 0; i < c.n; i++ {
-#		for j := 0; j < c.m; j++ {
-#			x := NewRat(0, 1)
-#			for k := 0; k < a.m; k++ {
-#				x.Add(x, new(Rat).Mul(a.at(i, k), b.at(k, j)))
-#			}
-#			c.set(i, j, x)
-#		}
-#	}
-#	return c
-#}
-#
-#func (a *matrix) eql(b *matrix) bool {
-#	if a.n != b.n || a.m != b.m {
-#		return false
-#	}
-#	for i := 0; i < a.n; i++ {
-#		for j := 0; j < a.m; j++ {
-#			if a.at(i, j).Cmp(b.at(i, j)) != 0 {
-#				return false
-#			}
-#		}
-#	}
-#	return true
-#}
-#
-#func (a *matrix) String() string {
-#	s := ""
-#	for i := 0; i < a.n; i++ {
-#		for j := 0; j < a.m; j++ {
-#			s += fmt.Sprintf("\t%s", a.at(i, j))
-#		}
-#		s += "\n"
-#	}
-#	return s
-#}
-#
-#func doHilbert(t *testing.T, n int) {
-#	a := newHilbert(n)
-#	b := newInverseHilbert(n)
-#	I := newUnit(n)
-#	ab := a.mul(b)
-#	if !ab.eql(I) {
-#		if t == nil {
-#			panic("Hilbert failed")
-#		}
-#		t.Errorf("a   = %s\n", a)
-#		t.Errorf("b   = %s\n", b)
-#		t.Errorf("a*b = %s\n", ab)
-#		t.Errorf("I   = %s\n", I)
-#	}
-#}
-#
-#func TestHilbert(t *testing.T) {
-#	doHilbert(t, 10)
-#}
-#
-#func BenchmarkHilbert(b *testing.B) {
-#	for i := 0; i < b.N; i++ {
-#		doHilbert(nil, 10)
-#	}
-#}
+class Matrix:
+	var n: int
+	var m: int
+	var a: Array[BigRat]
+
+	func item_at(i: int, j: int) -> BigRat:
+		assert(0 <= i and i < n)
+		assert(0 <= j and j < m)
+		return a[(i * m) + j]
+
+	func set_item(i: int, j: int, x: BigRat) -> void:
+		assert(0 <= i and i < n)
+		assert(0 <= j and j < m)
+		a[(i * m) + j] = x
+
+	func mul(b: Matrix) -> Matrix:
+		assert(m == b.n)
+		var c := newMatrix(n, b.m)
+		var t := BigRat.new()
+		for i in c.n:
+			for j in c.m:
+				var x := BigRat.NewRat(0, 1)
+				for k in m:
+					t.Mul(item_at(i, k), b.item_at(k, j))
+					x.Add(x, t)
+				c.set_item(i, j, x)
+		return c
+
+	func eql(b: Matrix) -> bool:
+		if n != b.n or m != b.m:
+			return false
+		for i in n:
+			for j in m:
+				if item_at(i, j).Cmp(b.item_at(i, j)) != 0:
+					return false
+		return true
+
+	func _to_string() -> String:
+		var s := ""
+		for i in n:
+			s += "\n"
+			for j in m:
+				s += "\t%s" % [item_at(i, j)]
+		return s
+
+	static func newMatrix(cols: int, rows: int) -> Matrix:
+		assert(cols > 0 and rows > 0)
+
+		var matrix := Matrix.new()
+		matrix.n = cols
+		matrix.m = rows
+		matrix.a.resize(cols * rows)
+
+		return matrix
+
+	static func newUnit(size: int) -> Matrix:
+		var matrix := newMatrix(size, size)
+		for i in size:
+			for j in size:
+				var x := BigRat.NewRat(0, 1)
+				if i == j:
+					x.SetInt64(1)
+				matrix.set_item(i, j, x)
+		return matrix
+
+	static func newHilbert(size: int) -> Matrix:
+		var matrix := newMatrix(size, size)
+		for i in size:
+			for j in size:
+				matrix.set_item(i, j, BigRat.NewRat(1, i + j + 1))
+		return matrix
+
+	static func newInverseHilbert(size: int) -> Matrix:
+		var matrix := newMatrix(size, size)
+		for i in size:
+			for j in size:
+				var xt := BigInt.new()
+				var x1 := BigRat.new()
+				x1.SetInt64(i + j + 1)
+				var x2 := BigRat.new()
+				xt.Binomial(size + i, size - j - 1)
+				x2.SetInt(xt)
+				var x3 := BigRat.new()
+				xt.Binomial(size + j, size - i - 1)
+				x3.SetInt(xt)
+				var x4 := BigRat.new()
+				xt.Binomial(i + j, i)
+				x4.SetInt(xt)
+
+				x1.Mul(x1, x2)
+				x1.Mul(x1, x3)
+				x1.Mul(x1, x4)
+				x1.Mul(x1, x4)
+
+				if ((i + j) & 1) != 0:
+					x1.Neg(x1)
+
+				matrix.set_item(i, j, x1)
+		return matrix
+
+func doHilbert(t: TestingT, n: int) -> void:
+	var a := Matrix.newHilbert(n)
+	var b := Matrix.newInverseHilbert(n)
+	var I := Matrix.newUnit(n)
+	var ab := a.mul(b)
+	if not ab.eql(I):
+		t.Error("a   = %s" % [a])
+		t.Error("b   = %s" % [b])
+		t.Error("a*b = %s" % [ab])
+		t.Error("I   = %s" % [I])
+
+func TestHilbert(t: TestingT) -> void:
+	doHilbert(t, 10)
+
+func BenchmarkHilbert(b: TestingB) -> void:
+	for i in b.N:
+		doHilbert(null, 10)

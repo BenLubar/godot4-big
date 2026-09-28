@@ -237,4 +237,58 @@ struct BigDecimal {
 	}
 
 	void roundShortest(const BigFloat *p_x);
+
+	inline godot::String to_string() const {
+		if (mant.is_empty()) {
+			return "0";
+		}
+
+		godot::String s;
+		if (exp <= 0) {
+			// 0.00ddd
+			s = "0." + godot::String("0").repeat(-exp);
+			s += mant.get_string_from_ascii();
+		} else if (exp < mant.size()) {
+			// dd.ddd
+			s = mant.slice(0, exp).get_string_from_ascii();
+			s += ".";
+			s += mant.slice(exp).get_string_from_ascii();
+		} else {
+			// ddd00
+			s = mant.get_string_from_ascii();
+			s += godot::String("0").repeat(exp - mant.size());
+		}
+
+		return s;
+	}
+
+	static inline godot::String test_raw_string_bind(const godot::PackedByteArray &p_mant, int64_t p_exp) {
+		BigDecimal d;
+		d.mant = p_mant;
+		d.exp = p_exp;
+		return d.to_string();
+	}
+
+	static inline godot::String test_string_bind(const godot::PackedInt64Array &p_m, int64_t p_shift) {
+		BigNat m{ p_m };
+		m.norm();
+		BigDecimal d;
+		d.init(m, p_shift);
+		return d.to_string();
+	}
+
+	static inline godot::String test_round_string_bind(const godot::PackedInt64Array &p_m, int64_t p_shift, int64_t p_n, int64_t p_round_direction) {
+		BigNat m{ p_m };
+		m.norm();
+		BigDecimal d;
+		d.init(m, p_shift);
+		if (p_round_direction < 0) {
+			d.roundDown(p_n);
+		} else if (p_round_direction > 0) {
+			d.roundUp(p_n);
+		} else {
+			d.round(p_n);
+		}
+		return d.to_string();
+	}
 };

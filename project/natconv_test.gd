@@ -46,7 +46,7 @@ const strTests: Array[Array] = [
 	[[], 2, "0"],
 	[[1], 2, "1"],
 	[[0xc5], 2, "11000101"],
-	[[03271], 8, "3271"],
+	[[1721], 8, "3271"],
 	[[10], 10, "10"],
 	[[1234567890], 10, "1234567890"],
 	[[0xdeadbeef], 16, "deadbeef"],
@@ -55,26 +55,23 @@ const strTests: Array[Array] = [
 	[[0x309663e6], 62, "TakXI"],
 ]
 
-#func TestString(t *testing.T) {
-#	for _, a := range strTests {
-#		s := string(a.x.utoa(a.b))
-#		if s != a.s {
-#			t.Errorf("string%+v\n\tgot s = %s; want %s", a, s, a.s)
-#		}
-#
-#		x, b, _, err := nat(nil).scan(strings.NewReader(a.s), a.b, false)
-#		if x.cmp(a.x) != 0 {
-#			t.Errorf("scan%+v\n\tgot z = %v; want %v", a, x, a.x)
-#		}
-#		if b != a.b {
-#			t.Errorf("scan%+v\n\tgot b = %d; want %d", a, b, a.b)
-#		}
-#		if err != nil {
-#			t.Errorf("scan%+v\n\tgot error = %s", a, err)
-#		}
-#	}
-#}
-#
+func TestString(t: TestingT) -> void:
+	for test in strTests:
+		var x := BigInt.new()
+		x._abs = test[0]
+		var base: int = test[1]
+		var got := x.String(base)
+		var want: String = test[2]
+		if got != want:
+			t.Error("string%s\n\tgot s = %s; want %s" % [test, got, want])
+
+		var x1 := BigInt.new()
+		var err := x1.SetString(want, base)
+		if x1.Cmp(x) != 0:
+			t.Error("scan%s\n\tgot z = %s; want %s" % [test, x1._abs, x._abs])
+		if err != OK:
+			t.Errorf("scan%s\n\tgot error = %s" % [test, error_string(err)])
+
 #var natScanTests = []struct {
 #	s     string # string to be scanned
 #	base  int    # input base
@@ -195,8 +192,9 @@ const strTests: Array[Array] = [
 #	{"0x_f00d.1E2", 0, true, nat{0xf00d1e2}, 16, -3, nil, 0},
 #	{"0x_f00d.1eg", 0, true, nat{0xf00d1e}, 16, -2, nil, 'g'},
 #}
-#
-#func TestScanBase(t *testing.T) {
+
+func TestScanBase(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, a := range natScanTests {
 #		r := strings.NewReader(a.s)
 #		x, b, count, err := nat(nil).scan(r, a.base, a.frac)
@@ -221,8 +219,7 @@ const strTests: Array[Array] = [
 #			t.Errorf("scan%+v\n\tgot next = %q; want %q", a, next, a.next)
 #		}
 #	}
-#}
-#
+
 const pi := "3" + \
 	"14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651" + \
 	"32823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461" + \
@@ -297,9 +294,6 @@ func BenchmarkScanPi(b: TestingB) -> void:
 #	const x = 9 # avoid tested bases, in case runs of 0s are handled specially
 #	for _, base := range []int{2, 8, 10, 16} {
 #		for _, y := range []Word{10, 100, 1000, 10000, 100000} {
-#			if isRaceBuilder && y > 1000 {
-#				continue
-#			}
 #			b.Run(fmt.Sprintf("%d/Base%d", y, base), func(b *testing.B) {
 #				b.StopTimer()
 #				var z nat
@@ -326,9 +320,6 @@ func BenchmarkScanPi(b: TestingB) -> void:
 #	const x = 10
 #	for _, base := range []int{2, 8, 10, 16} {
 #		for _, y := range []Word{10, 100, 1000, 10000, 100000} {
-#			if isRaceBuilder && y > 1000 {
-#				continue
-#			}
 #			b.Run(fmt.Sprintf("%d/Base%d", y, base), func(b *testing.B) {
 #				b.StopTimer()
 #				var z nat
@@ -390,17 +381,15 @@ func BenchmarkScanPi(b: TestingB) -> void:
 #		}
 #	}
 #}
-#
-#func TestStringPowers(t *testing.T) {
+
+func TestStringPowers(t: TestingT) -> void:
+	t.Error("TODO")
 #	stk := getStack()
 #	defer stk.free()
 #
 #	var p Word
 #	for b := 2; b <= 16; b++ {
 #		for p = 0; p <= 512; p++ {
-#			if testing.Short() && p > 10 {
-#				break
-#			}
 #			x := nat(nil).expWW(stk, Word(b), p)
 #			xs := x.utoa(b)
 #			xs2 := itoa(x, b)
@@ -408,8 +397,4 @@ func BenchmarkScanPi(b: TestingB) -> void:
 #				t.Errorf("failed at %d ** %d in base %d: %s != %s", b, p, b, xs, xs2)
 #			}
 #		}
-#		if b >= 3 && testing.Short() {
-#			break
-#		}
 #	}
-#}

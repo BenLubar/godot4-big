@@ -70,6 +70,8 @@ struct BigNat {
 	static bool greaterThan(BigWord x1, BigWord x0, BigWord y1, BigWord y0);
 	static BigWord reciprocalWord(BigWord d1);
 
+	static godot::PackedInt64Array test_mul_bind(int64_t p_karatsuba_threshold, const godot::PackedInt64Array &p_x, const godot::PackedInt64Array &p_y);
+	static godot::PackedInt64Array test_sqr_bind(int64_t p_basic_sqr_threshold, int64_t p_karatsuba_sqr_threshold, const godot::PackedInt64Array &p_x);
 	void mul(BigNat p_x, BigNat p_y);
 	void sqr(BigNat p_x);
 	void mulAddWW(BigNat p_x, BigWord p_y, BigWord p_r);
