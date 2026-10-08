@@ -1,4 +1,4 @@
-// This file is ported from src/math/big/decimal.go in Go 1.26.1.
+// This file is ported from src/math/big/decimal.go in Go 1.27.1.
 // Original copyright notice follows:
 
 // Copyright 2015 The Go Authors. All rights reserved.
@@ -36,9 +36,9 @@ struct BigDecimal {
 	int64_t exp = 0; // exponent
 
 	// at returns the i'th mantissa digit, starting with the most significant digit at 0.
-	[[nodiscard]] inline char at(int64_t i) const {
-		if (0 <= i && i < mant.size()) {
-			return mant[i];
+	[[nodiscard]] _FORCE_INLINE_ char at(int64_t p_i) const {
+		if (0 <= p_i && p_i < mant.size()) {
+			return mant[p_i];
 		}
 		return '0';
 	}
@@ -58,9 +58,9 @@ struct BigDecimal {
 
 	// Init initializes x to the decimal representation of m << shift (for
 	// shift >= 0), or m >> -shift (for shift < 0).
-	inline void init(BigNat m, int64_t shift) {
+	inline void init(BigNat p_m, int64_t p_shift) {
 		// special case 0
-		if (m.array.is_empty()) {
+		if (p_m.is_zero()) {
 			mant.clear();
 			exp = 0;
 			return;
@@ -69,49 +69,49 @@ struct BigDecimal {
 		// Optimization: If we need to shift right, first remove any trailing
 		// zero bits from m to reduce shift amount that needs to be done in
 		// decimal format (since that is likely slower).
-		if (shift < 0) {
-			const uint64_t ntz = m.trailingZeroBits();
-			const uint64_t s = godot::Math::min(static_cast<uint64_t>(-shift), ntz); // shift at most ntz bits
-			m.rsh(m, s);
-			shift += static_cast<int64_t>(s);
+		if (p_shift < 0) {
+			const uint64_t ntz = p_m.trailingZeroBits();
+			const uint64_t s = godot::Math::min(static_cast<uint64_t>(-p_shift), ntz); // shift at most ntz bits
+			p_m.rsh(p_m, s);
+			p_shift += static_cast<int64_t>(s);
 		}
 
 		// Do any shift left in binary representation.
-		if (shift > 0) {
-			m.lsh(m, static_cast<uint64_t>(shift));
-			shift = 0;
+		if (p_shift > 0) {
+			p_m.lsh(p_m, static_cast<uint64_t>(p_shift));
+			p_shift = 0;
 		}
 
 		// Convert mantissa into decimal representation.
-		const godot::String s = m.utoa(10);
-		int64_t n = s.length();
+		const godot::PackedByteArray s = p_m.utoa(10);
+		int64_t n = s.size();
 		exp = n;
 		// Trim trailing zeros; instead the exponent is tracking
 		// the decimal point independent of the number of digits.
 		while (n > 0 && s[n - 1] == '0') {
 			n--;
 		}
-		mant = s.substr(0, n).to_ascii_buffer();
+		mant = s.slice(0, n);
 
 		// Do any (remaining) shift right in decimal representation.
-		if (shift < 0) {
-			while (shift < -maxShift) {
+		if (p_shift < 0) {
+			while (p_shift < -maxShift) {
 				rsh(maxShift);
-				shift += maxShift;
+				p_shift += maxShift;
 			}
 
-			rsh(static_cast<uint64_t>(-shift));
+			rsh(static_cast<uint64_t>(-p_shift));
 		}
 	}
 
 	// rsh implements x >> s, for s <= maxShift.
-	inline void rsh(uint64_t s) {
+	inline void rsh(uint64_t p_s) {
 		// Division by 1<<s using shift-and-subtract algorithm.
 
 		// pick up enough leading digits to cover first shift
 		int64_t r = 0; // read index
 		BigWord n = 0;
-		while ((n >> s) == 0 && r < mant.size()) {
+		while ((n >> p_s) == 0 && r < mant.size()) {
 			const BigWord ch = static_cast<BigWord>(mant[r]);
 			r++;
 			n = (n * 10) + ch - '0';
@@ -121,7 +121,7 @@ struct BigDecimal {
 			mant.clear();
 			return;
 		}
-		while ((n >> s) == 0) {
+		while ((n >> p_s) == 0) {
 			r++;
 			n *= 10;
 		}
@@ -130,11 +130,11 @@ struct BigDecimal {
 
 		// read a digit, write a digit
 		int64_t w = 0; // write index
-		const BigWord mask = (static_cast<BigWord>(1) << s) - 1;
+		const BigWord mask = (UINT64_C(1) << p_s) - 1;
 		while (r < mant.size()) {
 			const BigWord ch = static_cast<BigWord>(mant[r]);
 			r++;
-			const BigWord d = n >> s;
+			const BigWord d = n >> p_s;
 			n &= mask; // n -= d << s
 			mant[w] = static_cast<uint8_t>(d + '0');
 			w++;
@@ -143,7 +143,7 @@ struct BigDecimal {
 
 		// write extra digits that still fit
 		while (n > 0 && w < mant.size()) {
-			const BigWord d = n >> s;
+			const BigWord d = n >> p_s;
 			n &= mask;
 			mant[w] = static_cast<uint8_t>(d + '0');
 			w++;
@@ -153,7 +153,7 @@ struct BigDecimal {
 
 		// append additional digits that didn't fit
 		while (n > 0) {
-			const BigWord d = n >> s;
+			const BigWord d = n >> p_s;
 			n &= mask;
 			mant.append(static_cast<uint8_t>(d + '0'));
 			n *= 10;
@@ -165,61 +165,61 @@ struct BigDecimal {
 	// shouldRoundUp reports if x should be rounded up
 	// if shortened to n digits. n must be a valid index
 	// for x.mant.
-	[[nodiscard]] inline bool shouldRoundUp(int64_t n) const {
-		if (mant[n] == '5' && n + 1 == mant.size()) {
+	[[nodiscard]] inline bool shouldRoundUp(int64_t p_n) const {
+		if (mant[p_n] == '5' && p_n + 1 == mant.size()) {
 			// exactly halfway - round to even
-			return n > 0 && ((mant[n - 1] - '0') & 1) != 0;
+			return p_n > 0 && ((mant[p_n - 1] - '0') & 1) != 0;
 		}
 
 		// not halfway - digit tells all (x.mant has no trailing zeros)
-		return mant[n] >= '5';
+		return mant[p_n] >= '5';
 	}
 
 	// round sets x to (at most) n mantissa digits by rounding it
 	// to the nearest even value with n (or fever) mantissa digits.
 	// If n < 0, x remains unchanged.
-	inline void round(int64_t n) {
-		if (n < 0 || n >= mant.size()) {
+	inline void round(int64_t p_n) {
+		if (p_n < 0 || p_n >= mant.size()) {
 			return; // nothing to do
 		}
 
-		if (shouldRoundUp(n)) {
-			roundUp(n);
+		if (shouldRoundUp(p_n)) {
+			roundUp(p_n);
 		} else {
-			roundDown(n);
+			roundDown(p_n);
 		}
 	}
 
-	inline void roundUp(int64_t n) {
-		if (n < 0 || n >= mant.size()) {
+	inline void roundUp(int64_t p_n) {
+		if (p_n < 0 || p_n >= mant.size()) {
 			return; // nothing to do
 		}
 		// 0 <= n < len(x.mant)
 
 		// find first digit < '9'
-		while (n > 0 && mant[n - 1] >= '9') {
-			n--;
+		while (p_n > 0 && mant[p_n - 1] >= '9') {
+			p_n--;
 		}
 
-		if (n == 0) {
+		if (p_n == 0) {
 			// all digits are '9's => round up to '1' and update exponent
-			mant[0] = '1'; // ok since len(x.mant) > n
 			mant.resize(1);
+			mant[0] = '1';
 			exp++;
 			return;
 		}
 
 		// n > 0 && x.mant[n-1] < '9'
-		mant[n - 1]++;
-		mant.resize(n);
+		mant[p_n - 1]++;
+		mant.resize(p_n);
 		// x already trimmed
 	}
 
-	inline void roundDown(int64_t n) {
-		if (n < 0 || n >= mant.size()) {
+	inline void roundDown(int64_t p_n) {
+		if (p_n < 0 || p_n >= mant.size()) {
 			return; // nothing to do
 		}
-		mant.resize(n);
+		mant.resize(p_n);
 		trim();
 	}
 
@@ -238,7 +238,7 @@ struct BigDecimal {
 
 	void roundShortest(const BigFloat *p_x);
 
-	inline godot::String to_string() const {
+	[[nodiscard]] inline godot::String to_string() const {
 		if (mant.is_empty()) {
 			return "0";
 		}
@@ -262,23 +262,25 @@ struct BigDecimal {
 		return s;
 	}
 
-	static inline godot::String test_raw_string_bind(const godot::PackedByteArray &p_mant, int64_t p_exp) {
+	[[nodiscard]] static inline godot::String test_raw_string_bind(const godot::PackedByteArray &p_mant, int64_t p_exp) {
 		BigDecimal d;
 		d.mant = p_mant;
 		d.exp = p_exp;
 		return d.to_string();
 	}
 
-	static inline godot::String test_string_bind(const godot::PackedInt64Array &p_m, int64_t p_shift) {
-		BigNat m{ p_m };
+	[[nodiscard]] static inline godot::String test_string_bind(const godot::PackedInt64Array &p_m, int64_t p_shift) {
+		BigNat m;
+		m.array = p_m;
 		m.norm();
 		BigDecimal d;
 		d.init(m, p_shift);
 		return d.to_string();
 	}
 
-	static inline godot::String test_round_string_bind(const godot::PackedInt64Array &p_m, int64_t p_shift, int64_t p_n, int64_t p_round_direction) {
-		BigNat m{ p_m };
+	[[nodiscard]] static inline godot::String test_round_string_bind(const godot::PackedInt64Array &p_m, int64_t p_shift, int64_t p_n, int64_t p_round_direction) {
+		BigNat m;
+		m.array = p_m;
 		m.norm();
 		BigDecimal d;
 		d.init(m, p_shift);

@@ -1,4 +1,4 @@
-// This file is ported from src/math/big/rat.go in Go 1.26.1.
+// This file is ported from src/math/big/rat.go in Go 1.27.1.
 // Original copyright notice follows:
 
 // Copyright 2010 The Go Authors. All rights reserved.
@@ -11,7 +11,11 @@
 
 #include "godot_big_int.h"
 
+#include <bit>
+
 using namespace godot;
+
+extern Ref<BigInt> *intOne;
 
 // A Rat represents a quotient a/b of arbitrary precision.
 // The zero value for a Rat represents the value 0.
@@ -23,36 +27,35 @@ using namespace godot;
 // a new value using the [Rat.Set] method; shallow copies
 // of Rats are not supported and may lead to errors.
 
-extern Ref<BigInt> *intOne;
-
 // NewRat creates a new [Rat] with numerator a and denominator b.
 Ref<BigRat> BigRat::NewRat(int64_t p_a, int64_t p_b) {
-	ERR_FAIL_COND_V(p_b == 0, nullptr);
+	ERR_FAIL_COND_V_MSG(p_b == 0, nullptr, "division by zero");
 
 	Ref<BigRat> r{ memnew(BigRat) };
-	r->SetFrac64(p_a, p_b);
+	[[maybe_unused]] const Error err = r->SetFrac64(p_a, p_b);
+	DEV_ASSERT(err == OK);
+
 	return r;
 }
 
 // SetFloat64 sets z to exactly f and returns z.
 // If f is not finite, SetFloat returns nil.
 Error BigRat::SetFloat64(double p_f) {
-	constexpr uint64_t expMask = (1LLU << 11) - 1;
+	static constexpr int64_t expMask = (INT64_C(1) << 11) - 1;
 	const uint64_t bits = std::bit_cast<uint64_t>(p_f);
-	uint64_t mantissa = bits & ((1LLU << 52) - 1);
-	int32_t exp = static_cast<int32_t>((bits >> 52) & expMask);
+	uint64_t mantissa = bits & ((UINT64_C(1) << 52) - 1);
+	int64_t exp = static_cast<int64_t>(bits >> 52) & expMask;
+
 	ERR_FAIL_COND_V_MSG(exp == expMask, ERR_INVALID_PARAMETER, "float is non-finite");
 
-	if (exp == 0) {
-		// denormal
+	if (exp == 0) { // denormal
 		exp -= 1022;
-	} else {
-		// normal
-		mantissa |= 1LLU << 52;
+	} else { // normal
+		mantissa |= UINT64_C(1) << 52;
 		exp -= 1023;
 	}
 
-	int32_t shift = 52 - exp;
+	int64_t shift = 52 - exp;
 
 	// Optimization (?): partially pre-normalise.
 	while ((mantissa & 1) == 0 && shift > 0) {
@@ -61,15 +64,19 @@ Error BigRat::SetFloat64(double p_f) {
 	}
 
 	_a.setUint64(mantissa);
-	_neg = p_f < 0;
+	_neg = p_f < 0.0;
 	_b.setUint64(1);
+
 	if (shift > 0) {
-		_b.lsh(_b, static_cast<uint64_t>(shift));
+		_b.lsh(_b, static_cast<uint64_t>(+shift));
 	} else {
-		_a.rsh(_a, static_cast<uint64_t>(-shift));
+		_a.lsh(_a, static_cast<uint64_t>(-shift));
 	}
 
 	_norm();
+
+	emit_changed();
+
 	return OK;
 }
 
@@ -77,7 +84,7 @@ Error BigRat::SetFloat64(double p_f) {
 // nearest to the quotient a/b, using round-to-even in
 // halfway cases. It does not mutate its arguments.
 // Preconditions: b is non-zero; a and b have no common factors.
-static Pair<float, bool> quotToFloat32(BigNat a, BigNat b) { // NOLINT(performance-unnecessary-value-param)
+bool BigNat::quotToFloat32(const BigNat &p_a, const BigNat &p_b, float &r_f) {
 	// float size in bits
 	static constexpr int64_t Fsize = 32;
 
@@ -88,33 +95,32 @@ static Pair<float, bool> quotToFloat32(BigNat a, BigNat b) { // NOLINT(performan
 
 	// exponent
 	static constexpr int64_t Esize = Fsize - Msize1;
-	static constexpr int64_t Ebias = (1LL << (Esize - 1)) - 1;
+	static constexpr int64_t Ebias = (INT64_C(1) << (Esize - 1)) - 1;
 	static constexpr int64_t Emin = 1 - Ebias;
 	static constexpr int64_t Emax = Ebias;
 
 	// TODO(adonovan): specialize common degenerate cases: 1.0, integers.
-	const int64_t alen = a.bitLen();
+	const int64_t alen = p_a.bitLen();
 	if (alen == 0) {
-		return { 0.0f, true };
+		r_f = 0.0f;
+		return true;
 	}
-
-	const int64_t blen = b.bitLen();
+	const int64_t blen = p_b.bitLen();
 	CRASH_COND_MSG(blen == 0, "division by zero");
 
 	// 1. Left-shift A or B such that quotient A/B is in [1<<Msize1, 1<<(Msize2+1)
 	// (Msize2 bits if A < B when they are left-aligned, Msize2+1 bits if A >= B).
-	// This is 2 or 3 more than the float64 mantissa field width of Msize:
+	// This is 2 or 3 more than the float32 mantissa field width of Msize:
 	// - the optional extra bit is shifted away in step 3 below.
 	// - the high-order 1 is omitted in "normal" representation;
 	// - the low-order 1 will be used during rounding then discarded.
 	int64_t exp = alen - blen;
-	BigNat a2;
-	BigNat b2;
-	a2.set(a);
-	b2.set(b);
-	const int64_t shift = Msize2 - exp;
+	BigNat a2 = p_a;
+	BigNat b2 = p_b;
+
+	int64_t shift = Msize2 - exp;
 	if (shift > 0) {
-		a2.lsh(a2, static_cast<uint64_t>(shift));
+		a2.lsh(a2, static_cast<uint64_t>(+shift));
 	} else if (shift < 0) {
 		b2.lsh(b2, static_cast<uint64_t>(-shift));
 	}
@@ -123,10 +129,10 @@ static Pair<float, bool> quotToFloat32(BigNat a, BigNat b) { // NOLINT(performan
 	// extra shift, the low-order bit of q is logically the
 	// high-order bit of r.
 	BigNat q;
-	BigNat &r = a2; // (recycle a2)
-	q.div(r, a2, b2);
-	uint64_t mantissa = q.low32();
-	bool haveRem = !r.array.is_empty(); // mantissa&1 && !haveRem => remainder is exactly half
+	BigNat r;
+	q.div(a2, b2, r);
+	uint32_t mantissa = q.low32();
+	bool haveRem = !r.is_zero(); // mantissa&1 && !haveRem => remainder is exactly half
 
 	// 3. If quotient didn't fit in Msize2 bits, redo division by b2<<1
 	// (in effect---we accomplish this incrementally).
@@ -137,24 +143,25 @@ static Pair<float, bool> quotToFloat32(BigNat a, BigNat b) { // NOLINT(performan
 		mantissa >>= 1;
 		exp++;
 	}
-	CRASH_COND((mantissa >> Msize1) != 1); // expected exactly Msize2 bits of result
+	CRASH_COND_MSG((mantissa >> Msize1) != 1, "expected exactly " + String::num_int64(Msize2) + " bits of result");
 
 	// 4. Rounding.
 	if (Emin - Msize <= exp && exp <= Emin) {
 		// Denormal case; lose 'shift' bits of precision.
-		const uint64_t shift = static_cast<uint64_t>(Emin - (exp - 1)); // [1..Esize1)
-		const uint64_t lostbits = mantissa & ((1LLU << shift) - 1);
+		shift = Emin - (exp - 1); // [1..Esize1)
+		const uint32_t lostbits = mantissa & ((UINT32_C(1) << shift) - 1);
 		haveRem = haveRem || lostbits != 0;
 		mantissa >>= shift;
 		exp = 2 - Ebias; // == exp + shift
 	}
+
 	// Round q using round-half-to-even.
 	bool exact = !haveRem;
 	if ((mantissa & 1) != 0) {
 		exact = false;
 		if (haveRem || (mantissa & 2) != 0) {
 			mantissa++;
-			if (mantissa >= (1LLU << Msize2)) {
+			if (mantissa >= (INT64_C(1) << Msize2)) {
 				// Complete rollover 11...1 => 100...0, so shift is safe
 				mantissa >>= 1;
 				exp++;
@@ -163,19 +170,15 @@ static Pair<float, bool> quotToFloat32(BigNat a, BigNat b) { // NOLINT(performan
 	}
 	mantissa >>= 1; // discard rounding bit.  Mantissa now scaled by 1<<Msize1.
 
-	const float f = ldexpf(static_cast<float>(mantissa), exp - Msize1);
-	if (Math::is_inf(f)) {
-		exact = false;
-	}
-
-	return { f, exact };
+	r_f = ldexpf(static_cast<float>(mantissa), exp - Msize1);
+	return exact && !Math::is_inf(r_f);
 }
 
 // quotToFloat64 returns the non-negative float64 value
 // nearest to the quotient a/b, using round-to-even in
 // halfway cases. It does not mutate its arguments.
 // Preconditions: b is non-zero; a and b have no common factors.
-static Pair<double, bool> quotToFloat64(BigNat a, BigNat b) { // NOLINT(performance-unnecessary-value-param)
+bool BigNat::quotToFloat64(const BigNat &p_a, const BigNat &p_b, double &r_f) {
 	// float size in bits
 	static constexpr int64_t Fsize = 64;
 
@@ -186,17 +189,17 @@ static Pair<double, bool> quotToFloat64(BigNat a, BigNat b) { // NOLINT(performa
 
 	// exponent
 	static constexpr int64_t Esize = Fsize - Msize1;
-	static constexpr int64_t Ebias = (1LL << (Esize - 1)) - 1;
+	static constexpr int64_t Ebias = (INT64_C(1) << (Esize - 1)) - 1;
 	static constexpr int64_t Emin = 1 - Ebias;
 	static constexpr int64_t Emax = Ebias;
 
 	// TODO(adonovan): specialize common degenerate cases: 1.0, integers.
-	const int64_t alen = a.bitLen();
+	const int64_t alen = p_a.bitLen();
 	if (alen == 0) {
-		return { 0.0, true };
+		r_f = 0.0;
+		return true;
 	}
-
-	const int64_t blen = b.bitLen();
+	const int64_t blen = p_b.bitLen();
 	CRASH_COND_MSG(blen == 0, "division by zero");
 
 	// 1. Left-shift A or B such that quotient A/B is in [1<<Msize1, 1<<(Msize2+1)
@@ -206,13 +209,12 @@ static Pair<double, bool> quotToFloat64(BigNat a, BigNat b) { // NOLINT(performa
 	// - the high-order 1 is omitted in "normal" representation;
 	// - the low-order 1 will be used during rounding then discarded.
 	int64_t exp = alen - blen;
-	BigNat a2;
-	BigNat b2;
-	a2.set(a);
-	b2.set(b);
-	const int64_t shift = Msize2 - exp;
+	BigNat a2 = p_a;
+	BigNat b2 = p_b;
+
+	int64_t shift = Msize2 - exp;
 	if (shift > 0) {
-		a2.lsh(a2, static_cast<uint64_t>(shift));
+		a2.lsh(a2, static_cast<uint64_t>(+shift));
 	} else if (shift < 0) {
 		b2.lsh(b2, static_cast<uint64_t>(-shift));
 	}
@@ -221,10 +223,10 @@ static Pair<double, bool> quotToFloat64(BigNat a, BigNat b) { // NOLINT(performa
 	// extra shift, the low-order bit of q is logically the
 	// high-order bit of r.
 	BigNat q;
-	BigNat &r = a2; // (recycle a2)
-	q.div(r, a2, b2);
+	BigNat r;
+	q.div(a2, b2, r);
 	uint64_t mantissa = q.low64();
-	bool haveRem = !r.array.is_empty(); // mantissa&1 && !haveRem => remainder is exactly half
+	bool haveRem = !r.is_zero(); // mantissa&1 && !haveRem => remainder is exactly half
 
 	// 3. If quotient didn't fit in Msize2 bits, redo division by b2<<1
 	// (in effect---we accomplish this incrementally).
@@ -235,24 +237,25 @@ static Pair<double, bool> quotToFloat64(BigNat a, BigNat b) { // NOLINT(performa
 		mantissa >>= 1;
 		exp++;
 	}
-	CRASH_COND((mantissa >> Msize1) != 1); // expected exactly Msize2 bits of result
+	CRASH_COND_MSG((mantissa >> Msize1) != 1, "expected exactly " + String::num_int64(Msize2) + " bits of result");
 
 	// 4. Rounding.
 	if (Emin - Msize <= exp && exp <= Emin) {
 		// Denormal case; lose 'shift' bits of precision.
-		const uint64_t shift = static_cast<uint64_t>(Emin - (exp - 1)); // [1..Esize1)
-		const uint64_t lostbits = mantissa & ((1LLU << shift) - 1);
+		shift = Emin - (exp - 1); // [1..Esize1)
+		const uint64_t lostbits = mantissa & ((UINT64_C(1) << shift) - 1);
 		haveRem = haveRem || lostbits != 0;
 		mantissa >>= shift;
 		exp = 2 - Ebias; // == exp + shift
 	}
+
 	// Round q using round-half-to-even.
 	bool exact = !haveRem;
 	if ((mantissa & 1) != 0) {
 		exact = false;
 		if (haveRem || (mantissa & 2) != 0) {
 			mantissa++;
-			if (mantissa >= (1LLU << Msize2)) {
+			if (mantissa >= (UINT64_C(1) << Msize2)) {
 				// Complete rollover 11...1 => 100...0, so shift is safe
 				mantissa >>= 1;
 				exp++;
@@ -261,12 +264,8 @@ static Pair<double, bool> quotToFloat64(BigNat a, BigNat b) { // NOLINT(performa
 	}
 	mantissa >>= 1; // discard rounding bit.  Mantissa now scaled by 1<<Msize1.
 
-	const double f = std::ldexp(static_cast<double>(mantissa), exp - Msize1);
-	if (Math::is_inf(f)) {
-		exact = false;
-	}
-
-	return { f, exact };
+	r_f = ldexp(static_cast<double>(mantissa), exp - Msize1);
+	return exact && !Math::is_inf(r_f);
 }
 
 // Float32 returns the nearest float32 value for x and a bool indicating
@@ -274,11 +273,12 @@ static Pair<double, bool> quotToFloat64(BigNat a, BigNat b) { // NOLINT(performa
 // be represented by a float32, f is an infinity and exact is false.
 // The sign of f always matches the sign of x, even if f == 0.
 Pair<float, bool> BigRat::Float32() const {
-	Pair<float, bool> f = quotToFloat32(_a, _b);
+	float f;
+	const bool exact = BigNat::quotToFloat32(_a, _b, f);
 	if (_neg) {
-		f.first = -f.first;
+		f = -f;
 	}
-	return f;
+	return { f, exact };
 }
 
 // Float64 returns the nearest float64 value for x and a bool indicating
@@ -286,11 +286,12 @@ Pair<float, bool> BigRat::Float32() const {
 // be represented by a float64, f is an infinity and exact is false.
 // The sign of f always matches the sign of x, even if f == 0.
 Pair<double, bool> BigRat::Float64() const {
-	Pair<double, bool> f = quotToFloat64(_a, _b);
+	double f;
+	const bool exact = BigNat::quotToFloat64(_a, _b, f);
 	if (_neg) {
-		f.first = -f.first;
+		f = -f;
 	}
-	return f;
+	return { f, exact };
 }
 
 // SetFrac sets z to a/b and returns z.
@@ -298,14 +299,17 @@ Pair<double, bool> BigRat::Float64() const {
 Error BigRat::SetFrac(const Ref<BigInt> &p_a, const Ref<BigInt> &p_b) {
 	ERR_FAIL_NULL_V(*p_a, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_b, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V_MSG(p_b->_abs.array.is_empty(), ERR_INVALID_PARAMETER, "division by zero");
+
+	ERR_FAIL_COND_V_MSG(p_b->_abs.is_zero(), ERR_INVALID_PARAMETER, "division by zero");
 
 	_neg = p_a->_neg != p_b->_neg;
-	_a.set(p_a->_abs);
-	_b.set(p_b->_abs);
+	_a = p_a->_abs;
+	_b = p_b->_abs;
 
 	_norm();
+
 	emit_changed();
+
 	return OK;
 }
 
@@ -315,11 +319,13 @@ Error BigRat::SetFrac64(int64_t p_a, int64_t p_b) {
 	ERR_FAIL_COND_V_MSG(p_b == 0, ERR_INVALID_PARAMETER, "division by zero");
 
 	_neg = (p_a < 0) != (p_b < 0);
-	_a.setUint64(static_cast<uint64_t>(p_a < 0 ? -p_a : p_a));
-	_b.setUint64(static_cast<uint64_t>(p_b < 0 ? -p_b : p_b));
+	_a.setUint64(static_cast<uint64_t>(p_a < 0 ? -p_a : +p_a));
+	_b.setUint64(static_cast<uint64_t>(p_b < 0 ? -p_b : +p_b));
 
 	_norm();
+
 	emit_changed();
+
 	return OK;
 }
 
@@ -328,7 +334,7 @@ void BigRat::SetInt(const Ref<BigInt> &p_x) {
 	ERR_FAIL_NULL(*p_x);
 
 	_neg = p_x->_neg;
-	_a.set(p_x->_abs);
+	_a = p_x->_abs;
 	_b.setUint64(1);
 
 	emit_changed();
@@ -337,7 +343,7 @@ void BigRat::SetInt(const Ref<BigInt> &p_x) {
 // SetInt64 sets z to x and returns z.
 void BigRat::SetInt64(int64_t p_x) {
 	_neg = p_x < 0;
-	_a.setUint64(static_cast<uint64_t>(p_x < 0 ? -p_x : p_x));
+	_a.setUint64(static_cast<uint64_t>(p_x < 0 ? -p_x : +p_x));
 	_b.setUint64(1);
 
 	emit_changed();
@@ -357,8 +363,12 @@ void BigRat::Set(const Ref<BigRat> &p_x) {
 	ERR_FAIL_NULL(*p_x);
 
 	_neg = p_x->_neg;
-	_a.set(p_x->_a);
-	_b.set(p_x->_b);
+	_a = p_x->_a;
+	_b = p_x->_b;
+
+	if (_b.is_zero()) {
+		_b.setUint64(1);
+	}
 
 	emit_changed();
 }
@@ -368,8 +378,8 @@ void BigRat::Abs(const Ref<BigRat> &p_x) {
 	ERR_FAIL_NULL(*p_x);
 
 	_neg = false;
-	_a.set(p_x->_a);
-	_b.set(p_x->_b);
+	_a = p_x->_a;
+	_b = p_x->_b;
 
 	emit_changed();
 }
@@ -378,26 +388,26 @@ void BigRat::Abs(const Ref<BigRat> &p_x) {
 void BigRat::Neg(const Ref<BigRat> &p_x) {
 	ERR_FAIL_NULL(*p_x);
 
-	_neg = !p_x->_a.array.is_empty() && !p_x->_neg; // 0 has no sign
-	_a.set(p_x->_a);
-	_b.set(p_x->_b);
+	_neg = !p_x->_a.is_zero() && !p_x->_neg; // 0 has no sign
+	_a = p_x->_a;
+	_b = p_x->_b;
 
 	emit_changed();
 }
 
 // Inv sets z to 1/x and returns z.
 // If x == 0, Inv panics.
-godot::Error BigRat::Inv(const Ref<BigRat> &p_x) {
+Error BigRat::Inv(const Ref<BigRat> &p_x) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V_MSG(p_x->_a.array.is_empty(), ERR_INVALID_PARAMETER, "division by zero");
+	ERR_FAIL_COND_V_MSG(p_x->_a.is_zero(), ERR_INVALID_PARAMETER, "division by zero");
 
 	_neg = p_x->_neg;
-
-	BigNat temp = p_x->_a;
-	_a = p_x->_b;
-	_b = std::move(temp);
+	_a = p_x->_a;
+	_b = p_x->_b;
+	SWAP(_a, _b);
 
 	emit_changed();
+
 	return OK;
 }
 
@@ -406,18 +416,16 @@ godot::Error BigRat::Inv(const Ref<BigRat> &p_x) {
 //   - 0 if x == 0;
 //   - +1 if x > 0.
 int BigRat::Sign() const {
-	if (_a.array.is_empty()) {
+	if (_a.is_zero()) {
 		return 0;
 	}
-	if (_neg) {
-		return -1;
-	}
-	return 1;
+
+	return _neg ? -1 : +1;
 }
 
 // IsInt reports whether the denominator of x is 1.
 bool BigRat::IsInt() const {
-	return _b.cmp1() == 0;
+	return _b.is_zero() || _b.cmp({ 1 }) == 0;
 }
 
 // Num returns the numerator of x; it may be <= 0.
@@ -429,6 +437,7 @@ void BigRat::Num(const Ref<BigInt> &r_a) const {
 
 	r_a->_neg = _neg;
 	r_a->_abs = _a;
+
 	r_a->emit_changed();
 }
 
@@ -444,33 +453,31 @@ void BigRat::Denom(const Ref<BigInt> &r_b) const {
 
 	r_b->_neg = false;
 	r_b->_abs = _b;
+
 	r_b->emit_changed();
 }
 
 void BigRat::_norm() {
-	// unlike the Go version of this code, denominator is initialized to 1
-	DEV_ASSERT(!_b.array.is_empty());
-
-	if (_a.array.is_empty()) {
+	if (_a.is_zero()) {
 		// z == 0; normalize sign and denominator
 		_neg = false;
 		_b.setUint64(1);
-		return;
-	}
-
-	// z is fraction; normalize numerator and denominator
-	Ref<BigInt> f{ memnew(BigInt) };
-	Ref<BigInt> A{ memnew(BigInt) };
-	Ref<BigInt> B{ memnew(BigInt) };
-
-	A->_abs = _a;
-	B->_abs = _b;
-	f->_lehmerGCD(nullptr, nullptr, A, B);
-
-	if (f->Cmp(*intOne) != 0) {
-		BigNat r;
-		_a.div(r, _a, f->_abs);
-		_b.div(r, _b, f->_abs);
+	} else if (_b.is_zero()) {
+		// z is integer; normalize denominator
+		_b.setUint64(1);
+	} else {
+		// z is fraction; normalize numerator and denominator
+		const Ref<BigInt> a{ memnew(BigInt) };
+		const Ref<BigInt> b{ memnew(BigInt) };
+		const Ref<BigInt> gcd{ memnew(BigInt) };
+		a->_abs = _a;
+		b->_abs = _b;
+		gcd->_lehmerGCD(nullptr, nullptr, a, b);
+		if (gcd->Cmp(*intOne) != 0) {
+			BigNat r;
+			_a.div(_a, gcd->_abs, r);
+			_b.div(_b, gcd->_abs, r);
+		}
 	}
 }
 
@@ -479,22 +486,18 @@ void BigRat::_norm() {
 //   - 0 if x == y;
 //   - +1 if x > y.
 int BigRat::Cmp(const Ref<BigRat> &p_y) const {
-	ERR_FAIL_NULL_V(*p_y, 0);
+	ERR_FAIL_NULL_V(*p_y, Sign());
 
-	Ref<BigInt> a{ memnew(BigInt) };
-	Ref<BigInt> b{ memnew(BigInt) };
-	Ref<BigInt> n{ memnew(BigInt) };
-	Ref<BigInt> d{ memnew(BigInt) };
+	if (_neg != p_y->_neg) {
+		return _neg ? -1 : +1;
+	}
 
-	Num(n);
-	p_y->Denom(d);
-	a->Mul(n, d);
+	BigNat a;
+	BigNat b;
+	a.mul(_a, p_y->_b);
+	b.mul(p_y->_a, _b);
 
-	p_y->Num(n);
-	Denom(d);
-	b->Mul(n, d);
-
-	return a->Cmp(b);
+	return _neg ? b.cmp(a) : a.cmp(b);
 }
 
 // Add sets z to the sum x+y and returns z.
@@ -502,26 +505,32 @@ void BigRat::Add(const Ref<BigRat> &p_x, const Ref<BigRat> &p_y) {
 	ERR_FAIL_NULL(*p_x);
 	ERR_FAIL_NULL(*p_y);
 
-	Ref<BigInt> a1{ memnew(BigInt) };
-	Ref<BigInt> a2{ memnew(BigInt) };
-	Ref<BigInt> n{ memnew(BigInt) };
-	Ref<BigInt> d{ memnew(BigInt) };
-
-	p_x->Num(n);
-	p_y->Denom(d);
-	a1->Mul(n, d);
-
-	p_y->Num(n);
-	p_x->Denom(d);
-	a2->Mul(n, d);
-
-	n->Add(a1, a2);
-	_neg = n->_neg;
-	_a = n->_abs;
-
+	BigNat xa;
+	BigNat ya;
+	xa.mul(p_x->_a, p_y->_b);
+	ya.mul(p_y->_a, p_x->_b);
 	_b.mul(p_x->_b, p_y->_b);
 
+	bool neg = p_x->_neg;
+	if (p_x->_neg == p_y->_neg) {
+		// x + y == x + y
+		// (-x) + (-y) == -(x + y)
+		_a.add(xa, ya);
+	} else {
+		// x + (-y) == x - y == -(y - x)
+		// (-x) + y == y - x == -(x - y)
+		if (xa.cmp(ya) >= 0) {
+			_a.sub(xa, ya);
+		} else {
+			neg = !neg;
+			_a.sub(ya, xa);
+		}
+	}
+
+	_neg = !_a.is_zero() && neg; // 0 has no sign
+
 	_norm();
+
 	emit_changed();
 }
 
@@ -530,26 +539,32 @@ void BigRat::Sub(const Ref<BigRat> &p_x, const Ref<BigRat> &p_y) {
 	ERR_FAIL_NULL(*p_x);
 	ERR_FAIL_NULL(*p_y);
 
-	Ref<BigInt> a1{ memnew(BigInt) };
-	Ref<BigInt> a2{ memnew(BigInt) };
-	Ref<BigInt> n{ memnew(BigInt) };
-	Ref<BigInt> d{ memnew(BigInt) };
-
-	p_x->Num(n);
-	p_y->Denom(d);
-	a1->Mul(n, d);
-
-	p_y->Num(n);
-	p_x->Denom(d);
-	a2->Mul(n, d);
-
-	n->Sub(a1, a2);
-	_neg = n->_neg;
-	_a = n->_abs;
-
+	BigNat xa;
+	BigNat ya;
+	xa.mul(p_x->_a, p_y->_b);
+	ya.mul(p_y->_a, p_x->_b);
 	_b.mul(p_x->_b, p_y->_b);
 
+	bool neg = p_x->_neg;
+	if (p_x->_neg != p_y->_neg) {
+		// x - (-y) == x + y
+		// (-x) - y == -(x + y)
+		_a.add(xa, ya);
+	} else {
+		// x - y == x - y == -(y - x)
+		// (-x) - (-y) == y - x == -(x - y)
+		if (xa.cmp(ya) >= 0) {
+			_a.sub(xa, ya);
+		} else {
+			neg = !neg;
+			_a.sub(ya, xa);
+		}
+	}
+
+	_neg = !_a.is_zero() && neg; // 0 has no sign
+
 	_norm();
+
 	emit_changed();
 }
 
@@ -565,14 +580,17 @@ void BigRat::Mul(const Ref<BigRat> &p_x, const Ref<BigRat> &p_y) {
 		_b.sqr(p_x->_b);
 
 		emit_changed();
+
 		return;
 	}
 
 	_a.mul(p_x->_a, p_y->_a);
-	_neg = !_a.array.is_empty() && p_x->_neg != p_y->_neg;
 	_b.mul(p_x->_b, p_y->_b);
 
+	_neg = !_a.is_zero() && p_x->_neg != p_y->_neg; // 0 has no sign
+
 	_norm();
+
 	emit_changed();
 }
 
@@ -581,26 +599,20 @@ void BigRat::Mul(const Ref<BigRat> &p_x, const Ref<BigRat> &p_y) {
 Error BigRat::Quo(const Ref<BigRat> &p_x, const Ref<BigRat> &p_y) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V_MSG(p_y->_a.array.is_empty(), ERR_INVALID_PARAMETER, "division by zero");
+	ERR_FAIL_COND_V_MSG(p_y->_a.is_zero(), ERR_INVALID_PARAMETER, "division by zero");
 
-	Ref<BigInt> a{ memnew(BigInt) };
-	Ref<BigInt> b{ memnew(BigInt) };
-	Ref<BigInt> n{ memnew(BigInt) };
-	Ref<BigInt> d{ memnew(BigInt) };
+	BigNat a;
+	BigNat b;
+	a.mul(p_x->_a, p_y->_b);
+	b.mul(p_y->_a, p_x->_b);
 
-	p_x->Num(n);
-	p_y->Denom(d);
-	a->Mul(n, d);
-
-	p_y->Num(n);
-	p_x->Denom(d);
-	b->Mul(n, d);
-
-	_a = a->_abs;
-	_b = b->_abs;
-	_neg = a->_neg != b->_neg;
+	_a = a;
+	_b = b;
+	_neg = p_x->_neg != p_y->_neg;
 
 	_norm();
+
 	emit_changed();
+
 	return OK;
 }

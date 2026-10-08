@@ -15,7 +15,7 @@ protected:
 public:
 	bool _neg = false;
 	BigNat _a;
-	BigNat _b{ { 1 } };
+	BigNat _b{ 1 };
 
 	void _set_neg(bool p_neg);
 	[[nodiscard]] bool _is_neg() const;

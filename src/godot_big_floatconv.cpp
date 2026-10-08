@@ -1,53 +1,43 @@
-// This file is ported from src/math/big/floatconv.go in Go 1.26.1.
+// This file is ported from src/math/big/floatconv.go in Go 1.27.1.
 // Original copyright notice follows:
 
 // Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// This file implements string-to-Float conversion functions.
+
 #include "godot_big_float.h"
 
 using namespace godot;
-
-// This file implements string-to-Float conversion functions.
 
 // scan is like Parse but reads the longest possible prefix representing a valid
 // floating point number from an io.ByteScanner rather than a string. It serves
 // as the implementation of Parse. It does not recognize ±Inf and does not expect
 // EOF at the end.
-Error BigFloat::_scan(const godot::String &s, int64_t &off, int64_t &base) {
-	uint32_t prec = _prec;
-	if (prec == 0) {
-		prec = 64;
-	}
+Error BigFloat::_scan(godot::String &s, int64_t &base) {
+	const int64_t orig_base = base;
+	const uint32_t prec = _prec == 0 ? 64 : _prec;
 
 	// A reasonable value in case of an error.
 	_form = FORM_ZERO;
 
 	// sign
-	Error err = BigNat::scanSign(s, off, _neg);
-	if (err != OK) {
-		return err;
-	}
+	BigNat::scanSign(s, _neg);
 
 	// mantissa
-	const int64_t orig_base = base;
-	int64_t fcount = 0; // fractional digit count; valid if <= 0
-	err = _mant.scan(s, off, base, true, base, fcount);
-	if (err != OK) {
-		return err;
-	}
+	int64_t fcount; // fractional digit count; valid if <= 0
+	Error err = _mant.scan(s, base, true, fcount);
+	ERR_FAIL_COND_V(err != OK, err);
 
 	// exponent
-	int64_t exp = 0;
-	int64_t ebase = 0;
-	err = BigNat::scanExponent(s, off, true, orig_base == 0, exp, ebase);
-	if (err != OK) {
-		return err;
-	}
+	int64_t exp;
+	int64_t ebase;
+	err = BigNat::scanExponent(s, true, orig_base == 0, exp, ebase);
+	ERR_FAIL_COND_V(err != OK, err);
 
 	// special-case 0
-	if (_mant.array.is_empty()) {
+	if (_mant.is_zero()) {
 		_prec = prec;
 		_acc = ACC_EXACT;
 		_form = FORM_ZERO;
@@ -75,18 +65,19 @@ Error BigFloat::_scan(const godot::String &s, int64_t &off, int64_t &base) {
 		// The mantissa has a radix point ddd.dddd; and
 		// -fcount is the number of digits to the right
 		// of '.'. Adjust relevant exponent accordingly.
+		const int64_t d = fcount;
 		switch (base) {
 			case 10:
-				exp5 = fcount;
+				exp5 = d;
 				[[fallthrough]]; // 10**e == 5**e * 2**e
 			case 2:
-				exp2 += fcount;
+				exp2 += d;
 				break;
 			case 8:
-				exp2 += fcount * 3; // octal digits are 3 bits each
+				exp2 += d * 3; // octal digits are 3 bits each
 				break;
 			case 16:
-				exp2 += fcount * 4; // hexadecimal digits are 4 bits each
+				exp2 += d * 4; // hexadecimal digits are 4 bits each
 				break;
 			default:
 				CRASH_NOW_MSG("unexpected mantissa base");
@@ -107,14 +98,12 @@ Error BigFloat::_scan(const godot::String &s, int64_t &off, int64_t &base) {
 	}
 	// exp consumed - not needed anymore
 
+	ERR_FAIL_COND_V_MSG(exp2 < MIN_EXP || exp2 > MAX_EXP, ERR_PARAMETER_RANGE_ERROR, "exponent overflow");
+
 	// apply 2**exp2
-	if (MIN_EXP <= exp2 && exp2 <= MAX_EXP) {
-		_prec = prec;
-		_form = FORM_FINITE;
-		_exp = static_cast<int32_t>(exp2);
-	} else {
-		ERR_FAIL_V_MSG(ERR_INVALID_DATA, "exponent overflow");
-	}
+	_prec = prec;
+	_form = FORM_FINITE;
+	_exp = static_cast<int32_t>(exp2);
 
 	if (exp5 == 0) {
 		// no decimal exponent contribution
@@ -128,10 +117,10 @@ Error BigFloat::_scan(const godot::String &s, int64_t &off, int64_t &base) {
 	p->SetPrec(Prec() + 64); // use more bits for p -- TODO(gri) what is the right number?
 	if (exp5 < 0) {
 		p->_pow5(static_cast<uint64_t>(-exp5));
-		Quo(this, p);
+		_uquo(this, *p);
 	} else {
-		p->_pow5(static_cast<uint64_t>(exp5));
-		Mul(this, p);
+		p->_pow5(static_cast<uint64_t>(+exp5));
+		_umul(this, *p);
 	}
 
 	return OK;
@@ -175,38 +164,33 @@ static constexpr std::array<uint64_t, 28> pow5tab{
 
 // pow5 sets z to 5**n and returns z.
 // n must not be negative.
-void BigFloat::_pow5(uint64_t p_n) {
-	constexpr uint64_t m = pow5tab.size() - 1;
-	if (p_n <= m) {
-		SetUint64(pow5tab[p_n]);
+// PORT: unlike other private methods, this calls emit_changed, possibly multiple times
+void BigFloat::_pow5(uint64_t n) {
+	static constexpr uint64_t m = static_cast<uint64_t>(pow5tab.size() - 1);
+	if (n <= m) {
+		SetUint64(pow5tab.at(n));
 		return;
 	}
 	// n > m
 
-	SetUint64(pow5tab[m]);
-	p_n -= m;
+	SetUint64(pow5tab.at(m));
+	n -= m;
 
 	// use more bits for f than for z
 	// TODO(gri) what is the right number?
-	Ref<BigFloat> f{ memnew(BigFloat) };
+	const Ref<BigFloat> f{ memnew(BigFloat) };
 	f->SetPrec(Prec() + 64);
 	f->SetUint64(5);
 
-	while (p_n > 0) {
-		if ((p_n & 1) != 0) {
+	while (n > 0) {
+		if ((n & 1) != 0) {
 			Mul(this, f);
 		}
 		f->Mul(f, f);
-		p_n >>= 1;
+		n >>= 1;
 	}
 }
 
-// SetString sets z to the value of s and returns z and a boolean indicating
-// success. s must be a floating-point number of the same format as accepted
-// by [Float.Parse], with base argument 0. The entire string (not just a prefix) must
-// be valid for success. If the operation failed, the value of z is undefined
-// but the returned value is nil.
-//
 // Parse parses s which must contain a text representation of a floating-
 // point number with a mantissa in the given conversion base (the exponent
 // is always a decimal number), or a string representing an infinite value.
@@ -252,25 +236,28 @@ void BigFloat::_pow5(uint64_t p_n) {
 //
 // The returned *Float f is nil and the value of z is valid but not
 // defined if an error is reported.
+
+// SetString sets z to the value of s and returns z and a boolean indicating
+// success. s must be a floating-point number of the same format as accepted
+// by [Float.Parse], with base argument 0. The entire string (not just a prefix) must
+// be valid for success. If the operation failed, the value of z is undefined
+// but the returned value is nil.
 Error BigFloat::SetString(const godot::String &p_s, int64_t p_base) {
 	// scan doesn't handle ±Inf
 	if (p_s.length() == 3 && (p_s == "Inf" || p_s == "inf")) {
 		SetInf(false);
 		return OK;
 	}
-	if (p_s.length() == 4 && (p_s[0] == '+' || p_s[0] == '-') && (p_s[1] == 'I' || p_s[1] == 'i') && p_s[2] == 'n' && p_s[3] == 'f') {
-		SetInf(p_s[0] == '-');
+	if (p_s.length() == 4 && (p_s[0] == U'+' || p_s[0] == U'-') && (p_s.substr(1) == "Inf" || p_s.substr(1) == "inf")) {
+		SetInf(p_s[0] == U'-');
 		return OK;
 	}
 
-	int64_t off = 0;
-	const Error err = _scan(p_s, off, p_base);
-	if (err != OK) {
-		return err;
-	}
-
-	// entire string must have been consumed
-	ERR_FAIL_COND_V(off != p_s.length(), ERR_INVALID_PARAMETER);
+	godot::String s = p_s;
+	const Error err = _scan(s, p_base);
+	emit_changed();
+	ERR_FAIL_COND_V(err != OK, err);
+	ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data after number");
 
 	return OK;
 }

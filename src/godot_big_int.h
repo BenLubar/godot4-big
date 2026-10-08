@@ -2,6 +2,8 @@
 
 #include "godot_big_naturals.h"
 
+#include <godot_cpp/classes/resource.hpp>
+
 class BigInt : public godot::Resource {
 	GDCLASS(BigInt, godot::Resource);
 
@@ -40,9 +42,20 @@ public:
 	godot::Error Quo(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
 	godot::Error Rem(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
 	godot::Error QuoRem(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &r_r);
+	void _quoRem(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &r_r);
 	godot::Error Div(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
 	godot::Error Mod(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
 	godot::Error DivMod(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &r_m);
+
+	// Rounding modes that determine how the integer quotient is adjusted in an integer division.
+	// See Daan Leijen, “Division and Modulus for Computer Scientists”, for details.
+	enum RoundingMode : uint8_t {
+		TRUNC = TO_ZERO, // T-division (same as Go division)
+		FLOOR = TO_NEGATIVE_INF, // F-division
+		ROUND = TO_NEAREST_EVEN, // R-division
+		CEIL = TO_POSITIVE_INF, // C-division
+	};
+	godot::Error Divide(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &r_r, RoundingMode p_mode);
 
 	[[nodiscard]] int Cmp(const godot::Ref<BigInt> &p_y) const;
 	[[nodiscard]] int CmpAbs(const godot::Ref<BigInt> &p_y) const;
@@ -95,11 +108,12 @@ public:
 
 	godot::Error Sqrt(const godot::Ref<BigInt> &p_x);
 
-	static constexpr int64_t MAX_BASE = 10 + ('z' - 'a' + 1) + ('Z' - 'A' + 1);
-	godot::Error _scan(const godot::String &s, int64_t &off, int64_t &base);
+	static constexpr int64_t MAX_BASE = BigNat::MAX_BASE;
+	godot::Error _scan(godot::String &s, int64_t &base);
 	godot::Error SetString(const godot::String &p_s, int64_t p_base = 0);
 	[[nodiscard]] godot::String String(int64_t p_base = 10) const;
 	[[nodiscard]] _FORCE_INLINE_ godot::String _to_string() const { return String(); }
 
 	[[nodiscard]] bool ProbablyPrime(int64_t n) const;
 };
+VARIANT_ENUM_CAST(BigInt::RoundingMode);

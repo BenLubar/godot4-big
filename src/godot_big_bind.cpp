@@ -262,6 +262,13 @@ void BigInt::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("Mod", "x", "y"), &BigInt::Mod);
 	ClassDB::bind_method(D_METHOD("DivMod", "x", "y", "m"), &BigInt::DivMod);
 
+	BIND_ENUM_CONSTANT(TRUNC);
+	BIND_ENUM_CONSTANT(FLOOR);
+	BIND_ENUM_CONSTANT(ROUND);
+	BIND_ENUM_CONSTANT(CEIL);
+
+	ClassDB::bind_method(D_METHOD("Divide", "x", "y", "r", "mode"), &BigInt::Divide);
+
 	// comparison
 	ClassDB::bind_method(D_METHOD("Cmp", "y"), &BigInt::Cmp);
 	ClassDB::bind_method(D_METHOD("CmpAbs", "y"), &BigInt::CmpAbs);

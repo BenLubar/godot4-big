@@ -1,10 +1,24 @@
-# Copyright 2019 The Go Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style
-# license that can be found in the LICENSE file.
+## This file is ported from src/math/big/alias_test.go in Go 1.27.1.
+## Original copyright notice follows:
+
+## Copyright 2019 The Go Authors. All rights reserved.
+## Use of this source code is governed by a BSD-style
+## license that can be found in the LICENSE file.
 
 class_name AliasTest
 extends TestSuite
 
+#package big_test
+#
+#import (
+#	cryptorand "crypto/rand"
+#	"math/big"
+#	"math/rand"
+#	"reflect"
+#	"testing"
+#	"testing/quick"
+#)
+#
 #func equal(z, x *big.Int) bool {
 #	return z.Cmp(x) == 0
 #}
@@ -80,72 +94,72 @@ extends TestSuite
 #	return reflect.ValueOf(smallUint{uint(rand.Intn(1024))})
 #}
 #
-## checkAliasingOneArg checks if f returns a correct result when v and x alias.
-##
-## f is a function that takes x as an argument, doesn't modify it, sets v to the
-## result, and returns v. It is the function signature of unbound methods like
-##
-##	func (v *big.Int) m(x *big.Int) *big.Int
-##
-## v and x are two random Int values. v is randomized even if it will be
-## overwritten to test for improper buffer reuse.
+#// checkAliasingOneArg checks if f returns a correct result when v and x alias.
+#//
+#// f is a function that takes x as an argument, doesn't modify it, sets v to the
+#// result, and returns v. It is the function signature of unbound methods like
+#//
+#//	func (v *big.Int) m(x *big.Int) *big.Int
+#//
+#// v and x are two random Int values. v is randomized even if it will be
+#// overwritten to test for improper buffer reuse.
 #func checkAliasingOneArg(t *testing.T, f func(v, x *big.Int) *big.Int, v, x *big.Int) bool {
 #	x1, v1 := new(big.Int).Set(x), new(big.Int).Set(x)
 #
-#	# Calculate a reference f(x) without aliasing.
+#	// Calculate a reference f(x) without aliasing.
 #	if out := f(v, x); out != v {
 #		return false
 #	}
 #
-#	# Test aliasing the argument and the receiver.
+#	// Test aliasing the argument and the receiver.
 #	if out := f(v1, v1); out != v1 || !equal(v1, v) {
 #		t.Logf("f(v, x) != f(x, x)")
 #		return false
 #	}
 #
-#	# Ensure the arguments was not modified.
+#	// Ensure the arguments was not modified.
 #	return equal(x, x1)
 #}
 #
-## checkAliasingTwoArgs checks if f returns a correct result when any
-## combination of v, x and y alias.
-##
-## f is a function that takes x and y as arguments, doesn't modify them, sets v
-## to the result, and returns v. It is the function signature of unbound methods
-## like
-##
-##	func (v *big.Int) m(x, y *big.Int) *big.Int
-##
-## v, x and y are random Int values. v is randomized even if it will be
-## overwritten to test for improper buffer reuse.
+#// checkAliasingTwoArgs checks if f returns a correct result when any
+#// combination of v, x and y alias.
+#//
+#// f is a function that takes x and y as arguments, doesn't modify them, sets v
+#// to the result, and returns v. It is the function signature of unbound methods
+#// like
+#//
+#//	func (v *big.Int) m(x, y *big.Int) *big.Int
+#//
+#// v, x and y are random Int values. v is randomized even if it will be
+#// overwritten to test for improper buffer reuse.
 #func checkAliasingTwoArgs(t *testing.T, f func(v, x, y *big.Int) *big.Int, v, x, y *big.Int) bool {
 #	x1, y1, v1 := new(big.Int).Set(x), new(big.Int).Set(y), new(big.Int).Set(v)
 #
-#	# Calculate a reference f(x, y) without aliasing.
+#	// Calculate a reference f(x, y) without aliasing.
 #	if out := f(v, x, y); out == nil {
-#		# Certain functions like ModInverse return nil for certain inputs.
-#		# Check that receiver and arguments were unchanged and move on.
+#		// Certain functions like ModInverse return nil for certain inputs.
+#		// Check that receiver and arguments were unchanged and move on.
 #		return equal(x, x1) && equal(y, y1) && equal(v, v1)
 #	} else if out != v {
 #		return false
 #	}
 #
-#	# Test aliasing the first argument and the receiver.
+#	// Test aliasing the first argument and the receiver.
 #	v1.Set(x)
 #	if out := f(v1, v1, y); out != v1 || !equal(v1, v) {
 #		t.Logf("f(v, x, y) != f(x, x, y)")
 #		return false
 #	}
-#	# Test aliasing the second argument and the receiver.
+#	// Test aliasing the second argument and the receiver.
 #	v1.Set(y)
 #	if out := f(v1, x, v1); out != v1 || !equal(v1, v) {
 #		t.Logf("f(v, x, y) != f(y, x, y)")
 #		return false
 #	}
 #
-#	# Calculate a reference f(y, y) without aliasing.
-#	# We use y because it's the one that commonly has restrictions
-#	# like being prime or non-zero.
+#	// Calculate a reference f(y, y) without aliasing.
+#	// We use y because it's the one that commonly has restrictions
+#	// like being prime or non-zero.
 #	v1.Set(v)
 #	y2 := new(big.Int).Set(y)
 #	if out := f(v, y, y2); out == nil {
@@ -154,24 +168,23 @@ extends TestSuite
 #		return false
 #	}
 #
-#	# Test aliasing the two arguments.
+#	// Test aliasing the two arguments.
 #	if out := f(v1, y, y); out != v1 || !equal(v1, v) {
 #		t.Logf("f(v, y1, y2) != f(v, y, y)")
 #		return false
 #	}
-#	# Test aliasing the two arguments and the receiver.
+#	// Test aliasing the two arguments and the receiver.
 #	v1.Set(y)
 #	if out := f(v1, v1, v1); out != v1 || !equal(v1, v) {
 #		t.Logf("f(v, y1, y2) != f(y, y, y)")
 #		return false
 #	}
 #
-#	# Ensure the arguments were not modified.
+#	// Ensure the arguments were not modified.
 #	return equal(x, x1) && equal(y, y1)
 #}
-
-func TestAliasing(t: TestingT) -> void:
-	t.Error("TODO")
+#
+#func TestAliasing(t *testing.T) {
 #	for name, f := range map[string]any{
 #		"Abs": func(v, x bigInt) bool {
 #			return checkAliasingOneArg(t, (*big.Int).Abs, v.Int, x.Int)
@@ -326,3 +339,4 @@ func TestAliasing(t: TestingT) -> void:
 #		z := new(big.Int).SetBytes([]byte{0x34, 0xe1, 0x5f, 0xd0, 0xa7, 0xf8, 0x34, 0x7c, 0x3c, 0x63, 0x82, 0x1e, 0xc3, 0x84, 0x9f, 0xa, 0x70, 0x22, 0xd3, 0xc8, 0x24, 0x64, 0x2b, 0xd7, 0x59, 0x20, 0xf2, 0xdd, 0xb5, 0xb2, 0xfa, 0x11, 0x2e, 0x98, 0x95})
 #		v.Exp(x, y, z)
 #	})
+#}

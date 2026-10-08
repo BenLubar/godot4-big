@@ -1,4 +1,4 @@
-// This file is ported from src/math/big/ratconv.go in Go 1.26.1.
+// This file is ported from src/math/big/ratconv.go in Go 1.27.1.
 // Original copyright notice follows:
 
 // Copyright 2015 The Go Authors. All rights reserved.
@@ -7,8 +7,9 @@
 
 // This file implements rat-to-string conversion functions.
 
-#include "godot_big_int.h"
 #include "godot_big_rat.h"
+
+#include <cstdlib>
 
 using namespace godot;
 
@@ -31,67 +32,70 @@ using namespace godot;
 // The entire string, not just a prefix, must be valid for success. If the
 // operation failed, the value of z is undefined but the returned value is nil.
 Error BigRat::SetString(const godot::String &p_s) {
-	ERR_FAIL_COND_V(p_s.is_empty(), ERR_INVALID_PARAMETER);
+	ERR_FAIL_COND_V_MSG(p_s.is_empty(), ERR_INVALID_DATA, "empty string");
 	// len(s) > 0
 
+	bool neg;
+	BigNat a;
+	BigNat b;
+
 	// parse fraction a/b, if any
-	int64_t sep = p_s.find("/");
+	const int64_t sep = p_s.find("/");
 	if (sep >= 0) {
-		Ref<BigInt> n{ memnew(BigInt) };
-		Ref<BigInt> d{ memnew(BigInt) };
+		godot::String s = p_s.substr(0, sep);
+		BigNat::scanSign(s, neg);
 
-		Error err = n->SetString(p_s.substr(0, sep), 0);
-		if (err != OK) {
-			return err;
-		}
+		int64_t base = 0;
+		[[maybe_unused]] int64_t fcount;
+		Error err = a.scan(s, base, false, fcount);
+		ERR_FAIL_COND_V(err != OK, err);
+		ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data between numerator and fraction slash");
 
-		err = d->SetString(p_s.substr(sep + 1), 0);
-		if (err != OK) {
-			return err;
-		}
+		s = p_s.substr(sep + 1);
+		base = 0;
+		err = b.scan(s, base, false, fcount);
+		ERR_FAIL_COND_V(err != OK, err);
+		ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data after denominator");
+		ERR_FAIL_COND_V_MSG(b.is_zero(), ERR_INVALID_DATA, "denominator cannot be zero");
 
-		ERR_FAIL_COND_V(d->_neg, ERR_INVALID_PARAMETER);
-		ERR_FAIL_COND_V(d->_abs.array.is_empty(), ERR_INVALID_PARAMETER);
+		_a = a;
+		_b = b;
+		_neg = neg && !_a.is_zero(); // 0 has no sign
 
-		return SetFrac(n, d);
+		_norm();
+
+		emit_changed();
+
+		return OK;
 	}
 
 	// parse floating-point number
-	int64_t off = 0;
+	godot::String s = p_s;
 
 	// sign
-	bool neg;
-	Error err = BigNat::scanSign(p_s, off, neg);
-	if (err != OK) {
-		return err;
-	}
+	BigNat::scanSign(s, neg);
 
 	// mantissa
-	BigNat a;
 	int64_t base = 0;
-	int64_t fcount = 0; // fractional digit count; valid if <= 0
-	err = a.scan(p_s, off, 0, true, base, fcount);
-	if (err != OK) {
-		return err;
-	}
+	int64_t fcount; // fractional digit count; valid if <= 0
+	Error err = a.scan(s, base, true, fcount);
+	ERR_FAIL_COND_V(err != OK, err);
 
 	// exponent
-	int64_t exp = 0;
-	int64_t ebase = 0;
-	err = BigNat::scanExponent(p_s, off, true, true, exp, ebase);
-	if (err != OK) {
-		return err;
-	}
-
-	// there should be no unread characters left
-	ERR_FAIL_COND_V(p_s.length() != off, ERR_INVALID_PARAMETER);
+	int64_t exp;
+	int64_t ebase;
+	err = BigNat::scanExponent(s, true, true, exp, ebase);
+	ERR_FAIL_COND_V(err != OK, err);
+	ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data after number");
 
 	// special-case 0 (see also issue #16176)
-	if (a.array.is_empty()) {
-		_neg = false;
-		_a.array.clear();
+	if (a.is_zero()) {
+		_a.setUint64(0);
 		_b.setUint64(1);
+		_neg = false;
+
 		emit_changed();
+
 		return OK;
 	}
 	// len(z.a.abs) > 0
@@ -114,18 +118,19 @@ Error BigRat::SetString(const godot::String &p_s) {
 		// The mantissa has a radix point ddd.dddd; and
 		// -fcount is the number of digits to the right
 		// of '.'. Adjust relevant exponent accordingly.
+		const int64_t d = fcount;
 		switch (base) {
 			case 10:
-				exp5 = fcount;
+				exp5 = d;
 				[[fallthrough]]; // 10**e == 5**e * 2**e
 			case 2:
-				exp2 = fcount;
+				exp2 = d;
 				break;
 			case 8:
-				exp2 = fcount * 3; // octal digits are 3 bits each
+				exp2 = d * 3; // octal digits are 3 bits each
 				break;
 			case 16:
-				exp2 = fcount * 4; // hexadecimal digits are 4 bits each
+				exp2 = d * 4; // hexadecimal digits are 4 bits each
 				break;
 			default:
 				CRASH_NOW_MSG("unexpected mantissa base");
@@ -148,40 +153,44 @@ Error BigRat::SetString(const godot::String &p_s) {
 
 	// apply exp5 contributions
 	// (start with exp5 so the numbers to multiply are smaller)
-	BigNat b;
 	if (exp5 != 0) {
+		ERR_FAIL_COND_V_MSG(exp5 == INT64_MIN, ERR_PARAMETER_RANGE_ERROR, "excessively large exponent");
 		int64_t n = exp5;
 		if (n < 0) {
 			n = -n;
-			// This can occur if -n overflows. -(-1 << 63) would become
-			// -1 << 63, which is still negative.
-			ERR_FAIL_COND_V(n < 0, ERR_PARAMETER_RANGE_ERROR);
 		}
-		ERR_FAIL_COND_V(n > 1e6, ERR_PARAMETER_RANGE_ERROR); // avoid excessively large exponents
-		b.expWW(5, n); // use underlying array of z.b.abs
+
+		ERR_FAIL_COND_V_MSG(n > 1e6, ERR_PARAMETER_RANGE_ERROR, "excessively large exponent");
+
+		BigNat pow5;
+		pow5.expNN({ 5 }, { static_cast<BigWord>(n) }, {}, false);
 		if (exp5 > 0) {
-			a.mul(a, b);
+			a.mul(a, pow5);
 			b.setUint64(1);
+		} else {
+			b = pow5;
 		}
 	} else {
 		b.setUint64(1);
 	}
 
 	// apply exp2 contributions
-	ERR_FAIL_COND_V(exp2 < -1e7 || exp2 > 1e7, ERR_PARAMETER_RANGE_ERROR); // avoid excessively large exponents
-
-	_a.set(a);
-	_b.set(b);
+	ERR_FAIL_COND_V_MSG(exp2 < -1e7 || exp2 > 1e7, ERR_PARAMETER_RANGE_ERROR, "excessively large exponent");
 
 	if (exp2 > 0) {
-		_a.lsh(_a, uint64_t(exp2));
+		a.lsh(a, static_cast<uint64_t>(+exp2));
 	} else if (exp2 < 0) {
-		_b.lsh(_b, uint64_t(-exp2));
+		b.lsh(b, static_cast<uint64_t>(-exp2));
 	}
 
-	_neg = neg && !_a.array.is_empty(); // 0 has no sign
+	_a = a;
+	_b = b;
+	_neg = neg && !_a.is_zero(); // 0 has no sign
 
 	_norm();
+
+	emit_changed();
+
 	return OK;
 }
 
@@ -201,42 +210,44 @@ Error BigRat::SetString(const godot::String &p_s) {
 //	digit    = "0" ... "9" .
 //
 // A base 2 exponent is only permitted if base2ok is set.
-Error BigNat::scanExponent(const String &s, int64_t &off, bool base2ok, bool sepOk, int64_t &exp, int64_t &base) {
+Error BigNat::scanExponent(godot::String &s, bool base2ok, bool sepOk, int64_t &exp, int64_t &base) {
 	// one char look-ahead
-	if (s.length() <= off) {
+	if (s.is_empty()) {
 		exp = 0;
 		base = 10;
 		return OK;
 	}
+	int64_t i = 0;
 
 	// exponent char
-	switch (s[off]) {
-		case 'e':
-		case 'E':
+	switch (s[i]) {
+		case U'e':
+		case U'E':
 			base = 10;
+			i++;
 			break;
-		case 'p':
-		case 'P':
+		case U'p':
+		case U'P':
 			if (base2ok) {
 				base = 2;
+				i++;
 				break; // ok
 			}
 			[[fallthrough]]; // binary exponent not permitted
 		default:
+			// ch does not belong to exponent anymore
 			exp = 0;
 			base = 10;
 			return OK;
 	}
 
-	off++;
-
 	// sign
 	PackedByteArray digits;
-	if (off < s.length() && (s[off] == '+' || s[off] == '-')) {
-		if (s[off] == '-') {
+	if (i < s.length() && (s[i] == U'+' || s[i] == U'-')) {
+		if (s[i] == U'-') {
 			digits.append('-');
 		}
-		off++;
+		i++;
 	}
 
 	// prev encodes the previously seen char: it is one
@@ -247,45 +258,63 @@ Error BigNat::scanExponent(const String &s, int64_t &off, bool base2ok, bool sep
 
 	// exponent value
 	bool hasDigits = false;
-	while (off < s.length()) {
-		if ('0' <= s[off] && s[off] <= '9') {
-			digits.append(s[off]);
+	while (i < s.length()) {
+		const char32_t ch = s[i];
+		if (U'0' <= ch && ch <= U'9') {
+			digits.append(static_cast<uint8_t>(ch));
 			prev = '0';
 			hasDigits = true;
-		} else if (s[off] == '_' && sepOk) {
+		} else if (ch == U'_' && sepOk) {
 			if (prev != '0') {
 				invalSep = true;
 			}
 			prev = '_';
 		} else {
-			off--; // ch does not belong to number anymore
-			break;
+			break; // ch does not belong to number anymore
 		}
-		off++;
+		i++;
 	}
 
-	ERR_FAIL_COND_V(!hasDigits, ERR_INVALID_DATA);
-	const String digitString = digits.get_string_from_ascii();
-	ERR_FAIL_COND_V(!digitString.is_valid_int(), ERR_INVALID_DATA);
-	exp = digitString.to_int();
+	ERR_FAIL_COND_V_MSG(!hasDigits, ERR_INVALID_DATA, "exponent has no digits");
+
+	// Godot doesn't have an integer parsing function with error checking, so let's use libc:
+	errno = 0;
+#if __WORDSIZE == 64
+	static_assert(sizeof(int64_t) == sizeof(long));
+	exp = std::strtol(reinterpret_cast<const char *>(digits.ptr()), nullptr, 10);
+#elif __WORDSIZE == 32
+	static_assert(sizeof(int64_t) == sizeof(long long));
+	exp = std::strtoll(reinterpret_cast<const char *>(digits.ptr()), nullptr, 10);
+#else
+#error unexpected machine word size
+#endif
+	ERR_FAIL_COND_V_MSG(errno != 0, ERR_INVALID_DATA, "invalid exponent");
+
 	// other errors take precedence over invalid separators
-	ERR_FAIL_COND_V(invalSep || prev == '_', ERR_INVALID_DATA);
+	ERR_FAIL_COND_V_MSG(invalSep || prev == '_', ERR_INVALID_DATA, "'_' must separate successive digits");
+
+	s = s.substr(i);
 
 	return OK;
 }
 
 // String returns a string representation of x in the form "a/b" (even if b == 1).
 String BigRat::String() const {
-	return _a.itoa(_neg, 10) + "/" + _b.utoa(10);
+	PackedByteArray buf = _a.itoa(_neg, 10);
+	buf.append('/');
+	buf.append_array(_b.utoa(10));
+	return buf.get_string_from_ascii();
 }
 
 // RatString returns a string representation of x in the form "a/b" if b != 1,
 // and in the form "a" if b == 1.
 String BigRat::RatString() const {
-	if (IsInt()) {
-		return _a.itoa(_neg, 10);
+	PackedByteArray buf = _a.itoa(_neg, 10);
+	if (!IsInt()) {
+		buf.append('/');
+		buf.append_array(_b.utoa(10));
 	}
-	return String();
+	return buf.get_string_from_ascii();
 }
 
 // FloatString returns a string representation of x in decimal form with prec
@@ -295,31 +324,30 @@ String BigRat::FloatString(int64_t p_prec) const {
 	PackedByteArray buf;
 
 	if (IsInt()) {
-		godot::String s = _a.itoa(_neg, 10);
+		buf.append_array(_a.itoa(_neg, 10));
 		if (p_prec > 0) {
-			buf = s.to_ascii_buffer();
 			buf.append('.');
 			for (int64_t i = p_prec; i > 0; i--) {
 				buf.append('0');
 			}
-			s = buf.get_string_from_ascii();
 		}
-		return s;
+
+		return buf.get_string_from_ascii();
 	}
 	// x.b.abs != 0
 
 	BigNat q;
 	BigNat r;
-	BigNat r2;
-	q.div(r, _a, _b);
+	q.div(_a, _b, r);
 
-	BigNat p{ { 1 } };
+	BigNat p{ 1 };
 	if (p_prec > 0) {
 		p.expWW(10, p_prec);
 	}
 
 	r.mul(r, p);
-	r.div(r2, r, _b);
+	BigNat r2;
+	r.div(r, _b, r2);
 
 	// see if we need to round up
 	r2.lsh(r2, 1);
@@ -334,15 +362,15 @@ String BigRat::FloatString(int64_t p_prec) const {
 	if (_neg) {
 		buf.append('-');
 	}
-	buf.append_array(q.utoa(10).to_ascii_buffer()); // itoa ignores sign if q == 0
+	buf.append_array(q.utoa(10)); // itoa ignores sign if q == 0
 
 	if (p_prec > 0) {
 		buf.append('.');
-		const godot::String rs = r.utoa(10);
-		for (int64_t i = p_prec - rs.length(); i > 0; i--) {
+		const PackedByteArray rs = r.utoa(10);
+		for (int64_t i = p_prec - rs.size(); i > 0; i--) {
 			buf.append('0');
 		}
-		buf.append_array(rs.to_ascii_buffer());
+		buf.append_array(rs);
 	}
 
 	return buf.get_string_from_ascii();
@@ -374,13 +402,13 @@ Pair<int64_t, bool> BigRat::FloatPrec() const {
 	//
 	// For details see:
 	// https://en.wikipedia.org/wiki/Repeating_decimal#Reciprocals_of_integers_not_coprime_to_10
-	BigNat d = _b; // d >= 1
+	BigNat d{ _b }; // d >= 1
 
 	// Determine p2 by counting factors of 2.
 	// p2 corresponds to the trailing zero bits in d.
 	// Do this first to reduce q as much as possible.
 	BigNat q;
-	const uint64_t p2 = d.trailingZeroBits();
+	uint64_t p2 = d.trailingZeroBits();
 	q.rsh(d, p2);
 
 	// Determine p5 by counting factors of 5.
@@ -388,16 +416,17 @@ Pair<int64_t, bool> BigRat::FloatPrec() const {
 	// and use repeated squaring until the factor doesn't
 	// divide q anymore. Then use the table to determine
 	// the power of 5 in q.
-	constexpr uint64_t fp = 13; // f == 5^fp
+	static constexpr uint64_t fp = 13; // f == 5^fp
 	LocalVector<BigNat> tab; // tab[i] == (5^fp)^(2^i) == 5^(fp·2^i)
-	BigNat f{ { 1220703125 } }; // == 5^fp (must fit into a uint32 Word)
-	BigNat t;
-	BigNat r; // temporaries
-	while (true) {
-		t.div(r, q, f);
-		if (!r.array.is_empty()) {
+	BigNat f{ 1220703125 }; // == 5^fp (must fit into a uint32 Word)
+	BigNat t; // temporaries
+	BigNat r;
+	for (;;) {
+		t.div(q, f, r);
+		if (!r.is_zero()) {
 			break; // f doesn't divide q evenly
 		}
+
 		tab.push_back(f);
 		f.sqr(f);
 	}
@@ -410,23 +439,22 @@ Pair<int64_t, bool> BigRat::FloatPrec() const {
 	// how f was chosen in the first place.
 	// The same reasoning applies to the subsequent factors.
 	uint64_t p5 = 0;
-	for (int64_t i = tab.size() - 1; i >= 0; i--) {
-		t.div(r, q, tab[i]);
-		if (r.array.is_empty()) {
-			p5 += fp * (1LLU << i); // tab[i] == 5^(fp·2^i)
-			q.set(t);
+	for (int64_t i = tab.size(); i >= 0; i--) {
+		t.div(q, tab[i], r);
+		if (r.is_zero()) {
+			p5 += fp * (UINT64_C(1) << i); // tab[i] == 5^(fp·2^i)
+			q = t;
 		}
 	}
 
 	// If fp != 1, we may still have multiples of 5 left.
-	while (true) {
-		t.div(r, q, BigNat{ { 5 } });
-		if (!r.array.is_empty()) {
+	for (;;) {
+		if (t.divW(q, 5) != 0) {
 			break;
 		}
 		p5++;
-		q.set(t);
+		q = t;
 	}
 
-	return { static_cast<int64_t>(Math::max(p2, p5)), q.cmp1() == 0 };
+	return { static_cast<int64_t>(Math::max(p2, p5)), q.cmp({ 1 }) == 0 };
 }

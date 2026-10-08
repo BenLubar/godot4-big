@@ -84,6 +84,15 @@
 			<description>
 			</description>
 		</method>
+		<method name="Divide">
+			<return type="int" enum="Error" />
+			<param index="0" name="x" type="BigInt" />
+			<param index="1" name="y" type="BigInt" />
+			<param index="2" name="r" type="BigInt" />
+			<param index="3" name="mode" type="int" enum="BigInt.RoundingMode" />
+			<description>
+			</description>
+		</method>
 		<method name="Exp">
 			<return type="int" enum="Error" />
 			<param index="0" name="x" type="BigInt" />
@@ -354,6 +363,14 @@
 		</member>
 	</members>
 	<constants>
+		<constant name="TRUNC" value="2" enum="RoundingMode">
+		</constant>
+		<constant name="FLOOR" value="4" enum="RoundingMode">
+		</constant>
+		<constant name="ROUND" value="0" enum="RoundingMode">
+		</constant>
+		<constant name="CEIL" value="5" enum="RoundingMode">
+		</constant>
 		<constant name="MAX_BASE" value="62">
 		</constant>
 	</constants>

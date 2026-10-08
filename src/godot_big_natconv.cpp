@@ -1,4 +1,4 @@
-// This file is ported from src/math/big/natconv.go in Go 1.26.1.
+// This file is ported from src/math/big/natconv.go in Go 1.27.1.
 // Original copyright notice follows:
 
 // Copyright 2015 The Go Authors. All rights reserved.
@@ -7,34 +7,43 @@
 
 // This file implements nat-to-string conversion functions.
 
-#include "godot_big_int.h"
+#include "godot_big_debug.h"
 #include "godot_big_naturals.h"
 
-#include <bit>
+#include <mutex>
 
 using namespace godot;
 
-static constexpr char digits[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+extern std::array<BigDivisor, 64> *cacheBase10;
+extern std::mutex cacheBase10_mutex;
 
-// Note: MaxBase = len(digits), but it must remain an untyped rune constant
-//       for API compatibility.
+static constexpr const char digits[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static constexpr int64_t maxBaseSmall = 10 + ('z' - 'a' + 1);
 
-// MaxBase is the largest number base accepted for string conversions.
-static constexpr int64_t MAX_BASE_SMALL = 10 + ('z' - 'a' + 1);
+static constexpr std::array<std::tuple<BigWord, int64_t>, BigNat::MAX_BASE> genMaxPow() {
+	std::array<std::tuple<BigWord, int64_t>, BigNat::MAX_BASE> array;
+
+	for (BigWord b = 2; b < array.size(); b++) {
+		BigWord p = b;
+		int64_t n = 1; // assuming b <= UINT64_MAX
+		const BigWord max = UINT64_MAX / b;
+		while (p <= max) {
+			// p == b**n && p <= max
+			p *= b;
+			n++;
+		}
+		// p == b**n && p <= _M
+		array.at(b) = std::make_tuple(p, n);
+	}
+
+	return array;
+}
 
 // maxPow returns (b**n, n) such that b**n is the largest power b**n <= _M.
 // For instance maxPow(10) == (1e19, 19) for 19 decimal digits in a 64bit Word.
 // In other words, at most n digits in base b fit into a Word.
 // TODO(gri) replace this with a table, generated at build time.
-static constexpr void maxPow(BigWord p_b, BigWord &r_p, int64_t &r_n) {
-	r_p = p_b;
-	r_n = 1;
-	for (const BigWord max = UINT64_MAX / p_b; r_p <= max;) {
-		r_p *= p_b;
-		r_n++;
-	}
-	// p == b**n && p <= _M
-}
+static constexpr std::array<std::tuple<BigWord, int64_t>, BigNat::MAX_BASE> maxPow{ genMaxPow() };
 
 // pow returns x**n for n > 0, and 1 otherwise.
 BigWord BigNat::pow(BigWord x, int64_t n) {
@@ -96,9 +105,13 @@ BigWord BigNat::pow(BigWord x, int64_t n) {
 // parsed. A digit count <= 0 indicates the presence of a period (if fracOk
 // is set, only), and -count is the number of fractional digits found.
 // In this case, the actual value of the scanned number is res * b**count.
-Error BigNat::scan(const String &s, int64_t &off, int64_t base, bool fracOk, int64_t &b, int64_t &count) {
+Error BigNat::scan(godot::String &s, int64_t &base, bool fracOk, int64_t &fcount) {
+	const int64_t orig_base = base;
 	// Reject invalid bases.
-	ERR_FAIL_COND_V_MSG(base != 0 && (fracOk ? (base != 2 && base != 8 && base != 10 && base != 16) : (2 > base || base > BigInt::MAX_BASE)), ERR_INVALID_PARAMETER, "invalid number base");
+	bool baseOk = orig_base == 0 ||
+			(!fracOk && 2 <= orig_base && orig_base <= MAX_BASE) ||
+			(fracOk && (orig_base == 2 || orig_base == 8 || orig_base == 10 || orig_base == 16));
+	ERR_FAIL_COND_V_MSG(!baseOk, ERR_INVALID_PARAMETER, "invalid number base " + String::num_int64(orig_base));
 
 	// prev encodes the previously seen char: it is one
 	// of '_', '0' (a digit), or '.' (anything else). A
@@ -107,47 +120,47 @@ Error BigNat::scan(const String &s, int64_t &off, int64_t base, bool fracOk, int
 	char prev = '.';
 	bool invalSep = false;
 
-	Error err = OK;
+	// one char look-ahead
+	int64_t si = 0;
 
 	// Determine actual base.
-	b = base;
 	char prefix = 0;
-	if (base == 0) {
+	if (orig_base == 0) {
 		// Actual base is 10 unless there's a base prefix.
-		b = 10;
-		if (off < s.length() && s[off] == '0') {
+		base = 10;
+		if (si < s.length() && s[si] == U'0') {
 			prev = '0';
-			count = 1;
-			off++;
-			if (off < s.length()) {
+			fcount = 1;
+			si++;
+			if (si < s.length()) {
 				// possibly one of 0b, 0B, 0o, 0O, 0x, 0X
-				switch (s[off]) {
-					case 'b':
-					case 'B':
-						b = 2;
+				switch (s[si]) {
+					case U'b':
+					case U'B':
+						base = 2;
 						prefix = 'b';
 						break;
-					case 'o':
-					case 'O':
-						b = 8;
+					case U'o':
+					case U'O':
+						base = 8;
 						prefix = 'o';
 						break;
-					case 'x':
-					case 'X':
-						b = 16;
+					case U'x':
+					case U'X':
+						base = 16;
 						prefix = 'x';
 						break;
 					default:
 						if (!fracOk) {
-							b = 8;
+							base = 8;
 							prefix = '0';
 						}
 						break;
 				}
 				if (prefix != 0) {
-					count = 0; // prefix is not counted
+					fcount = 0; // prefix is not counted
 					if (prefix != '0') {
-						off++;
+						si++;
 					}
 				}
 			}
@@ -163,11 +176,11 @@ Error BigNat::scan(const String &s, int64_t &off, int64_t base, bool fracOk, int
 	// With more cleverness we could also handle binary bases like 8 and 32
 	// (corresponding to 3-bit and 5-bit chunks) that don't pack nicely into
 	// words, but those are not too important.
-	array.clear();
-	BigWord b1 = static_cast<BigWord>(b);
+	BigNat z;
+	BigWord b1 = static_cast<BigWord>(base);
 	BigWord bn = 0; // b1**n (or 0 for the special bit-packing cases b=2,4,16)
-	int64_t n = 0; // max digits that fit into Word
-	switch (b) {
+	int64_t n; // max digits that fit into Word
+	switch (base) {
 		case 2: // 1 bit per digit
 			n = 64;
 			break;
@@ -178,47 +191,46 @@ Error BigNat::scan(const String &s, int64_t &off, int64_t base, bool fracOk, int
 			n = 64 / 4;
 			break;
 		default:
-			maxPow(b1, bn, n);
+			std::tie(bn, n) = maxPow.at(b1);
 			break;
 	}
+
 	BigWord di = 0; // 0 <= di < b1**i < bn
 	int64_t i = 0; // 0 <= i < n
 	int64_t dp = -1; // position of decimal point
-	while (off < s.length()) {
-		if (s[off] == '.' && fracOk) {
+	while (si < s.length()) {
+		const char32_t ch = s[si];
+		if (ch == U'.' && fracOk) {
 			fracOk = false;
 			if (prev == '_') {
 				invalSep = true;
 			}
 			prev = '.';
-			dp = count;
-		} else if (s[off] == '_' && base == 0) {
+			dp = fcount;
+		} else if (ch == U'_' && orig_base == 0) {
 			if (prev != '0') {
 				invalSep = true;
 			}
 			prev = '_';
 		} else {
 			// convert rune into digit value d1
-			BigWord d1 = 0;
-			if ('0' <= s[off] && s[off] <= '9') {
-				d1 = static_cast<BigWord>(s[off]) - '0';
-			} else if ('a' <= s[off] && s[off] <= 'z') {
-				d1 = static_cast<BigWord>(s[off]) - 'a' + 10;
-			} else if ('A' <= s[off] && s[off] <= 'Z') {
-				if (b <= MAX_BASE_SMALL) {
-					d1 = static_cast<BigWord>(s[off]) - 'A' + 10;
+			BigWord d1 = MAX_BASE + 1;
+			if (U'0' <= ch && ch <= U'9') {
+				d1 = static_cast<BigWord>(ch - U'0');
+			} else if (U'a' <= ch && ch <= U'z') {
+				d1 = static_cast<BigWord>(ch - U'a' + 10); // NOLINT(bugprone-misplaced-widening-cast)
+			} else if (U'A' <= ch && ch <= U'Z') {
+				if (base <= maxBaseSmall) {
+					d1 = static_cast<BigWord>(ch - U'A' + 10); // NOLINT(bugprone-misplaced-widening-cast)
 				} else {
-					d1 = static_cast<BigWord>(s[off]) - 'A' + MAX_BASE_SMALL;
+					d1 = static_cast<BigWord>(ch - U'A' + maxBaseSmall);
 				}
-			} else {
-				d1 = BigInt::MAX_BASE + 1;
 			}
 			if (d1 >= b1) {
-				// ch does not belong to number anymore
-				break;
+				break; // ch does not belong to number anymore
 			}
 			prev = '0';
-			count++;
+			fcount++;
 
 			// collect d1 in di
 			di = (di * b1) + d1;
@@ -227,77 +239,74 @@ Error BigNat::scan(const String &s, int64_t &off, int64_t base, bool fracOk, int
 			// if di is "full", add it to the result
 			if (i == n) {
 				if (bn == 0) {
-					array.append(di);
+					z.array.append(static_cast<int64_t>(di));
 				} else {
-					mulAddWW(*this, bn, di);
+					z.mulAddWW(z, bn, di);
 				}
 				di = 0;
 				i = 0;
 			}
 		}
 
-		off++;
+		si++;
 	}
 
-	// other errors take precedence over invalid separators
-	if (err == OK && (invalSep || prev == '_')) {
-		err = ERR_INVALID_DATA;
-	}
+	ERR_FAIL_COND_V_MSG(invalSep || prev == '_', ERR_INVALID_DATA, "'_' must separate successive digits");
 
-	if (count == 0) {
+	if (fcount == 0) {
 		// no digits found
 		if (prefix == '0') {
 			// there was only the octal prefix 0 (possibly followed by separators and digits > 7);
 			// interpret as decimal 0
 			array.clear();
-			b = 10;
-			count = 1;
+			base = 10;
+			fcount = 1;
 			return OK;
 		}
-		err = ERR_INVALID_DATA; // fall through; result will be 0
+
+		ERR_FAIL_V_MSG(ERR_INVALID_DATA, "number has no digits");
 	}
 
 	if (bn == 0) {
 		if (i > 0) {
 			// Add remaining digit chunk to result.
 			// Left-justify group's digits; will shift back down after reverse.
-			array.append(di * pow(b1, n - i));
+			z.array.append(static_cast<int64_t>(di * pow(b1, n - i)));
 		}
-		array.reverse();
-		norm();
+		z.array.reverse();
+		z.norm();
 		if (i > 0) {
-			rsh(*this, static_cast<uint64_t>(n - i) * static_cast<uint64_t>(64 / n));
+			z.rsh(z, static_cast<uint64_t>(n - i) * static_cast<uint64_t>(64 / n));
 		}
-	} else {
-		if (i > 0) {
-			// Add remaining digit chunk to result.
-			mulAddWW(*this, pow(b1, i), di);
-		}
+	} else if (i > 0) {
+		// Add remaining digit chunk to result.
+		z.mulAddWW(z, pow(b1, i), di);
 	}
+	*this = z;
 
 	// adjust count for fraction, if any
 	if (dp >= 0) {
 		// 0 <= dp <= count
-		count = dp - count;
+		fcount = dp - fcount;
 	}
 
-	return err;
+	return OK;
 }
-
-static Vector<BigDivisor> divisors(int64_t p_m, BigWord p_b, int64_t p_ndigits, BigWord p_bb);
 
 // utoa converts x to an ASCII representation in the given base;
 // base must be between 2 and MaxBase, inclusive.
-//
+PackedByteArray BigNat::utoa(int64_t p_base) const {
+	return itoa(false, p_base);
+}
+
 // itoa is like utoa but it prepends a '-' if neg && x != 0.
-String BigNat::itoa(bool p_neg, int64_t p_base) const {
-	ERR_FAIL_COND_V_MSG(p_base < 2 || p_base > BigInt::MAX_BASE, String(), "invalid base");
+PackedByteArray BigNat::itoa(bool p_neg, int64_t p_base) const {
+	ERR_FAIL_COND_V_MSG(p_base < 2 || p_base > MAX_BASE, {}, "invalid base");
 
 	// x == 0
-	if (array.is_empty()) {
-		return "0";
+	if (is_zero()) {
+		return { '0' };
 	}
-
 	// len(x) > 0
 
 	// allocate buffer for conversion
@@ -310,12 +319,12 @@ String BigNat::itoa(bool p_neg, int64_t p_base) const {
 	s.resize(i);
 
 	// convert power of two and non power of two bases separately
-	BigWord b = p_base;
+	BigWord b = static_cast<BigWord>(p_base);
 	if (b == (b & -b)) {
 		// shift is base b digit size in bits
-		const uint64_t shift = std::countr_zero(static_cast<uint64_t>(b)); // shift > 0 because b >= 2
-		const BigWord mask = static_cast<BigWord>((1LLU << shift) - 1);
-		BigWord w = static_cast<BigWord>(array[0]); // current word
+		uint64_t shift = static_cast<uint64_t>(std::countr_zero(b)); // shift > 0 because b >= 2
+		BigWord mask = (UINT64_C(1) << shift) - 1;
+		BigWord w = operator[](0); // current word
 		uint64_t nbits = 64; // number of unprocessed bits in w
 
 		// convert less-significant words (include leading zeros)
@@ -331,16 +340,16 @@ String BigNat::itoa(bool p_neg, int64_t p_base) const {
 			// convert any partial leading digit and advance to next word
 			if (nbits == 0) {
 				// no partial digit remaining, just advance
-				w = static_cast<BigWord>(array[k]);
+				w = operator[](k);
 				nbits = 64;
 			} else {
 				// partial digit in current word w (== x[k-1]) and next word x[k]
-				w |= static_cast<BigWord>(array[k]) << nbits;
+				w |= operator[](k) << nbits;
 				i--;
 				s[i] = digits[w & mask];
 
 				// advance
-				w = static_cast<BigWord>(array[k]) >> (shift - nbits);
+				w = operator[](k) >> (shift - nbits);
 				nbits = 64 - (shift - nbits);
 			}
 		}
@@ -354,18 +363,18 @@ String BigNat::itoa(bool p_neg, int64_t p_base) const {
 	} else {
 		BigWord bb;
 		int64_t ndigits;
-		maxPow(b, bb, ndigits);
+		std::tie(bb, ndigits) = maxPow.at(b);
 
 		// construct table of successive squares of bb*leafSize to use in subdivisions
 		// result (table != nil) <=> (len(x) > leafSize > 0)
-		const Vector<BigDivisor> table = divisors(array.size(), b, ndigits, bb);
+		LocalVector<BigDivisor> table;
+		divisors(array.size(), b, ndigits, bb, table);
 
 		// preserve x, create local copy for use by convertWords
-		BigNat q;
-		q.set(*this);
+		BigNat q{ *this };
 
 		// convert q to string s in base b
-		q.convertWords(s.ptrw(), s.size(), b, ndigits, bb, table);
+		q.convertWords(s.ptrw(), s.size(), b, ndigits, bb, table.span());
 
 		// strip leading zeros
 		// (x != 0; thus s must contain at least one non-zero digit
@@ -381,7 +390,7 @@ String BigNat::itoa(bool p_neg, int64_t p_base) const {
 		s[i] = '-';
 	}
 
-	return s.slice(i).get_string_from_ascii();
+	return s.slice(i);
 }
 
 // Split blocks greater than leafSize Words (or set to 0 to disable recursive conversion)
@@ -389,7 +398,7 @@ String BigNat::itoa(bool p_neg, int64_t p_base) const {
 //
 //	8 and 16 effective on 3.0 GHz Xeon "Clovertown" CPU (128 byte cache lines)
 //	8 and 16 effective on 2.66 GHz Core 2 Duo "Penryn" CPU
-static constexpr int64_t leafSize = 8; // number of Word-size binary values treat as a monolithic block
+CALIBRATION_SPECIFIERS int64_t leafSize = 8; // number of Word-size binary values treat as a monolithic block
 
 // Convert words of q to base b digits in s. If q is large, it is recursively "split in half"
 // by nat/nat division using tabulated divisors. Otherwise, it is converted iteratively using
@@ -406,14 +415,12 @@ static constexpr int64_t leafSize = 8; // number of Word-size binary values trea
 // range 2..64 shows that values of 8 and 16 work well, with a 4x speedup at medium lengths and
 // ~30x for 20000 digits. Use nat_test.go's BenchmarkLeafSize tests to optimize leafSize for
 // specific hardware.
-void BigNat::convertWords(uint8_t *r_s, int64_t r_s_size, BigWord p_b, int64_t p_ndigits, BigWord p_bb, const Vector<BigDivisor> &p_table) {
-	int64_t i = r_s_size;
-
+void BigNat::convertWords(uint8_t *s, int64_t slen, BigWord p_b, int64_t p_ndigits, BigWord p_bb, const Span<BigDivisor> &p_table) {
 	// split larger blocks recursively
 	if (!p_table.is_empty()) {
 		// len(q) > leafSize > 0
 		BigNat r;
-		int64_t index = p_table.size() - 1;
+		uint32_t index = p_table.size() - 1;
 		while (array.size() > leafSize) {
 			// find divisor close to sqrt(q) if possible, but in any case < q
 			int64_t maxLength = bitLen(); // ~= log2 q, or at of least largest possible q of this bit length
@@ -427,19 +434,21 @@ void BigNat::convertWords(uint8_t *r_s, int64_t r_s_size, BigWord p_b, int64_t p
 			}
 
 			// split q into the two digit number (q'*bbb + r) to form independent subblocks
-			div(r, *this, p_table[index].bbb);
+			div(*this, p_table[index].bbb, r);
 
 			// convert subblocks and collect results in s[:h] and s[h:]
-			i -= p_table[index].ndigits; // == q.convertWords(stk, s, b, ndigits, bb, table[0:index+1])
-			r.convertWords(r_s + i, r_s_size - i, p_b, p_ndigits, p_bb, p_table.slice(0, index));
+			int64_t h = slen - p_table[index].ndigits;
+			r.convertWords(s + h, slen - h, p_b, p_ndigits, p_bb, { p_table.ptr(), index });
+			slen = h; // == q.convertWords(stk, s, b, ndigits, bb, table[0:index+1])
 		}
 	}
 
 	// having split any large blocks now process the remaining (small) block iteratively
+	int64_t i = slen;
 	BigWord r = 0;
 	if (p_b == 10) {
 		// hard-coding for 10 here speeds this up by 1.25x (allows for / and % by constants)
-		while (!array.is_empty()) {
+		while (!is_zero()) {
 			// extract least significant, base bb "digit"
 			r = divW(*this, p_bb);
 			for (int64_t j = 0; j < p_ndigits && i > 0; j++) {
@@ -448,17 +457,17 @@ void BigNat::convertWords(uint8_t *r_s, int64_t r_s_size, BigWord p_b, int64_t p
 				// this appears to be faster for BenchmarkString10000Base10
 				// and smaller strings (but a bit slower for larger ones)
 				const BigWord t = r / 10;
-				r_s[i] = '0' + static_cast<char>(r - (t * 10));
+				s[i] = '0' + static_cast<uint8_t>(r - (t * 10));
 				r = t;
 			}
 		}
 	} else {
-		while (!array.is_empty()) {
+		while (!is_zero()) {
 			// extract least significant, base bb "digit"
 			r = divW(*this, p_bb);
 			for (int64_t j = 0; j < p_ndigits && i > 0; j++) {
 				i--;
-				r_s[i] = digits[r % p_b];
+				s[i] = digits[r % p_b];
 				r /= p_b;
 			}
 		}
@@ -467,73 +476,69 @@ void BigNat::convertWords(uint8_t *r_s, int64_t r_s_size, BigWord p_b, int64_t p
 	// prepend high-order zeros
 	while (i > 0) { // while need more leading zeros
 		i--;
-		r_s[i] = '0';
+		s[i] = '0';
 	}
 }
-
-extern Vector<BigDivisor> *cacheBase10;
-extern std::mutex cacheBase10_mutex;
 
 // expWW computes x**y
 void BigNat::expWW(BigWord p_x, BigWord p_y) {
-	expNN(BigNat{ { static_cast<int64_t>(p_x) } }, BigNat{ { static_cast<int64_t>(p_y) } }, BigNat{}, false);
+	expNN({ p_x }, { p_y }, {}, false);
 }
 
 // construct table of powers of bb*leafSize to use in subdivisions.
-static Vector<BigDivisor> divisors(int64_t p_m, BigWord p_b, int64_t p_ndigits, BigWord p_bb) {
+void BigNat::divisors(int64_t p_m, BigWord p_b, int64_t p_ndigits, BigWord p_bb, LocalVector<BigDivisor> &r_table) {
 	// only compute table when recursive conversion is enabled and x is large
 	if (leafSize == 0 || p_m <= leafSize) {
-		return {};
+		return;
 	}
 
 	// determine k where (bb**leafSize)**(2**k) >= sqrt(x)
-	int64_t k = 1;
-	for (int64_t words = leafSize; words < (p_m >> 1) && k < 64; words <<= 1) {
+	uint32_t k = 1;
+	for (int64_t words = leafSize; words < (p_m >> 1) && k < cacheBase10->size(); words <<= 1) {
 		k++;
 	}
 
 	// reuse and extend existing table of divisors or create new table as appropriate
-	Vector<BigDivisor> table; // for b == 10, table overlaps with cacheBase10.table
+	// for b == 10, table overlaps with cacheBase10.table
+	r_table.resize(k); // create new table for this conversion
 	if (p_b == 10) {
 		cacheBase10_mutex.lock();
-		if (cacheBase10->size() < k) {
-			cacheBase10->resize(k);
+		for (uint32_t i = 0; i < k; i++) {
+			r_table[i] = cacheBase10->at(i); // reuse old table for this conversion
 		}
-		table = *cacheBase10; // reuse old table for this conversion
-	} else {
-		table.resize(k); // create new table for this conversion
 	}
 
 	// extend table
-	if (table[k - 1].ndigits == 0) {
+	if (r_table[k - 1].ndigits == 0) {
 		// add new entries as needed
 		BigNat larger;
-		for (int64_t i = 0; i < k; i++) {
-			if (table[i].ndigits == 0) {
+		for (uint32_t i = 0; i < k; i++) {
+			if (r_table[i].ndigits == 0) {
 				if (i == 0) {
-					table.write[0].bbb.expWW(p_bb, static_cast<BigWord>(leafSize));
-					table.write[0].ndigits = p_ndigits * leafSize;
+					r_table[0].bbb.expWW(p_bb, static_cast<BigWord>(leafSize));
+					r_table[0].ndigits = p_ndigits * leafSize;
 				} else {
-					table.write[i].bbb.sqr(table[i - 1].bbb);
-					table.write[i].ndigits = 2 * table[i - 1].ndigits;
+					r_table[i].bbb.sqr(r_table[i - 1].bbb);
+					r_table[i].ndigits = 2 * r_table[i - 1].ndigits;
 				}
 
 				// optimization: exploit aggregated extra bits in macro blocks
-				larger.set(table[i].bbb);
-				while (BigNat::mulAddVWW(larger, larger, p_b, 0) == 0) {
-					table.write[i].bbb.set(larger);
-					table.write[i].ndigits++;
+				larger = r_table[i].bbb;
+				while (mulAddVWW(larger.slice(), larger.cslice(), p_b, 0) == 0) {
+					r_table[i].bbb = larger;
+					r_table[i].ndigits++;
 				}
 
-				table.write[i].nbits = table[i].bbb.bitLen();
+				r_table[i].nbits = r_table[i].bbb.bitLen();
+
+				if (p_b == 10) {
+					cacheBase10->at(i) = r_table[i];
+				}
 			}
 		}
 	}
 
 	if (p_b == 10) {
-		*cacheBase10 = table;
 		cacheBase10_mutex.unlock();
 	}
-
-	return table;
 }

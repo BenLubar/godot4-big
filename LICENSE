@@ -2,7 +2,9 @@ This code was ported to godot-cpp by Ben Lubar, who takes no ownership.
 If there's something wrong with the port, please file an issue at
 https://github.com/BenLubar/godot4-big
 
-Original copyright notice from Go 1.26.1 follows:
+Any errors in porting are my own.
+
+Original copyright notice from Go 1.27.1 follows:
 
 ---
 

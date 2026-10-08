@@ -13,7 +13,7 @@ using namespace godot;
 
 Ref<BigInt> *intOne = nullptr;
 Ref<BigFloat> *floatThree = nullptr;
-Vector<BigDivisor> *cacheBase10 = nullptr;
+std::array<BigDivisor, 64> *cacheBase10 = nullptr;
 std::mutex cacheBase10_mutex;
 
 void initialize_big_module(ModuleInitializationLevel p_level) {
@@ -29,7 +29,8 @@ void initialize_big_module(ModuleInitializationLevel p_level) {
 	*intOne = BigInt::NewInt(1);
 	floatThree = memnew(Ref<BigFloat>);
 	*floatThree = BigFloat::NewFloat(3.0);
-	cacheBase10 = memnew(Vector<BigDivisor>);
+	using divisorArray = std::array<BigDivisor, 64>;
+	cacheBase10 = memnew(divisorArray);
 }
 
 void uninitialize_big_module(ModuleInitializationLevel p_level) {

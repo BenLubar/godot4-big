@@ -1,22 +1,24 @@
-# Copyright 2015 The Go Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style
-# license that can be found in the LICENSE file.
+## This file is ported from src/math/big/floatconv_test.go in Go 1.27.1.
+## Original copyright notice follows:
+
+## Copyright 2015 The Go Authors. All rights reserved.
+## Use of this source code is governed by a BSD-style
+## license that can be found in the LICENSE file.
 
 class_name FloatConvTest
 extends TestSuite
 
-const zero_ := 0.0
-
-func TestFloatSetFloat64String(t: TestingT) -> void:
-	t.Error("TODO")
+#var zero_ float64
+#
+#func TestFloatSetFloat64String(t *testing.T) {
 #	inf := math.Inf(0)
 #	nan := math.NaN()
 #
 #	for _, test := range []struct {
 #		s string
-#		x float64 # NaNs represent invalid inputs
+#		x float64 // NaNs represent invalid inputs
 #	}{
-#		# basics
+#		// basics
 #		{"0", 0},
 #		{"-0", -zero_},
 #		{"+0", 0},
@@ -30,7 +32,7 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #		{"1.", 1},
 #		{"+1.", 1},
 #
-#		# various zeros
+#		// various zeros
 #		{"0e100", 0},
 #		{"-0e+100", -zero_},
 #		{"+0e-100", 0},
@@ -38,7 +40,7 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #		{"-0E+100", -zero_},
 #		{"+0E-100", 0},
 #
-#		# various decimal exponent formats
+#		// various decimal exponent formats
 #		{"1.e10", 1e10},
 #		{"1e+10", 1e10},
 #		{"+1e-10", 1e-10},
@@ -46,7 +48,7 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #		{"1.E+10", 1e10},
 #		{"+1E-10", 1e-10},
 #
-#		# infinities
+#		// infinities
 #		{"Inf", inf},
 #		{"+Inf", inf},
 #		{"-Inf", -inf},
@@ -54,7 +56,7 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #		{"+inf", inf},
 #		{"-inf", -inf},
 #
-#		# invalid numbers
+#		// invalid numbers
 #		{"", nan},
 #		{"-", nan},
 #		{"0x", nan},
@@ -65,7 +67,7 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #		{"infinity", nan},
 #		{"foobar", nan},
 #
-#		# invalid underscores
+#		// invalid underscores
 #		{"_", nan},
 #		{"0_", nan},
 #		{"1__0", nan},
@@ -80,14 +82,14 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #		{"10.0e0_", nan},
 #		{"0P-0__0", nan},
 #
-#		# misc decimal values
+#		// misc decimal values
 #		{"3.14159265", 3.14159265},
 #		{"-687436.79457e-245", -687436.79457e-245},
 #		{"-687436.79457E245", -687436.79457e245},
 #		{".0000000000000000000000000000000000000001", 1e-40},
 #		{"+10000000000000000000000000000000000000000e-0", 1e40},
 #
-#		# decimal mantissa, binary exponent
+#		// decimal mantissa, binary exponent
 #		{"0p0", 0},
 #		{"-0p0", -zero_},
 #		{"1p10", 1 << 10},
@@ -97,7 +99,7 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #		{"-1p10", -1024},
 #		{"1.5p1", 3},
 #
-#		# binary mantissa, decimal exponent
+#		// binary mantissa, decimal exponent
 #		{"0b0", 0},
 #		{"-0b0", -zero_},
 #		{"0b0e+10", 0},
@@ -108,7 +110,7 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #		{"0b.001", 0.125},
 #		{"0b.001e3", 125},
 #
-#		# binary mantissa, binary exponent
+#		// binary mantissa, binary exponent
 #		{"0b0p+10", 0},
 #		{"-0b0p-10", -zero_},
 #		{"0b.1010p4", 10},
@@ -118,7 +120,7 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #		{"0b0.01p2", 1},
 #		{"0b0.01P+2", 1},
 #
-#		# octal mantissa, decimal exponent
+#		// octal mantissa, decimal exponent
 #		{"0o0", 0},
 #		{"-0o0", -zero_},
 #		{"0o0e+10", 0},
@@ -129,7 +131,7 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #		{"0o.01", 0.015625},
 #		{"0o.01e3", 15.625},
 #
-#		# octal mantissa, binary exponent
+#		// octal mantissa, binary exponent
 #		{"0o0p+10", 0},
 #		{"-0o0p-10", -zero_},
 #		{"0o.12p6", 10},
@@ -139,7 +141,7 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #		{"0o0.01p7", 2},
 #		{"0O0.01P+2", 0.0625},
 #
-#		# hexadecimal mantissa and exponent
+#		// hexadecimal mantissa and exponent
 #		{"0x0", 0},
 #		{"-0x0", -zero_},
 #		{"0x0p+10", 0},
@@ -151,7 +153,7 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #		{"0x0.0000000000001p-1022", math.SmallestNonzeroFloat64},
 #		{"0x1.fffffffffffffp1023", math.MaxFloat64},
 #
-#		# underscores
+#		// underscores
 #		{"0_0", 0},
 #		{"1_000.", 1000},
 #		{"1_2_3.4_5_6", 123.456},
@@ -165,13 +167,13 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #		x.SetPrec(53)
 #		_, ok := x.SetString(test.s)
 #		if math.IsNaN(test.x) {
-#			# test.s is invalid
+#			// test.s is invalid
 #			if ok {
 #				t.Errorf("%s: want parse error", test.s)
 #			}
 #			continue
 #		}
-#		# test.s is valid
+#		// test.s is valid
 #		if !ok {
 #			t.Errorf("%s: got parse error", test.s)
 #			continue
@@ -190,9 +192,8 @@ func TestFloatSetFloat64String(t: TestingT) -> void:
 #	below1e23 = 99999999999999974834176
 #	above1e23 = 100000000000000008388608
 #)
-
-func TestFloat64Text(t: TestingT) -> void:
-	t.Error("TODO")
+#
+#func TestFloat64Text(t *testing.T) {
 #	for _, test := range []struct {
 #		x      float64
 #		format byte
@@ -231,7 +232,7 @@ func TestFloat64Text(t: TestingT) -> void:
 #		{1024.0, 'p', 0, "0x.8p+11"},
 #		{-1024.0, 'p', 0, "-0x.8p+11"},
 #
-#		# all test cases below from strconv/ftoa_test.go
+#		// all test cases below from strconv/ftoa_test.go
 #		{1, 'e', 5, "1.00000e+00"},
 #		{1, 'f', 5, "1.00000"},
 #		{1, 'g', 5, "1"},
@@ -241,7 +242,7 @@ func TestFloat64Text(t: TestingT) -> void:
 #		{200000, 'g', -1, "200000"},
 #		{2000000, 'g', -1, "2e+06"},
 #
-#		# g conversion and zero suppression
+#		// g conversion and zero suppression
 #		{400, 'g', 2, "4e+02"},
 #		{40, 'g', 2, "40"},
 #		{4, 'g', 2, "4"},
@@ -302,23 +303,23 @@ func TestFloat64Text(t: TestingT) -> void:
 #
 #		{5e-304 / 1e20, 'g', -1, "5e-324"},
 #		{-5e-304 / 1e20, 'g', -1, "-5e-324"},
-#		{fdiv(5e-304, 1e20), 'g', -1, "5e-324"},   # avoid constant arithmetic
-#		{fdiv(-5e-304, 1e20), 'g', -1, "-5e-324"}, # avoid constant arithmetic
+#		{fdiv(5e-304, 1e20), 'g', -1, "5e-324"},   // avoid constant arithmetic
+#		{fdiv(-5e-304, 1e20), 'g', -1, "-5e-324"}, // avoid constant arithmetic
 #
 #		{32, 'g', -1, "32"},
 #		{32, 'g', 0, "3e+01"},
 #
 #		{100, 'x', -1, "0x1.9p+06"},
 #
-#		# {math.NaN(), 'g', -1, "NaN"},  # Float doesn't support NaNs
-#		# {-math.NaN(), 'g', -1, "NaN"}, # Float doesn't support NaNs
+#		// {math.NaN(), 'g', -1, "NaN"},  // Float doesn't support NaNs
+#		// {-math.NaN(), 'g', -1, "NaN"}, // Float doesn't support NaNs
 #		{math.Inf(0), 'g', -1, "+Inf"},
 #		{math.Inf(-1), 'g', -1, "-Inf"},
 #		{-math.Inf(0), 'g', -1, "-Inf"},
 #
 #		{-1, 'b', -1, "-4503599627370496p-52"},
 #
-#		# fixed bugs
+#		// fixed bugs
 #		{0.9, 'f', 1, "0.9"},
 #		{0.09, 'f', 1, "0.1"},
 #		{0.0999, 'f', 1, "0.1"},
@@ -328,25 +329,25 @@ func TestFloat64Text(t: TestingT) -> void:
 #		{0.5, 'f', 0, "0"},
 #		{1.5, 'f', 0, "2"},
 #
-#		# https://www.exploringbinary.com/java-hangs-when-converting-2-2250738585072012e-308/
+#		// https://www.exploringbinary.com/java-hangs-when-converting-2-2250738585072012e-308/
 #		{2.2250738585072012e-308, 'g', -1, "2.2250738585072014e-308"},
-#		# https://www.exploringbinary.com/php-hangs-on-numeric-value-2-2250738585072011e-308/
+#		// https://www.exploringbinary.com/php-hangs-on-numeric-value-2-2250738585072011e-308/
 #		{2.2250738585072011e-308, 'g', -1, "2.225073858507201e-308"},
 #
-#		# Issue 2625.
+#		// Issue 2625.
 #		{383260575764816448, 'f', 0, "383260575764816448"},
 #		{383260575764816448, 'g', -1, "3.8326057576481645e+17"},
 #
-#		# Issue 15918.
+#		// Issue 15918.
 #		{1, 'f', -10, "1"},
 #		{1, 'f', -11, "1"},
 #		{1, 'f', -12, "1"},
 #	} {
-#		# The test cases are from the strconv package which tests float64 values.
-#		# When formatting values with prec = -1 (shortest representation),
-#		# the actually available mantissa precision matters.
-#		# For denormalized values, that precision is < 53 (SetFloat64 default).
-#		# Compute and set the actual precision explicitly.
+#		// The test cases are from the strconv package which tests float64 values.
+#		// When formatting values with prec = -1 (shortest representation),
+#		// the actually available mantissa precision matters.
+#		// For denormalized values, that precision is < 53 (SetFloat64 default).
+#		// Compute and set the actual precision explicitly.
 #		f := new(Float).SetPrec(actualPrec(test.x)).SetFloat64(test.x)
 #		got := f.Text(test.format, test.prec)
 #		if got != test.want {
@@ -355,30 +356,49 @@ func TestFloat64Text(t: TestingT) -> void:
 #		}
 #
 #		if test.format == 'b' && test.x == 0 {
-#			continue # 'b' format in strconv.Float requires knowledge of bias for 0.0
+#			continue // 'b' format in strconv.Float requires knowledge of bias for 0.0
 #		}
 #		if test.format == 'p' {
-#			continue # 'p' format not supported in strconv.Format
+#			continue // 'p' format not supported in strconv.Format
 #		}
 #
-#		# verify that Float format matches strconv format
+#		// verify that Float format matches strconv format
 #		want := strconv.FormatFloat(test.x, test.format, test.prec, 64)
 #		if got != want {
 #			t.Errorf("%v: got %s; want %s (strconv)", test, got, want)
 #		}
 #	}
-
-## actualPrec returns the number of actually used mantissa bits.
+#}
+#
+#// actualPrec returns the number of actually used mantissa bits.
 #func actualPrec(x float64) uint {
 #	if mant := math.Float64bits(x); x != 0 && mant&(0x7ff<<52) == 0 {
-#		# x is denormalized
+#		// x is denormalized
 #		return 64 - uint(bits.LeadingZeros64(mant&(1<<52-1)))
 #	}
 #	return 53
 #}
-
-func TestFloatText(t: TestingT) -> void:
-	t.Error("TODO")
+#
+#func TestRoundShortestNormal(t *testing.T) {
+#	// See go.dev/issue/80206.
+#	text := func(x float64) string {
+#		return new(Float).SetPrec(53).SetFloat64(x).Text('g', -1)
+#	}
+#	for _, x := range []float64{
+#		4.3749999999999917e+17,
+#		4.9999999999999917e+17,
+#		4.7619047619047597e+17,
+#		3.7499999999999917e+17,
+#		1.9047619047619039e+18,
+#		1.1138394197049199e+18, // m='9' at trimmed position; guard must reject round-up
+#	} {
+#		if got, want := text(x), strconv.FormatFloat(x, 'g', -1, 64); got != want {
+#			t.Errorf("got %s, want %s", got, want)
+#		}
+#	}
+#}
+#
+#func TestFloatText(t *testing.T) {
 #	const defaultRound = ^RoundingMode(0)
 #
 #	for _, test := range []struct {
@@ -438,7 +458,7 @@ func TestFloatText(t: TestingT) -> void:
 #		{"3e40", defaultRound, 100, 'f', 4, "30000000000000000000000000000000000000000.0000"},
 #		{"3e40", defaultRound, 100, 'g', 40, "3e+40"},
 #
-#		# make sure "stupid" exponents don't stall the machine
+#		// make sure "stupid" exponents don't stall the machine
 #		{"1e1000000", defaultRound, 64, 'p', 0, "0x.88b3a28a05eade3ap+3321929"},
 #		{"1e646456992", defaultRound, 64, 'p', 0, "0x.e883a0c5c8c7c42ap+2147483644"},
 #		{"1e646456993", defaultRound, 64, 'p', 0, "+Inf"},
@@ -448,13 +468,13 @@ func TestFloatText(t: TestingT) -> void:
 #		{"1e-646456994", defaultRound, 64, 'p', 0, "0"},
 #		{"1e-1000000000", defaultRound, 64, 'p', 0, "0"},
 #
-#		# minimum and maximum values
+#		// minimum and maximum values
 #		{"1p2147483646", defaultRound, 64, 'p', 0, "0x.8p+2147483647"},
 #		{"0x.8p2147483647", defaultRound, 64, 'p', 0, "0x.8p+2147483647"},
 #		{"0x.8p-2147483647", defaultRound, 64, 'p', 0, "0x.8p-2147483647"},
 #		{"1p-2147483649", defaultRound, 64, 'p', 0, "0x.8p-2147483648"},
 #
-#		# TODO(gri) need tests for actual large Floats
+#		// TODO(gri) need tests for actual large Floats
 #
 #		{"0", defaultRound, 53, 'b', 0, "0"},
 #		{"-0", defaultRound, 53, 'b', 0, "-0"},
@@ -462,7 +482,7 @@ func TestFloatText(t: TestingT) -> void:
 #		{"-1.0", defaultRound, 53, 'b', 0, "-4503599627370496p-52"},
 #		{"4503599627370496", defaultRound, 53, 'b', 0, "4503599627370496p+0"},
 #
-#		# issue 9939
+#		// issue 9939
 #		{"3", defaultRound, 350, 'b', 0, "1720123961992553633708115671476565205597423741876210842803191629540192157066363606052513914832594264915968p-348"},
 #		{"03", defaultRound, 350, 'b', 0, "1720123961992553633708115671476565205597423741876210842803191629540192157066363606052513914832594264915968p-348"},
 #		{"3.", defaultRound, 350, 'b', 0, "1720123961992553633708115671476565205597423741876210842803191629540192157066363606052513914832594264915968p-348"},
@@ -531,7 +551,7 @@ func TestFloatText(t: TestingT) -> void:
 #		{"8191.53125", ToPositiveInf, 53, 'x', 4, "0x1.fff9p+12"},
 #		{"-8191.53125", ToPositiveInf, 53, 'x', 4, "-0x1.fff8p+12"},
 #
-#		# issue 34343
+#		// issue 34343
 #		{"0x.8p-2147483648", ToNearestEven, 4, 'p', -1, "0x.8p-2147483648"},
 #		{"0x.8p-2147483648", ToNearestEven, 4, 'x', -1, "0x1p-2147483649"},
 #	} {
@@ -549,10 +569,10 @@ func TestFloatText(t: TestingT) -> void:
 #			t.Errorf("%v: got %s; want %s", test, got, test.want)
 #		}
 #
-#		# compare with strconv.FormatFloat output if possible
-#		# ('p' format is not supported by strconv.FormatFloat,
-#		# and its output for 0.0 prints a biased exponent value
-#		# as in 0p-1074 which makes no sense to emulate here)
+#		// compare with strconv.FormatFloat output if possible
+#		// ('p' format is not supported by strconv.FormatFloat,
+#		// and its output for 0.0 prints a biased exponent value
+#		// as in 0p-1074 which makes no sense to emulate here)
 #		if test.prec == 53 && test.format != 'p' && f.Sign() != 0 && (test.round == ToNearestEven || test.round == defaultRound) {
 #			f64, acc := f.Float64()
 #			if acc != Exact {
@@ -565,15 +585,15 @@ func TestFloatText(t: TestingT) -> void:
 #			}
 #		}
 #	}
-
-func TestFloatFormat(t: TestingT) -> void:
-	t.Error("TODO")
+#}
+#
+#func TestFloatFormat(t *testing.T) {
 #	for _, test := range []struct {
 #		format string
-#		value  any # float32, float64, or string (== 512bit *Float)
+#		value  any // float32, float64, or string (== 512bit *Float)
 #		want   string
 #	}{
-#		# from fmt/fmt_test.go
+#		// from fmt/fmt_test.go
 #		{"%+.3e", 0.0, "+0.000e+00"},
 #		{"%+.3e", 1.0, "+1.000e+00"},
 #		{"%+.3f", -1.0, "-1.000"},
@@ -593,7 +613,7 @@ func TestFloatFormat(t: TestingT) -> void:
 #		{"%b", float32(1.0), "8388608p-23"},
 #		{"%b", 1.0, "4503599627370496p-52"},
 #
-#		# from fmt/fmt_test.go: old test/fmt_test.go
+#		// from fmt/fmt_test.go: old test/fmt_test.go
 #		{"%e", 1.0, "1.000000e+00"},
 #		{"%e", 1234.5678e3, "1.234568e+06"},
 #		{"%e", 1234.5678e-8, "1.234568e-05"},
@@ -638,7 +658,7 @@ func TestFloatFormat(t: TestingT) -> void:
 #		{"%20e", math.Inf(1), "                +Inf"},
 #		{"%-20f", math.Inf(-1), "-Inf                "},
 #
-#		# from fmt/fmt_test.go: comparison of padding rules with C printf
+#		// from fmt/fmt_test.go: comparison of padding rules with C printf
 #		{"%.2f", 1.0, "1.00"},
 #		{"%.2f", -1.0, "-1.00"},
 #		{"% .2f", 1.0, " 1.00"},
@@ -658,7 +678,7 @@ func TestFloatFormat(t: TestingT) -> void:
 #		{"%+07.2f", 1.0, "+001.00"},
 #		{"%+07.2f", -1.0, "-001.00"},
 #
-#		# from fmt/fmt_test.go: zero padding does not apply to infinities
+#		// from fmt/fmt_test.go: zero padding does not apply to infinities
 #		{"%020f", math.Inf(-1), "                -Inf"},
 #		{"%020f", math.Inf(+1), "                +Inf"},
 #		{"% 020f", math.Inf(-1), "                -Inf"},
@@ -667,14 +687,14 @@ func TestFloatFormat(t: TestingT) -> void:
 #		{"%+020f", math.Inf(+1), "                +Inf"},
 #		{"%20f", -1.0, "           -1.000000"},
 #
-#		# handle %v like %g
+#		// handle %v like %g
 #		{"%v", 0.0, "0"},
 #		{"%v", -7.0, "-7"},
 #		{"%v", -1e-9, "-1e-09"},
 #		{"%v", float32(-1e-9), "-1e-09"},
 #		{"%010v", 0.0, "0000000000"},
 #
-#		# *Float cases
+#		// *Float cases
 #		{"%.20f", "1e-20", "0.00000000000000000001"},
 #		{"%.20f", "-1e-20", "-0.00000000000000000001"},
 #		{"%30.20f", "-1e-20", "       -0.00000000000000000001"},
@@ -682,7 +702,7 @@ func TestFloatFormat(t: TestingT) -> void:
 #		{"%030.20f", "+1e-20", "000000000.00000000000000000001"},
 #		{"% 030.20f", "+1e-20", " 00000000.00000000000000000001"},
 #
-#		# erroneous formats
+#		// erroneous formats
 #		{"%s", 1.0, "%!s(*big.Float=1)"},
 #	} {
 #		value := new(Float)
@@ -701,9 +721,10 @@ func TestFloatFormat(t: TestingT) -> void:
 #			t.Errorf("%v: got %q; want %q", test, got, test.want)
 #		}
 #	}
-
+#}
+#
 #func BenchmarkParseFloatSmallExp(b *testing.B) {
-#	for i := 0; i < b.N; i++ {
+#	for b.Loop() {
 #		for _, s := range []string{
 #			"1e0",
 #			"1e-1",
@@ -733,7 +754,7 @@ func TestFloatFormat(t: TestingT) -> void:
 #}
 #
 #func BenchmarkParseFloatLargeExp(b *testing.B) {
-#	for i := 0; i < b.N; i++ {
+#	for b.Loop() {
 #		for _, s := range []string{
 #			"1e0",
 #			"1e-10",
@@ -765,10 +786,9 @@ func TestFloatFormat(t: TestingT) -> void:
 #		}
 #	}
 #}
-
-func TestFloatScan(t: TestingT) -> void:
-	t.Error("TODO")
-#	var floatScanTests = []struct {
+#
+#func TestFloatScan(t *testing.T) {
+#	floatScanTests := []struct {
 #		input     string
 #		format    string
 #		output    string
@@ -786,7 +806,7 @@ func TestFloatScan(t: TestingT) -> void:
 #		8: {"-1.234e+567", "%g", "-1.234e+567", 0, false},
 #		9: {"+1234567891011.234", "%G", "1.234567891e+12", 0, false},
 #
-#		# Scan doesn't handle ±Inf.
+#		// Scan doesn't handle ±Inf.
 #		10: {"Inf", "%v", "", 3, true},
 #		11: {"-Inf", "%v", "", 3, true},
 #		12: {"-Inf", "%v", "", 3, true},
@@ -816,3 +836,4 @@ func TestFloatScan(t: TestingT) -> void:
 #			t.Errorf("#%d got %d bytes remaining; want %d", i, buf.Len(), test.remaining)
 #		}
 #	}
+#}

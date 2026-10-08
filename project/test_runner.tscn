@@ -2,6 +2,8 @@
 
 [ext_resource type="Script" uid="uid://c4d4qk8jd4pfa" path="res://test_runner.gd" id="1_td3x5"]
 [ext_resource type="Script" uid="uid://dxq1flryclr3m" path="res://alias_test.gd" id="3_emgfw"]
+[ext_resource type="Script" uid="uid://t1y6qc4lkrwi" path="res://arith_test.gd" id="3_i478c"]
+[ext_resource type="Script" uid="uid://ebnn7esnf1cy" path="res://calibrate_test.gd" id="5_5k0p6"]
 [ext_resource type="Script" uid="uid://cvn0s81u02ynl" path="res://bits_test.gd" id="5_i478c"]
 [ext_resource type="Script" uid="uid://xxd4hgbd82w" path="res://decimal_test.gd" id="6_5k0p6"]
 [ext_resource type="Script" uid="uid://b74b4ija25b56" path="res://float_test.gd" id="7_mti7l"]
@@ -28,7 +30,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_td3x5")
-suite_scripts = Array[Script]([ExtResource("3_emgfw"), ExtResource("5_i478c"), ExtResource("6_5k0p6"), ExtResource("20_q4fhp"), ExtResource("19_2v7o5"), ExtResource("8_t8gll"), ExtResource("21_7d0wd"), ExtResource("7_mti7l"), ExtResource("9_b8mat"), ExtResource("10_w0m1v"), ExtResource("12_nd65q"), ExtResource("11_yvq1k"), ExtResource("14_frmtx"), ExtResource("13_w63pn"), ExtResource("15_c3kbx"), ExtResource("17_8g0u6"), ExtResource("16_hyab0"), ExtResource("18_gss4m")])
+suite_scripts = Array[Script]([ExtResource("3_emgfw"), ExtResource("3_i478c"), ExtResource("5_i478c"), ExtResource("5_5k0p6"), ExtResource("6_5k0p6"), ExtResource("20_q4fhp"), ExtResource("19_2v7o5"), ExtResource("8_t8gll"), ExtResource("21_7d0wd"), ExtResource("7_mti7l"), ExtResource("9_b8mat"), ExtResource("10_w0m1v"), ExtResource("12_nd65q"), ExtResource("11_yvq1k"), ExtResource("14_frmtx"), ExtResource("13_w63pn"), ExtResource("15_c3kbx"), ExtResource("17_8g0u6"), ExtResource("16_hyab0"), ExtResource("18_gss4m")])
 metadata/_custom_type_script = "uid://c4d4qk8jd4pfa"
 
 [node name="HSplitContainer" type="HSplitContainer" parent="." unique_id=838892222]

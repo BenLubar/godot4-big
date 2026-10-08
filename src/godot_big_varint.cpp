@@ -95,7 +95,7 @@ int64_t BigInt::from_svarint(const PackedByteArray &p_bytes, int64_t p_offset) {
 	BigNat abs;
 	const uint64_t advance = abs.from_uvarint(Span(p_bytes.ptr() + p_offset, p_bytes.size() - p_offset));
 	if (advance != 0) {
-		const bool neg = !abs.array.is_empty() && (abs[0] & 1) != 0;
+		const bool neg = !abs.is_zero() && (abs[0] & 1) != 0;
 		abs.rsh(abs, 1);
 		if (neg) {
 			abs.add1(abs);
@@ -111,7 +111,7 @@ int64_t BigInt::from_svarint(const PackedByteArray &p_bytes, int64_t p_offset) {
 }
 
 PackedByteArray BigFloat::to_bytes() const {
-#ifdef DEBUG_ENABLED
+#ifdef DEBUG_FLOAT_ENABLED
 	_validate();
 #endif
 
@@ -120,7 +120,7 @@ PackedByteArray BigFloat::to_bytes() const {
 	if (_form == FORM_FINITE) {
 		mantissa_len = _mant.array.size();
 		// size cannot be negative (we would have run out of virtual memory space) or zero (invalid float)
-		BigNat n{ { mantissa_len } };
+		BigNat n{ static_cast<BigWord>(mantissa_len) };
 		mantissa_len_encoded = n.to_uvarint();
 	}
 
@@ -177,7 +177,7 @@ int64_t BigFloat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 		_neg = neg;
 		_prec = prec;
 
-#ifdef DEBUG_ENABLED
+#ifdef DEBUG_FLOAT_ENABLED
 		_validate();
 #endif
 
@@ -216,7 +216,7 @@ int64_t BigFloat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 	_exp = exp;
 	_mant = mant;
 
-#ifdef DEBUG_ENABLED
+#ifdef DEBUG_FLOAT_ENABLED
 	_validate();
 #endif
 
@@ -254,7 +254,7 @@ int64_t BigRat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 	}
 
 	// denominator cannot be 0
-	if (n->_abs.array.is_empty()) {
+	if (n->_abs.is_zero()) {
 		return 0;
 	}
 
