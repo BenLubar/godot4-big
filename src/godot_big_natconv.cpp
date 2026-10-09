@@ -253,6 +253,8 @@ Error BigNat::scan(godot::String &s, int64_t &base, bool fracOk, int64_t &fcount
 
 	ERR_FAIL_COND_V_MSG(invalSep || prev == '_', ERR_INVALID_DATA, "'_' must separate successive digits");
 
+	s = s.substr(si);
+
 	if (fcount == 0) {
 		// no digits found
 		if (prefix == '0') {
