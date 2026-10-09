@@ -27,8 +27,9 @@ extends TestSuite
 #	{nat{16, 571956, 8794, 68}, nat{837, 9146, 1, 754489}, -1},
 #	{nat{34986, 41, 105, 1957}, nat{56, 7458, 104, 1957}, 1},
 #}
-#
-#func TestCmp(t *testing.T) {
+
+func TestCmp(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, a := range cmpTests {
 #		r := a.x.cmp(a.y)
 #		if r != a.r {
@@ -165,7 +166,8 @@ func natFromString(s: String) -> BigInt:
 	assert(not x._neg)
 	return x
 
-#func TestSet(t *testing.T) {
+func TestSet(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, a := range sumNN {
 #		z := nat(nil).set(a.z)
 #		if z.cmp(a.z) != 0 {
@@ -196,16 +198,18 @@ func natFromString(s: String) -> BigInt:
 #	*p = v
 #	t.Cleanup(func() { *p = old })
 #}
-#
-#func TestAdd(t *testing.T) {
+
+func TestAdd(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, a := range sumNN {
 #		testFunNN(t, "add", nat.add, a)
 #		a.x, a.y = a.y, a.x
 #		testFunNN(t, "add", nat.add, a)
 #	}
 #}
-#
-#func TestSub(t *testing.T) {
+
+func TestSub(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, a := range sumNN {
 #		a.x, a.z = a.z, a.x
 #		testFunNN(t, "sub", nat.sub, a)
@@ -214,8 +218,9 @@ func natFromString(s: String) -> BigInt:
 #		testFunNN(t, "sub", nat.sub, a)
 #	}
 #}
-#
-#func TestNatMul(t *testing.T) {
+
+func TestNatMul(t: TestingT) -> void:
+	t.Error("TODO")
 #	t.Run("Basic", func(t *testing.T) {
 #		setDuringTest(t, &karatsubaThreshold, 1e9)
 #		for _, a := range prodNN {
@@ -257,8 +262,9 @@ func natFromString(s: String) -> BigInt:
 #		t.Errorf("basicSqr(%v), got %v, want %v", x, got, want)
 #	}
 #}
-#
-#func TestNatSqr(t *testing.T) {
+
+func TestNatSqr(t: TestingT) -> void:
+	t.Error("TODO")
 #	t.Run("Basic", func(t *testing.T) {
 #		setDuringTest(t, &basicSqrThreshold, 0)
 #		setDuringTest(t, &karatsubaSqrThreshold, 1e9)
@@ -314,8 +320,9 @@ func natFromString(s: String) -> BigInt:
 #	{math.MaxUint64 - 2, math.MaxUint64, "6277101735386680761794095221682035635525021984684230311930"},
 #	{math.MaxUint64 - 3, math.MaxUint64, "115792089237316195360799967654821100226821973275796746098729803619699194331160"},
 #}
-#
-#func TestMulRangeN(t *testing.T) {
+
+func TestMulRangeN(t: TestingT) -> void:
+	t.Error("TODO")
 #	stk := getStack()
 #	defer stk.free()
 #
@@ -336,11 +343,12 @@ func natFromString(s: String) -> BigInt:
 #	runtime.ReadMemStats(&stats)
 #	return stats.TotalAlloc - t
 #}
-#
-#// TestMulUnbalanced tests that multiplying numbers of different lengths
-#// does not cause deep recursion and in turn allocate too much memory.
-#// Test case for issue 3807.
-#func TestMulUnbalanced(t *testing.T) {
+
+## TestMulUnbalanced tests that multiplying numbers of different lengths
+## does not cause deep recursion and in turn allocate too much memory.
+## Test case for issue 3807.
+func TestMulUnbalanced(t: TestingT) -> void:
+	t.Error("TODO")
 #	stk := getStack()
 #	defer stk.free()
 #
@@ -387,16 +395,14 @@ func natFromString(s: String) -> BigInt:
 #
 #func BenchmarkNatMul(b *testing.B) {
 #	for _, n := range mulBenchSizes {
-#		if isRaceBuilder && n > 1e3 {
-#			continue
-#		}
 #		b.Run(fmt.Sprintf("%d", n), func(b *testing.B) {
 #			benchmarkNatMul(b, n)
 #		})
 #	}
 #}
-#
-#func TestNLZ(t *testing.T) {
+
+func TestNLZ(t: TestingT) -> void:
+	t.Error("TODO")
 #	var x Word = _B >> 1
 #	for i := 0; i <= _W; i++ {
 #		if int(nlz(x)) != i {
@@ -421,7 +427,8 @@ func natFromString(s: String) -> BigInt:
 #	{nat{1 << (_W - 1), 0}, 1, nat{0, 1}},
 #}
 #
-#func TestShiftLeft(t *testing.T) {
+func TestShiftLeft(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range leftShiftTests {
 #		var z nat
 #		z = z.lsh(test.in, test.shift)
@@ -444,7 +451,8 @@ func natFromString(s: String) -> BigInt:
 #	{nat{2, 1, 1}, 1, nat{1<<(_W-1) + 1, 1 << (_W - 1)}},
 #}
 #
-#func TestShiftRight(t *testing.T) {
+func TestShiftRight(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range rightShiftTests {
 #		var z nat
 #		z = z.rsh(test.in, test.shift)
@@ -511,8 +519,9 @@ func natFromString(s: String) -> BigInt:
 #		}
 #	}
 #}
-#
-#func TestModW(t *testing.T) {
+
+func TestModW(t: TestingT) -> void:
+	t.Error("TODO")
 #	if _W >= 32 {
 #		runModWTests(t, modWTests32)
 #	}
@@ -591,8 +600,9 @@ func natFromString(s: String) -> BigInt:
 #		"0x92fcad4b5c0d52f451aec609b15da8e5e5626c4eaa88723bdeac9d25ca9b961269400410ca208a16af9c2fb07d799c32fe2f3cc5422f9711078d51a3797eb18e691295293284d8f5e69caf6decddfe1df6",
 #	},
 #}
-#
-#func TestMontgomery(t *testing.T) {
+
+func TestMontgomery(t: TestingT) -> void:
+	t.Error("TODO")
 #	stk := getStack()
 #	defer stk.free()
 #
@@ -688,8 +698,9 @@ func natFromString(s: String) -> BigInt:
 #	{"5", "1435700818", "72", "49"},
 #	{"0xffff", "0x300030003000300030003000300030003000302a3000300030003000300030003000300030003000300030003000300030003030623066307f3030783062303430383064303630343036", "0x300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "0xa3f94c08b0b90e87af637cacc9383f7ea032352b8961fc036a52b659b6c9b33491b335ffd74c927f64ddd62cfca0001"},
 #}
-#
-#func TestExpNN(t *testing.T) {
+
+func TestExpNN(t: TestingT) -> void:
+	t.Error("TODO")
 #	stk := getStack()
 #	defer stk.free()
 #
@@ -709,23 +720,29 @@ func natFromString(s: String) -> BigInt:
 #		}
 #	}
 #}
-#
-#func FuzzExpMont(f *testing.F) {
-#	f.Fuzz(func(t *testing.T, x1, x2, x3, y1, y2, y3, m1, m2, m3 uint) {
-#		if m1 == 0 && m2 == 0 && m3 == 0 {
-#			return
-#		}
-#		x := new(Int).SetBits([]Word{Word(x1), Word(x2), Word(x3)})
-#		y := new(Int).SetBits([]Word{Word(y1), Word(y2), Word(y3)})
-#		m := new(Int).SetBits([]Word{Word(m1), Word(m2), Word(m3)})
-#		out := new(Int).Exp(x, y, m)
-#		want := new(Int).expSlow(x, y, m)
-#		if out.Cmp(want) != 0 {
-#			t.Errorf("x = %#x\ny=%#x\nz=%#x\nout=%#x\nwant=%#x\ndc: 16o 16i %X %X %X |p", x, y, m, out, want, x, y, m)
-#		}
-#	})
-#}
-#
+
+func TestFuzzExpMont(t: TestingT) -> void:
+	t.QuickCheckIIIIIIIII(func(x1: int, x2: int, x3: int, y1: int, y2: int, y3: int, m1: int, m2: int, m3: int) -> bool:
+		if m1 == 0 and m2 == 0 and m3 == 0:
+			return true
+
+		var x := BigInt.new()
+		x._abs = [x1, x2, x3]
+		var y := BigInt.new()
+		y._abs = [y1, y2, y3]
+		var m := BigInt.new()
+		m._abs = [m1, m2, m3]
+
+		var out := BigInt.new()
+		out.Exp(x, y, m)
+		var want := BigInt.new()
+		out._expSlow(x, y, m)
+
+		if out.Cmp(want) != 0:
+			t.Error("x = %s\ny=%s\nz=%s\nout=%s\nwant=%s" % [x, y, m, out, want])
+			return false
+		return true)
+
 #func BenchmarkExp3Power(b *testing.B) {
 #	stk := getStack()
 #	defer stk.free()
@@ -819,7 +836,8 @@ func BenchmarkFibo(b: TestingB) -> void:
 #	{"0x3" + strings.Repeat("0", 32), 130, 0},
 #}
 
-#func TestBit(t *testing.T) {
+func TestBit(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range bitTests {
 #		x := natFromString(test.x)
 #		if got := x.bit(test.i); got != test.want {
@@ -851,7 +869,8 @@ func BenchmarkFibo(b: TestingB) -> void:
 #	{"0x1" + strings.Repeat("0", 100), 401, 1},
 #}
 
-#func TestSticky(t *testing.T) {
+func TestSticky(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range stickyTests {
 #		x := natFromString(test.x)
 #		if got := x.sticky(test.i); got != test.want {
@@ -886,62 +905,50 @@ const sqrBenchSizes: PackedInt64Array = [
 
 #func BenchmarkNatSqr(b *testing.B) {
 #	for _, n := range sqrBenchSizes {
-#		if isRaceBuilder && n > 1e3 {
-#			continue
-#		}
 #		b.Run(fmt.Sprintf("%d", n), func(b *testing.B) {
 #			benchmarkNatSqr(b, n)
 #		})
 #	}
 #}
 
-#var subMod2NTests = []struct {
+#struct {
 #	x string
 #	y string
 #	n uint
 #	z string
-#}{
-#	{"1", "2", 0, "0"},
-#	{"1", "0", 1, "1"},
-#	{"0", "1", 1, "1"},
-#	{"3", "5", 3, "6"},
-#	{"5", "3", 3, "2"},
-#	// 2^65, 2^66-1, 2^65 - (2^66-1) + 2^67
-#	{"36893488147419103232", "73786976294838206463", 67, "110680464442257309697"},
-#	// 2^66-1, 2^65, 2^65-1
-#	{"73786976294838206463", "36893488147419103232", 67, "36893488147419103231"},
 #}
+const subMod2NTests: Array[Array] = [
+	["1", "2", 0, "0"],
+	["1", "0", 1, "1"],
+	["0", "1", 1, "1"],
+	["3", "5", 3, "6"],
+	["5", "3", 3, "2"],
+	## 2^65, 2^66-1, 2^65 - (2^66-1) + 2^67
+	["36893488147419103232", "73786976294838206463", 67, "110680464442257309697"],
+	## 2^66-1, 2^65, 2^65-1
+	["73786976294838206463", "36893488147419103232", 67, "36893488147419103231"],
+]
 
-#func TestNatSubMod2N(t *testing.T) {
-#	for _, mode := range []string{"noalias", "aliasX", "aliasY"} {
-#		t.Run(mode, func(t *testing.T) {
-#			for _, tt := range subMod2NTests {
-#				x0 := natFromString(tt.x)
-#				y0 := natFromString(tt.y)
-#				want := natFromString(tt.z)
-#				x := nat(nil).set(x0)
-#				y := nat(nil).set(y0)
-#				var z nat
-#				switch mode {
-#				case "aliasX":
-#					z = x
-#				case "aliasY":
-#					z = y
-#				}
-#				z = z.subMod2N(x, y, tt.n)
-#				if z.cmp(want) != 0 {
-#					t.Fatalf("subMod2N(%d, %d, %d) = %d, want %d", x0, y0, tt.n, z, want)
-#				}
-#				if mode != "aliasX" && x.cmp(x0) != 0 {
-#					t.Fatalf("subMod2N(%d, %d, %d) modified x", x0, y0, tt.n)
-#				}
-#				if mode != "aliasY" && y.cmp(y0) != 0 {
-#					t.Fatalf("subMod2N(%d, %d, %d) modified y", x0, y0, tt.n)
-#				}
-#			}
-#		})
-#	}
-#}
+func TestNatSubMod2N(t: TestingT) -> void:
+	for tt in subMod2NTests:
+		var x0 := natFromString(tt[0])
+		var y0 := natFromString(tt[1])
+		var want := natFromString(tt[3])
+		var x := BigInt.new()
+		x.Set(x0)
+		var y := BigInt.new()
+		y.Set(y0)
+		var z := BigInt.new()
+		z._subMod2N(x, y, tt[2])
+		if z.Cmp(want) != 0:
+			t.Error("subMod2N(%s, %s, %d) = %s, want %s" % [x0, y0, tt[2], z, want])
+			return
+		if x.Cmp(x0) != 0:
+			t.Error("subMod2N(%s, %s, %d) modified x" % [x0, y0, tt[2]])
+			return
+		if y.Cmp(y0) != 0:
+			t.Error("subMod2N(%s, %s, %d) modified y" % [x0, y0, tt[2]])
+			return
 
 #func BenchmarkNatSetBytes(b *testing.B) {
 #	const maxLength = 128
@@ -962,7 +969,8 @@ const sqrBenchSizes: PackedInt64Array = [
 #	}
 #}
 
-#func TestNatDiv(t *testing.T) {
+func TestNatDiv(t: TestingT) -> void:
+	t.Error("TODO")
 #	stk := getStack()
 #	defer stk.free()
 #
@@ -1019,8 +1027,11 @@ func TestIssue37499(t: TestingT) -> void:
 ## TestIssue42552 triggers an edge case of recursive division
 ## where the first division loop is never entered, and correcting
 ## the remainder takes exactly two iterations in the final loop.
-#func TestIssue42552(t: TestingT) -> void:
-#	var u := natFromString("0xc23b166884c3869092a520eceedeced2b00847bd256c9cf3b2c5e2227c15bd5e6ee7ef8a2f49236ad0eedf2c8a3b453cf6e0706f64285c526b372c4b1321245519d430540804a50b7ca8b6f1b34a2ec05cdbc24de7599af112d3e3c8db347e8799fe70f16e43c6566ba3aeb169463a3ecc486172deb2d9b80a3699c776e44fef20036bd946f1b4d054dd88a2c1aeb986199b0b2b7e58c42288824b74934d112fe1fc06e06b4d99fe1c5e725946b23210521e209cd507cce90b5f39a523f27e861f9e232aee50c3f585208b4573dcc0b897b6177f2ba20254fd5c50a033e849dee1b3a93bd2dc44ba8ca836cab2c2ae50e50b126284524fa0187af28628ff0face68d87709200329db1392852c8b8963fbe3d05fb1efe19f0ed5ca9fadc2f96f82187c24bb2512b2e85a66333a7e176605695211e1c8e0b9b9e82813e50654964945b1e1e66a90840396c7d10e23e47f364d2d3f660fa54598e18d1ca2ea4fe4f35a40a11f69f201c80b48eaee3e2e9b0eda63decf92bec08a70f731587d4ed0f218d5929285c8b2ccbc497e20db42de73885191fa453350335990184d8df805072f958d5354debda38f5421effaaafd6cb9b721ace74be0892d77679f62a4a126697cd35797f6858193da4ba1770c06aea2e5c59ec04b8ea26749e61b72ecdde403f3bc7e5e546cd799578cc939fa676dfd5e648576d4a06cbadb028adc2c0b461f145b2321f42e5e0f3b4fb898ecd461df07a6f5154067787bf74b5cc5c03704a1ce47494961931f0263b0aac32505102595957531a2de69dd71aac51f8a49902f81f21283dbe8e21e01e5d82517868826f86acf338d935aa6b4d5a25c8d540389b277dd9d64569d68baf0f71bd03dba45b92a7fc052601d1bd011a2fc6790a23f97c6fa5caeea040ab86841f268d39ce4f7caf01069df78bba098e04366492f0c2ac24f1bf16828752765fa523c9a4d42b71109d123e6be8c7b1ab3ccf8ea03404075fe1a9596f1bba1d267f9a7879ceece514818316c9c0583469d2367831fc42b517ea028a28df7c18d783d16ea2436cee2b15d52db68b5dfdee6b4d26f0905f9b030c911a04d078923a4136afea96eed6874462a482917353264cc9bee298f167ac65a6db4e4eda88044b39cc0b33183843eaa946564a00c3a0ab661f2c915e70bf0bb65bfbb6fa2eea20aed16bf2c1a1d00ec55fb4ff2f76b8e462ea70c19efa579c9ee78194b86708fdae66a9ce6e2cf3d366037798cfb50277ba6d2fd4866361022fd788ab7735b40b8b61d55e32243e06719e53992e9ac16c9c4b6e6933635c3c47c8f7e73e17dd54d0dd8aeba5d76de46894e7b3f9d3ec25ad78ee82297ba69905ea0fa094b8667faa2b8885e2187b3da80268aa1164761d7b0d6de206b676777348152b8ae1d4afed753bc63c739a5ca8ce7afb2b241a226bd9e502baba391b5b13f5054f070b65a9cf3a67063bfaa803ba390732cd03888f664023f888741d04d564e0b5674b0a183ace81452001b3fbb4214c77d42ca75376742c471e58f67307726d56a1032bd236610cbcbcd03d0d7a452900136897dc55bb3ce959d10d4e6a10fb635006bd8c41cd9ded2d3dfdd8f2e229590324a7370cb2124210b2330f4c56155caa09a2564932ceded8d92c79664dcdeb87faad7d3da006cc2ea267ee3df41e9677789cc5a8cc3b83add6491561b3047919e0648b1b2e97d7ad6f6c2aa80cab8e9ae10e1f75b1fdd0246151af709d259a6a0ed0b26bd711024965ecad7c41387de45443defce53f66612948694a6032279131c257119ed876a8e805dfb49576ef5c563574115ee87050d92d191bc761ef51d966918e2ef925639400069e3959d8fe19f36136e947ff430bf74e71da0aa5923b00000000")
-#	var v := natFromString("0x838332321d443a3d30373d47301d47073847473a383d3030f25b3d3d3e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002e00000000000000000041603038331c3d32f5303441e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e01c0a5459bfc7b9be9fcbb9d2383840464319434707303030f43a32f53034411c0a5459413820878787878787878787878787878787878787878787878787878787878787878787870630303a3a30334036605b923a6101f83638413943413960204337602043323801526040523241846038414143015238604060328452413841413638523c0240384141364036605b923a6101f83638413943413960204334602043323801526040523241846038414143015238604060328452413841413638523c02403841413638433030f25a8b83838383838383838383838383838383837d838383ffffffffffffffff838383838383838383000000000000000000030000007d26e27c7c8b83838383838383838383838383838383837d838383ffffffffffffffff83838383838383838383838383838383838383838383435960f535073030f3343200000000000000011881301938343030fa398383300000002300000000000000000000f11af4600c845252904141364138383c60406032414443095238010241414303364443434132305b595a15434160b042385341ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff47476043410536613603593a6005411c437405fcfcfcfcfcfcfc0000000000005a3b075815054359000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
-#	var q := BigInt.new()
-#	q.Rem(u, v)
+func TestIssue42552(t: TestingT) -> void:
+	if true:
+		t.Skip() ## PORT: FIXME: currently crashes the gdextension
+		return
+	var u := natFromString("0xc23b166884c3869092a520eceedeced2b00847bd256c9cf3b2c5e2227c15bd5e6ee7ef8a2f49236ad0eedf2c8a3b453cf6e0706f64285c526b372c4b1321245519d430540804a50b7ca8b6f1b34a2ec05cdbc24de7599af112d3e3c8db347e8799fe70f16e43c6566ba3aeb169463a3ecc486172deb2d9b80a3699c776e44fef20036bd946f1b4d054dd88a2c1aeb986199b0b2b7e58c42288824b74934d112fe1fc06e06b4d99fe1c5e725946b23210521e209cd507cce90b5f39a523f27e861f9e232aee50c3f585208b4573dcc0b897b6177f2ba20254fd5c50a033e849dee1b3a93bd2dc44ba8ca836cab2c2ae50e50b126284524fa0187af28628ff0face68d87709200329db1392852c8b8963fbe3d05fb1efe19f0ed5ca9fadc2f96f82187c24bb2512b2e85a66333a7e176605695211e1c8e0b9b9e82813e50654964945b1e1e66a90840396c7d10e23e47f364d2d3f660fa54598e18d1ca2ea4fe4f35a40a11f69f201c80b48eaee3e2e9b0eda63decf92bec08a70f731587d4ed0f218d5929285c8b2ccbc497e20db42de73885191fa453350335990184d8df805072f958d5354debda38f5421effaaafd6cb9b721ace74be0892d77679f62a4a126697cd35797f6858193da4ba1770c06aea2e5c59ec04b8ea26749e61b72ecdde403f3bc7e5e546cd799578cc939fa676dfd5e648576d4a06cbadb028adc2c0b461f145b2321f42e5e0f3b4fb898ecd461df07a6f5154067787bf74b5cc5c03704a1ce47494961931f0263b0aac32505102595957531a2de69dd71aac51f8a49902f81f21283dbe8e21e01e5d82517868826f86acf338d935aa6b4d5a25c8d540389b277dd9d64569d68baf0f71bd03dba45b92a7fc052601d1bd011a2fc6790a23f97c6fa5caeea040ab86841f268d39ce4f7caf01069df78bba098e04366492f0c2ac24f1bf16828752765fa523c9a4d42b71109d123e6be8c7b1ab3ccf8ea03404075fe1a9596f1bba1d267f9a7879ceece514818316c9c0583469d2367831fc42b517ea028a28df7c18d783d16ea2436cee2b15d52db68b5dfdee6b4d26f0905f9b030c911a04d078923a4136afea96eed6874462a482917353264cc9bee298f167ac65a6db4e4eda88044b39cc0b33183843eaa946564a00c3a0ab661f2c915e70bf0bb65bfbb6fa2eea20aed16bf2c1a1d00ec55fb4ff2f76b8e462ea70c19efa579c9ee78194b86708fdae66a9ce6e2cf3d366037798cfb50277ba6d2fd4866361022fd788ab7735b40b8b61d55e32243e06719e53992e9ac16c9c4b6e6933635c3c47c8f7e73e17dd54d0dd8aeba5d76de46894e7b3f9d3ec25ad78ee82297ba69905ea0fa094b8667faa2b8885e2187b3da80268aa1164761d7b0d6de206b676777348152b8ae1d4afed753bc63c739a5ca8ce7afb2b241a226bd9e502baba391b5b13f5054f070b65a9cf3a67063bfaa803ba390732cd03888f664023f888741d04d564e0b5674b0a183ace81452001b3fbb4214c77d42ca75376742c471e58f67307726d56a1032bd236610cbcbcd03d0d7a452900136897dc55bb3ce959d10d4e6a10fb635006bd8c41cd9ded2d3dfdd8f2e229590324a7370cb2124210b2330f4c56155caa09a2564932ceded8d92c79664dcdeb87faad7d3da006cc2ea267ee3df41e9677789cc5a8cc3b83add6491561b3047919e0648b1b2e97d7ad6f6c2aa80cab8e9ae10e1f75b1fdd0246151af709d259a6a0ed0b26bd711024965ecad7c41387de45443defce53f66612948694a6032279131c257119ed876a8e805dfb49576ef5c563574115ee87050d92d191bc761ef51d966918e2ef925639400069e3959d8fe19f36136e947ff430bf74e71da0aa5923b00000000")
+	var v := natFromString("0x838332321d443a3d30373d47301d47073847473a383d3030f25b3d3d3e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002e00000000000000000041603038331c3d32f5303441e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e01c0a5459bfc7b9be9fcbb9d2383840464319434707303030f43a32f53034411c0a5459413820878787878787878787878787878787878787878787878787878787878787878787870630303a3a30334036605b923a6101f83638413943413960204337602043323801526040523241846038414143015238604060328452413841413638523c0240384141364036605b923a6101f83638413943413960204334602043323801526040523241846038414143015238604060328452413841413638523c02403841413638433030f25a8b83838383838383838383838383838383837d838383ffffffffffffffff838383838383838383000000000000000000030000007d26e27c7c8b83838383838383838383838383838383837d838383ffffffffffffffff83838383838383838383838383838383838383838383435960f535073030f3343200000000000000011881301938343030fa398383300000002300000000000000000000f11af4600c845252904141364138383c60406032414443095238010241414303364443434132305b595a15434160b042385341ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff47476043410536613603593a6005411c437405fcfcfcfcfcfcfc0000000000005a3b075815054359000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
+	var q := BigInt.new()
+	q.Rem(u, v)

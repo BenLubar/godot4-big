@@ -11,36 +11,37 @@
 class_name ArithTest
 extends TestSuite
 
-#package big
-#
-#import (
-#	"fmt"
-#	"internal/testenv"
-#	"iter"
-#	"math/bits"
-#	"math/rand/v2"
-#	"slices"
-#	"strings"
-#	"testing"
-#)
-#
-#var isRaceBuilder = strings.HasSuffix(testenv.Builder(), "-race")
-#
 #var words4 = []Word{0, 1, _M - 1, _M}
 #var words2 = []Word{0, _M}
 #var muls = []Word{0, 1, 2, 3, 4, 5, _M / 4, _M / 2, _M - 3, _M - 2, _M - 1, _M}
 #var adds = []Word{0, 1, _M - 1, _M}
 #var shifts = []uint{1, 2, 3, _W/4 - 1, _W / 4, _W/4 + 1, _W/2 - 1, _W / 2, _W/2 + 1, _W - 3, _W - 2, _W - 1}
-#
-#func TestAddVV(t *testing.T)      { testVV(t, "addVV", addVV, addVV_g) }
-#func TestSubVV(t *testing.T)      { testVV(t, "subVV", subVV, subVV_g) }
-#func TestAddVW(t *testing.T)      { testVW(t, "addVW", addVW, addVW_ref, words4) }
-#func TestSubVW(t *testing.T)      { testVW(t, "subVW", subVW, subVW_ref, words4) }
-#func TestLshVU(t *testing.T)      { testVU(t, "lshVU", lshVU, lshVU_g, shifts) }
-#func TestRshVU(t *testing.T)      { testVU(t, "rshVU", rshVU, rshVU_g, shifts) }
-#func TestMulAddVWW(t *testing.T)  { testVWW(t, "mulAddVWW", mulAddVWW, mulAddVWW_g, muls) }
-#func TestAddMulVVWW(t *testing.T) { testVVWW(t, "addMulVVWW", addMulVVWW, addMulVVWW_g, muls, adds) }
-#
+
+func TestAddVV(t: TestingT) -> void:
+	t.Error("TODO")
+	#testVV(t, "addVV", addVV, addVV_g)
+func TestSubVV(t: TestingT) -> void:
+	t.Error("TODO")
+	#testVV(t, "subVV", subVV, subVV_g)
+func TestAddVW(t: TestingT) -> void:
+	t.Error("TODO")
+	#testVW(t, "addVW", addVW, addVW_ref, words4)
+func TestSubVW(t: TestingT) -> void:
+	t.Error("TODO")
+	#testVW(t, "subVW", subVW, subVW_ref, words4)
+func TestLshVU(t: TestingT) -> void:
+	t.Error("TODO")
+	#testVU(t, "lshVU", lshVU, lshVU_g, shifts)
+func TestRshVU(t: TestingT) -> void:
+	t.Error("TODO")
+	#testVU(t, "rshVU", rshVU, rshVU_g, shifts)
+func TestMulAddVWW(t: TestingT) -> void:
+	t.Error("TODO")
+	#testVWW(t, "mulAddVWW", mulAddVWW, mulAddVWW_g, muls)
+func TestAddMulVVWW(t: TestingT) -> void:
+	t.Error("TODO")
+	#testVVWW(t, "addMulVVWW", addMulVVWW, addMulVVWW_g, muls, adds)
+
 #// Note: It would be nice to avoid all the duplication of these test variants,
 #// but the only obvious way is to use reflection. These tests are already
 #// pretty expensive, and hitting them with reflect call overhead would
@@ -569,8 +570,9 @@ extends TestSuite
 #		t.Errorf("d := %v, %s (d[%d:%d], d[%d:%d], %d)\n\tgot c = %#x; want %#x", a.d, a.m, a.zp, a.zp+a.l, a.xp, a.xp+a.l, a.s, c, a.c)
 #	}
 #}
-#
-#func TestShiftOverlap(t *testing.T) {
+
+func TestShiftOverlap(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, a := range arglshVU {
 #		arg := a
 #		testShiftFunc(t, lshVU, arg)
@@ -581,8 +583,9 @@ extends TestSuite
 #		testShiftFunc(t, rshVU, arg)
 #	}
 #}
-#
-#func TestIssue31084(t *testing.T) {
+
+func TestIssue31084(t: TestingT) -> void:
+	t.Error("TODO")
 #	stk := getStack()
 #	defer stk.free()
 #
@@ -599,7 +602,8 @@ extends TestSuite
 #
 #const issue42838Value = "159309191113245227702888039776771180559110455519261878607388585338616290151305816094308987472018268594098344692611135542392730712890625"
 #
-#func TestIssue42838(t *testing.T) {
+func TestIssue42838(t: TestingT) -> void:
+	t.Error("TODO")
 #	const s = 192
 #	z, _, _, _ := nat(nil).scan(strings.NewReader(issue42838Value), 0, false)
 #	z = z.lsh(z, s)
@@ -679,7 +683,8 @@ extends TestSuite
 #	}
 #}
 #
-#func TestFunVWW(t *testing.T) {
+func TestFunVWW(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, a := range prodVWW {
 #		arg := a
 #		testFunVWW(t, "mulAddVWW_g", mulAddVWW_g, arg)
@@ -700,7 +705,8 @@ extends TestSuite
 #	// 32 bit only: {0xc47dfa8c, 50911, 0x98a4, 0x998587f4},
 #}
 #
-#func TestMulWW(t *testing.T) {
+func TestMulWW(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range mulWWTests {
 #		q, r := mulWW(test.x, test.y)
 #		if q != test.q || r != test.r {
@@ -720,7 +726,8 @@ extends TestSuite
 #	{_M, _M, _M, _M, 0},
 #}
 #
-#func TestMulAddWWW(t *testing.T) {
+func TestMulAddWWW(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range mulAddWWWTests {
 #		q, r := mulAddWWW_g(test.x, test.y, test.c)
 #		if q != test.q || r != test.r {
@@ -738,8 +745,9 @@ extends TestSuite
 #}
 #
 #const testsNumber = 1 << 16
-#
-#func TestDivWW(t *testing.T) {
+
+func TestDivWW(t: TestingT) -> void:
+	t.Error("TODO")
 #	i := 0
 #	for i, test := range divWWTests {
 #		rec := reciprocalWord(test.y)
@@ -781,9 +789,6 @@ extends TestSuite
 #// even if different benchmarks have different numbers of other parameters.
 #func bench(b *testing.B, suffix string, fn benchFunc) {
 #	for _, n := range benchSizes {
-#		if isRaceBuilder && n > 1e3 {
-#			continue
-#		}
 #		var z, x, y []Word
 #		b.Run(fmt.Sprintf("words=%d%s", n, suffix), func(b *testing.B) {
 #			if z == nil {

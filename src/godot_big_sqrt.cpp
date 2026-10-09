@@ -33,7 +33,7 @@ Error BigFloat::Sqrt(const Ref<BigFloat> &p_x) {
 	}
 
 	// following IEEE754-2008 (section 7.2)
-	ERR_FAIL_COND_V_MSG(p_x->Sign() == -1, ERR_INVALID_PARAMETER, "square root of negative operand");
+	BIG_ERR_FAIL_COND_V_MSG(p_x->Sign() == -1, ERR_INVALID_PARAMETER, "square root of negative operand");
 
 	// handle ±0 and +∞
 	if (p_x->_form != FORM_FINITE) {

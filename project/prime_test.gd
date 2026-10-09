@@ -112,7 +112,9 @@ const composites: PackedStringArray = [
 ]
 
 func TestProbablyPrime(t: TestingT) -> void:
-	const nreps := 20
+	var nreps := 20
+	if short:
+		nreps = 1
 
 	for i in len(primes):
 		var s := primes[i]

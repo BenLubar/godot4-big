@@ -7,6 +7,7 @@
 
 // This file implements string-to-Float conversion functions.
 
+#include "godot_big_debug.h"
 #include "godot_big_float.h"
 
 using namespace godot;
@@ -28,13 +29,13 @@ Error BigFloat::_scan(godot::String &s, int64_t &base) {
 	// mantissa
 	int64_t fcount; // fractional digit count; valid if <= 0
 	Error err = _mant.scan(s, base, true, fcount);
-	ERR_FAIL_COND_V(err != OK, err);
+	BIG_ERR_FAIL_COND_V(err != OK, err);
 
 	// exponent
 	int64_t exp;
 	int64_t ebase;
 	err = BigNat::scanExponent(s, true, orig_base == 0, exp, ebase);
-	ERR_FAIL_COND_V(err != OK, err);
+	BIG_ERR_FAIL_COND_V(err != OK, err);
 
 	// special-case 0
 	if (_mant.is_zero()) {
@@ -98,7 +99,7 @@ Error BigFloat::_scan(godot::String &s, int64_t &base) {
 	}
 	// exp consumed - not needed anymore
 
-	ERR_FAIL_COND_V_MSG(exp2 < MIN_EXP || exp2 > MAX_EXP, ERR_PARAMETER_RANGE_ERROR, "exponent overflow");
+	BIG_ERR_FAIL_COND_V_MSG(exp2 < MIN_EXP || exp2 > MAX_EXP, ERR_PARAMETER_RANGE_ERROR, "exponent overflow");
 
 	// apply 2**exp2
 	_prec = prec;
@@ -256,8 +257,8 @@ Error BigFloat::SetString(const godot::String &p_s, int64_t p_base) {
 	godot::String s = p_s;
 	const Error err = _scan(s, p_base);
 	emit_changed();
-	ERR_FAIL_COND_V(err != OK, err);
-	ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data after number");
+	BIG_ERR_FAIL_COND_V(err != OK, err);
+	BIG_ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data after number");
 
 	return OK;
 }

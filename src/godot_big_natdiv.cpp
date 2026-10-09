@@ -510,6 +510,25 @@ using namespace godot;
 // at which point divRecursive is faster than divBasic.
 CALIBRATION_SPECIFIERS uint64_t divRecursiveThreshold = 40; // see calibrate_test.go
 
+TypedArray<PackedInt64Array> BigNat::test_div_bind(uint64_t p_div_recursive_threshold, const PackedInt64Array &p_u, const PackedInt64Array &p_v) {
+#ifdef CALIBRATION_SPECIFIERS_MUTABLE
+	const uint64_t old_div_recursive_threshold = divRecursiveThreshold;
+	divRecursiveThreshold = p_div_recursive_threshold;
+#else
+	WARN_PRINT("BigInt._test_div does not change thresholds on release builds");
+#endif
+
+	BigNat quotient;
+	BigNat remainder;
+	quotient.div(BigNat{ p_u }, BigNat{ p_v }, remainder);
+
+#ifdef CALIBRATION_SPECIFIERS_MUTABLE
+	divRecursiveThreshold = old_div_recursive_threshold;
+#endif
+
+	return { quotient.array, remainder.array };
+}
+
 // rem returns r such that r = u%v.
 // It uses z as the storage for r.
 void BigNat::rem(BigNat p_u, BigNat p_v) { // NOLINT(performance-unnecessary-value-param)
@@ -534,7 +553,7 @@ void BigNat::div(BigNat p_u, BigNat p_v, BigNat &r_r) { // NOLINT(performance-un
 
 	if (p_u.cmp(p_v) < 0) {
 		array.clear();
-		r_r = p_u;
+		r_r = std::move(p_u);
 		return;
 	}
 
@@ -733,6 +752,7 @@ void BigNat::divBasic(Slice r_q, Slice r_u, const CSlice &p_v) {
 		if (j == m && m == r_q.length && qhat == 0) {
 			continue;
 		}
+		DEV_ASSERT(j < r_q.length);
 		q[j] = qhat;
 	}
 }
@@ -884,7 +904,7 @@ void BigNat::divRecursiveStep(Slice r_z, Slice r_u, const CSlice &p_v) {
 		c = subVW(r_u.slice(qhatv.array.size()), r_u.cslice(qhatv.array.size()), c);
 	}
 
-	DEV_ASSERT(c <= 0);
+	DEV_ASSERT(c == 0);
 
 	// Done!
 	qhat.norm();

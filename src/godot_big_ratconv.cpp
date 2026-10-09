@@ -7,6 +7,7 @@
 
 // This file implements rat-to-string conversion functions.
 
+#include "godot_big_debug.h"
 #include "godot_big_rat.h"
 
 #include <cstdlib>
@@ -32,7 +33,7 @@ using namespace godot;
 // The entire string, not just a prefix, must be valid for success. If the
 // operation failed, the value of z is undefined but the returned value is nil.
 Error BigRat::SetString(const godot::String &p_s) {
-	ERR_FAIL_COND_V_MSG(p_s.is_empty(), ERR_INVALID_DATA, "empty string");
+	BIG_ERR_FAIL_COND_V_MSG(p_s.is_empty(), ERR_INVALID_DATA, "empty string");
 	// len(s) > 0
 
 	bool neg;
@@ -48,15 +49,15 @@ Error BigRat::SetString(const godot::String &p_s) {
 		int64_t base = 0;
 		[[maybe_unused]] int64_t fcount;
 		Error err = a.scan(s, base, false, fcount);
-		ERR_FAIL_COND_V(err != OK, err);
-		ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data between numerator and fraction slash");
+		BIG_ERR_FAIL_COND_V(err != OK, err);
+		BIG_ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data between numerator and fraction slash");
 
 		s = p_s.substr(sep + 1);
 		base = 0;
 		err = b.scan(s, base, false, fcount);
-		ERR_FAIL_COND_V(err != OK, err);
-		ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data after denominator");
-		ERR_FAIL_COND_V_MSG(b.is_zero(), ERR_INVALID_DATA, "denominator cannot be zero");
+		BIG_ERR_FAIL_COND_V(err != OK, err);
+		BIG_ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data after denominator");
+		BIG_ERR_FAIL_COND_V_MSG(b.is_zero(), ERR_INVALID_DATA, "denominator cannot be zero");
 
 		_a = a;
 		_b = b;
@@ -79,14 +80,14 @@ Error BigRat::SetString(const godot::String &p_s) {
 	int64_t base = 0;
 	int64_t fcount; // fractional digit count; valid if <= 0
 	Error err = a.scan(s, base, true, fcount);
-	ERR_FAIL_COND_V(err != OK, err);
+	BIG_ERR_FAIL_COND_V(err != OK, err);
 
 	// exponent
 	int64_t exp;
 	int64_t ebase;
 	err = BigNat::scanExponent(s, true, true, exp, ebase);
-	ERR_FAIL_COND_V(err != OK, err);
-	ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data after number");
+	BIG_ERR_FAIL_COND_V(err != OK, err);
+	BIG_ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data after number");
 
 	// special-case 0 (see also issue #16176)
 	if (a.is_zero()) {
@@ -154,13 +155,13 @@ Error BigRat::SetString(const godot::String &p_s) {
 	// apply exp5 contributions
 	// (start with exp5 so the numbers to multiply are smaller)
 	if (exp5 != 0) {
-		ERR_FAIL_COND_V_MSG(exp5 == INT64_MIN, ERR_PARAMETER_RANGE_ERROR, "excessively large exponent");
+		BIG_ERR_FAIL_COND_V_MSG(exp5 == INT64_MIN, ERR_PARAMETER_RANGE_ERROR, "excessively large exponent");
 		int64_t n = exp5;
 		if (n < 0) {
 			n = -n;
 		}
 
-		ERR_FAIL_COND_V_MSG(n > 1e6, ERR_PARAMETER_RANGE_ERROR, "excessively large exponent");
+		BIG_ERR_FAIL_COND_V_MSG(n > 1e6, ERR_PARAMETER_RANGE_ERROR, "excessively large exponent");
 
 		BigNat pow5;
 		pow5.expNN({ 5 }, { static_cast<BigWord>(n) }, {}, false);
@@ -175,7 +176,7 @@ Error BigRat::SetString(const godot::String &p_s) {
 	}
 
 	// apply exp2 contributions
-	ERR_FAIL_COND_V_MSG(exp2 < -1e7 || exp2 > 1e7, ERR_PARAMETER_RANGE_ERROR, "excessively large exponent");
+	BIG_ERR_FAIL_COND_V_MSG(exp2 < -1e7 || exp2 > 1e7, ERR_PARAMETER_RANGE_ERROR, "excessively large exponent");
 
 	if (exp2 > 0) {
 		a.lsh(a, static_cast<uint64_t>(+exp2));
@@ -275,7 +276,7 @@ Error BigNat::scanExponent(godot::String &s, bool base2ok, bool sepOk, int64_t &
 		i++;
 	}
 
-	ERR_FAIL_COND_V_MSG(!hasDigits, ERR_INVALID_DATA, "exponent has no digits");
+	BIG_ERR_FAIL_COND_V_MSG(!hasDigits, ERR_INVALID_DATA, "exponent has no digits");
 
 	// Godot doesn't have an integer parsing function with error checking, so let's use libc:
 	errno = 0;
@@ -288,10 +289,10 @@ Error BigNat::scanExponent(godot::String &s, bool base2ok, bool sepOk, int64_t &
 #else
 #error unexpected machine word size
 #endif
-	ERR_FAIL_COND_V_MSG(errno != 0, ERR_INVALID_DATA, "invalid exponent");
+	BIG_ERR_FAIL_COND_V_MSG(errno != 0, ERR_INVALID_DATA, "invalid exponent");
 
 	// other errors take precedence over invalid separators
-	ERR_FAIL_COND_V_MSG(invalSep || prev == '_', ERR_INVALID_DATA, "'_' must separate successive digits");
+	BIG_ERR_FAIL_COND_V_MSG(invalSep || prev == '_', ERR_INVALID_DATA, "'_' must separate successive digits");
 
 	s = s.substr(i);
 
@@ -439,7 +440,7 @@ Pair<int64_t, bool> BigRat::FloatPrec() const {
 	// how f was chosen in the first place.
 	// The same reasoning applies to the subsequent factors.
 	uint64_t p5 = 0;
-	for (int64_t i = tab.size(); i >= 0; i--) {
+	for (int64_t i = static_cast<int64_t>(tab.size()) - 1; i >= 0; i--) {
 		t.div(q, tab[i], r);
 		if (r.is_zero()) {
 			p5 += fp * (UINT64_C(1) << i); // tab[i] == 5^(fp·2^i)

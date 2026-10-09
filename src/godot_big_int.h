@@ -35,9 +35,10 @@ public:
 	void Neg(const godot::Ref<BigInt> &p_x);
 	void Add(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
 	void Sub(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
+	void _subMod2N(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, uint64_t p_n);
 	void Mul(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
 	void MulRange(int64_t p_a, int64_t p_b);
-	void _test_mul_range_unsigned(uint64_t p_a, uint64_t p_b);
+	void _mulRangeUnsigned(uint64_t p_a, uint64_t p_b);
 	void Binomial(int64_t p_n, int64_t p_k);
 	godot::Error Quo(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
 	godot::Error Rem(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
@@ -76,7 +77,7 @@ public:
 	[[nodiscard]] uint64_t TrailingZeroBits() const;
 
 	godot::Error Exp(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &p_m = nullptr);
-	godot::Error expSlow(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &p_m);
+	godot::Error _expSlow(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &p_m);
 	godot::Error _exp(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, const godot::Ref<BigInt> &p_m, bool p_slow);
 	void GCD(const godot::Ref<BigInt> &r_x, const godot::Ref<BigInt> &r_y, const godot::Ref<BigInt> &p_a, const godot::Ref<BigInt> &p_b);
 

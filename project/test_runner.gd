@@ -15,6 +15,7 @@ class SuiteFunction:
 	var errors: PackedStringArray
 	var tree_item: TreeItem
 	# protected by _mutex
+	var skipped: bool
 	var test_result: TestingT
 	var example_result: TestingE
 	var benchmark_result: TestingB
@@ -32,6 +33,16 @@ var _benchmark_task := -1
 @onready var _tree: Tree = %Tree
 
 func _ready() -> void:
+	for arg in OS.get_cmdline_args():
+		if arg == "--short":
+			TestSuite.short = true
+		elif arg == "--long":
+			TestSuite.long = true
+		elif arg == "--calibrate":
+			TestSuite.calibrate = true
+		elif arg.begins_with("--run="):
+			TestSuite.run_regexp = RegEx.create_from_string(arg.trim_prefix("--run="))
+
 	_suites.append_array(suite_scripts.map(func(s: Script) -> TestSuite: return s.new()))
 
 	for suite in _suites:
@@ -71,6 +82,7 @@ func _ready() -> void:
 		queued.tree_item.set_text(1, tr(&"..."))
 		queued.tree_item.set_selectable(1, false)
 
+	BigInt._test_disable_error_printing(true)
 	if false:
 		for i in len(_queued_tests) + len(_queued_examples):
 			_run_test_or_example(i)
@@ -104,13 +116,26 @@ func _process(_delta: float) -> void:
 func _run_test_or_example(i: int) -> void:
 	if i < len(_queued_tests):
 		var test := _queued_tests[i]
+		if TestSuite.run_regexp and not TestSuite.run_regexp.search(test.name):
+			_mutex.lock()
+			test.skipped = true
+			_mutex.unlock()
+			_on_test_finished.call_deferred(i)
+			return
 		var result := test.suite.run_test(test.name)
 		_mutex.lock()
 		test.test_result = result
+		test.skipped = result.skipped
 		_mutex.unlock()
 		_on_test_finished.call_deferred(i)
 	else:
 		var example := _queued_examples[i - len(_queued_tests)]
+		if TestSuite.run_regexp and not TestSuite.run_regexp.search(example.name):
+			_mutex.lock()
+			example.skipped = true
+			_mutex.unlock()
+			_on_example_finished.call_deferred(i - len(_queued_tests))
+			return
 		var result := example.suite.run_example(example.name)
 		_mutex.lock()
 		example.example_result = result
@@ -119,20 +144,30 @@ func _run_test_or_example(i: int) -> void:
 
 func _run_benchmark(i: int) -> void:
 	var benchmark := _queued_benchmarks[i]
+	if TestSuite.run_regexp and not TestSuite.run_regexp.search(benchmark.name):
+		_mutex.lock()
+		benchmark.skipped = true
+		_mutex.unlock()
+		_on_benchmark_finished.call_deferred(i)
+		return
 	var result := benchmark.suite.run_benchmark(benchmark.name)
 	_mutex.lock()
 	benchmark.benchmark_result = result
+	benchmark.skipped = result.skipped
 	_mutex.unlock()
 	_on_benchmark_finished.call_deferred(i)
 
 func _on_test_finished(i: int) -> void:
 	var test := _queued_tests[i]
 	_mutex.lock()
-	if test.test_result.failed:
+	if test.skipped:
+		test.tree_item.set_text(1, tr(&"SKIP"))
+		test.tree_item.set_custom_color(1, Color.CYAN)
+	elif test.test_result.failed:
 		test.tree_item.set_text(1, tr(&"FAIL"))
 		test.tree_item.set_custom_color(1, Color.RED)
 		if test.test_result.errors == PackedStringArray(["TODO"]):
-			test.tree_item.set_text(1, "TODO")
+			test.tree_item.set_text(1, tr(&"TODO"))
 			test.tree_item.set_custom_color(1, Color.YELLOW)
 	else:
 		test.tree_item.set_text(1, tr(&"PASS"))
@@ -143,7 +178,10 @@ func _on_test_finished(i: int) -> void:
 func _on_example_finished(i: int) -> void:
 	var example := _queued_examples[i]
 	_mutex.lock()
-	if example.example_result.failed:
+	if example.skipped:
+		example.tree_item.set_text(1, tr(&"SKIP"))
+		example.tree_item.set_custom_color(1, Color.CYAN)
+	elif example.example_result.failed:
 		example.tree_item.set_text(1, tr(&"FAIL"))
 		example.tree_item.set_custom_color(1, Color.RED)
 	else:

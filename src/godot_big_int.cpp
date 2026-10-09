@@ -9,6 +9,7 @@
 
 #include "godot_big_int.h"
 
+#include "godot_big_debug.h"
 #include "godot_big_float.h"
 
 using namespace godot;
@@ -160,6 +161,16 @@ void BigInt::Sub(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	emit_changed();
 }
 
+void BigInt::_subMod2N(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y, uint64_t p_n) {
+	ERR_FAIL_NULL(*p_x);
+	ERR_FAIL_NULL(*p_y);
+
+	_abs.subMod2N(p_x->_abs, p_y->_abs, p_n);
+	_neg = false;
+
+	emit_changed();
+}
+
 // Mul sets z to the product x*y and returns z.
 void BigInt::Mul(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	ERR_FAIL_NULL(*p_x);
@@ -212,7 +223,7 @@ void BigInt::MulRange(int64_t p_a, int64_t p_b) {
 	emit_changed();
 }
 
-void BigInt::_test_mul_range_unsigned(uint64_t p_a, uint64_t p_b) {
+void BigInt::_mulRangeUnsigned(uint64_t p_a, uint64_t p_b) {
 	_abs.mulRange(p_a, p_b);
 	_neg = false;
 
@@ -272,7 +283,7 @@ void BigInt::Binomial(int64_t p_n, int64_t p_k) {
 Error BigInt::Quo(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
+	BIG_ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
 
 	BigNat rem;
 	_abs.div(p_x->_abs, p_y->_abs, rem);
@@ -289,7 +300,7 @@ Error BigInt::Quo(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 Error BigInt::Rem(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
+	BIG_ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
 
 	BigNat quo;
 	quo.div(p_x->_abs, p_y->_abs, _abs);
@@ -315,8 +326,8 @@ Error BigInt::QuoRem(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y, const Ref<B
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*r_r, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V(this == *r_r, ERR_ALREADY_IN_USE);
-	ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
+	BIG_ERR_FAIL_COND_V(this == *r_r, ERR_ALREADY_IN_USE);
+	BIG_ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
 
 	_quoRem(p_x, p_y, r_r);
 
@@ -340,7 +351,7 @@ void BigInt::_quoRem(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y, const Ref<B
 Error BigInt::Div(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
+	BIG_ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
 
 	const bool y_neg = p_y->_neg; // z may be an alias for y
 	Ref<BigInt> r{ memnew(BigInt) };
@@ -364,7 +375,7 @@ Error BigInt::Div(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 Error BigInt::Mod(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
+	BIG_ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
 
 	Ref<BigInt> y0{ p_y }; // save y
 	if (this == *p_y) {
@@ -405,8 +416,8 @@ Error BigInt::DivMod(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y, const Ref<B
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*r_m, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V(this == *r_m, ERR_ALREADY_IN_USE);
-	ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
+	BIG_ERR_FAIL_COND_V(this == *r_m, ERR_ALREADY_IN_USE);
+	BIG_ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
 
 	Ref<BigInt> y0{ p_y }; // save y
 	if (this == *p_y) {
@@ -445,9 +456,9 @@ Error BigInt::Divide(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y, const Ref<B
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*r_r, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V(this == *r_r, ERR_ALREADY_IN_USE);
-	ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
-	ERR_FAIL_COND_V_MSG(p_mode != TRUNC && p_mode != FLOOR && p_mode != ROUND && p_mode != CEIL, ERR_INVALID_PARAMETER, "unsupported rounding mode");
+	BIG_ERR_FAIL_COND_V(this == *r_r, ERR_ALREADY_IN_USE);
+	BIG_ERR_FAIL_COND_V_MSG(p_y->Sign() == 0, ERR_INVALID_PARAMETER, "division by zero");
+	BIG_ERR_FAIL_COND_V_MSG(p_mode != TRUNC && p_mode != FLOOR && p_mode != ROUND && p_mode != CEIL, ERR_INVALID_PARAMETER, "unsupported rounding mode");
 
 	bool r_neg = false;
 	const BigNat y_abs = p_y->_abs; // save y
@@ -633,8 +644,8 @@ Error BigInt::SetString(const godot::String &p_s, int64_t p_base) {
 	godot::String s = p_s;
 	const Error err = _scan(s, p_base);
 	emit_changed();
-	ERR_FAIL_COND_V(err != OK, err);
-	ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data after number");
+	BIG_ERR_FAIL_COND_V(err != OK, err);
+	BIG_ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data after number");
 	return OK;
 }
 
@@ -693,6 +704,19 @@ Error BigInt::Exp(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y, const Ref<BigI
 	return err;
 }
 
+Error BigInt::_expSlow(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y, const Ref<BigInt> &p_m) {
+	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
+	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
+
+	const Error err = _exp(p_x, p_y, p_m, true);
+
+	if (likely(err == OK)) {
+		emit_changed();
+	}
+
+	return err;
+}
+
 Error BigInt::_exp(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y, const Ref<BigInt> &p_m, bool p_slow) {
 	// See Knuth, volume 2, section 4.6.3.
 	BigNat xWords = p_x->_abs;
@@ -705,7 +729,7 @@ Error BigInt::_exp(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y, const Ref<Big
 		// for y < 0: x**y mod m == (x**(-1))**|y| mod m
 		Ref<BigInt> inverse{ memnew(BigInt) };
 		const Error err = inverse->ModInverse(p_x, p_m);
-		ERR_FAIL_COND_V_MSG(err != OK, err, "unable to find multiplicative inverse");
+		BIG_ERR_FAIL_COND_V_MSG(err != OK, err, "unable to find multiplicative inverse");
 		xWords = inverse->_abs;
 	}
 	BigNat yWords = p_y->_abs;
@@ -1055,7 +1079,7 @@ void BigInt::Rand_bind(const Callable &p_rnd, const Ref<BigInt> &p_n) {
 Error BigInt::ModInverse(const Ref<BigInt> &p_g, const Ref<BigInt> &p_n) {
 	ERR_FAIL_NULL_V(*p_g, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_n, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V_MSG(p_n->_abs.is_zero(), ERR_INVALID_PARAMETER, "division by zero");
+	BIG_ERR_FAIL_COND_V_MSG(p_n->_abs.is_zero(), ERR_INVALID_PARAMETER, "division by zero");
 
 	// GCD expects parameters a and b to be > 0.
 	Ref<BigInt> n{ p_n };
@@ -1112,7 +1136,7 @@ Error BigNat::modInverse(const BigNat &p_g, const BigNat &p_n) {
 int BigInt::Jacobi(const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
 	ERR_FAIL_NULL_V(*p_x, -1);
 	ERR_FAIL_NULL_V(*p_y, -1);
-	ERR_FAIL_COND_V_MSG(p_y->_abs.is_zero() || (p_y->_abs[0] & 1) == 0, -1, "y must be odd");
+	BIG_ERR_FAIL_COND_V_MSG(p_y->_abs.is_zero() || (p_y->_abs[0] & 1) == 0, -1, "y must be odd");
 
 	// We use the formulation described in chapter 2, section 2.4,
 	// "The Yacas Book of Algorithms":
@@ -1281,7 +1305,7 @@ Error BigInt::ModSqrt(const Ref<BigInt> &p_x, const Ref<BigInt> &p_p) {
 	ERR_FAIL_NULL_V(*p_p, ERR_INVALID_PARAMETER);
 	switch (Jacobi(p_x, p_p)) {
 		case -1:
-			ERR_FAIL_V_MSG(ERR_DOES_NOT_EXIST, "x is not a square mod p");
+			BIG_ERR_FAIL_V_MSG(ERR_DOES_NOT_EXIST, "x is not a square mod p");
 		case 0:
 			SetUint64(0); // sqrt(0) mod p = 0
 			return OK;
@@ -1355,7 +1379,7 @@ uint64_t BigInt::Bit(int64_t p_i) const {
 		return 0;
 	}
 
-	ERR_FAIL_COND_V_MSG(p_i < 0, 0, "negative bit index");
+	BIG_ERR_FAIL_COND_V_MSG(p_i < 0, 0, "negative bit index");
 
 	if (unlikely(_neg)) {
 		BigNat t;
@@ -1373,8 +1397,8 @@ uint64_t BigInt::Bit(int64_t p_i) const {
 //   - if b is not 0 or 1, SetBit will panic.
 void BigInt::SetBit(const Ref<BigInt> &p_x, int64_t p_i, uint64_t p_b) {
 	ERR_FAIL_NULL(*p_x);
-	ERR_FAIL_COND_MSG(p_i < 0, "negative bit index");
-	ERR_FAIL_COND_MSG(p_b > 1, "invalid bit value");
+	BIG_ERR_FAIL_COND_MSG(p_i < 0, "negative bit index");
+	BIG_ERR_FAIL_COND_MSG(p_b > 1, "invalid bit value");
 
 	if (unlikely(p_x->_neg)) {
 		_abs.sub1(p_x->_abs);
@@ -1605,7 +1629,7 @@ void BigInt::Not(const Ref<BigInt> &p_x) {
 // It panics if x is negative.
 Error BigInt::Sqrt(const Ref<BigInt> &p_x) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V_MSG(p_x->_neg, ERR_INVALID_PARAMETER, "square root of negative number");
+	BIG_ERR_FAIL_COND_V_MSG(p_x->_neg, ERR_INVALID_PARAMETER, "square root of negative number");
 
 	_neg = false;
 	_abs.sqrt(p_x->_abs);

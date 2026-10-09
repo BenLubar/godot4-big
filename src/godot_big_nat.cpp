@@ -14,6 +14,7 @@
 //          changed (no 3-operand slice expressions). If that
 //          changes, alias needs to be updated for correctness.
 
+#include "godot_big_debug.h"
 #include "godot_big_naturals.h"
 
 using namespace godot;
@@ -188,7 +189,7 @@ int BigNat::cmp(const BigNat &p_y) const {
 // In the terminology of that paper, this is an "Almost Montgomery Multiplication":
 // x and y are required to satisfy 0 <= z < 2**(n*_W) and then the result
 // z is guaranteed to satisfy 0 <= z < 2**(n*_W), but it may not be < m.
-void BigNat::montgomery(BigNat p_x, BigNat p_y, BigNat p_m, BigWord p_k, int64_t p_n) {
+void BigNat::montgomery(BigNat p_x, BigNat p_y, BigNat p_m, BigWord p_k, int64_t p_n) { // NOLINT(performance-unnecessary-value-param)
 	// This code assumes x, y, m are all the same length, n.
 	// (required by addMulVVW and the for loop).
 	// It also assumes that x, y are already reduced mod m,
@@ -1026,7 +1027,7 @@ void BigNat::subMod2N(BigNat p_x, BigNat p_y, uint64_t p_n) {
 		return;
 	}
 	// x - y < 0; x - y mod 2ⁿ = x - y + 2ⁿ = 2ⁿ - (y - x) = 1 + 2ⁿ-1 - (y - x) = 1 + ^(y - x).
-	sub(p_y, p_x);
+	sub(p_y, p_x); // NOLINT(readability-suspicious-call-argument)
 	while (static_cast<uint64_t>(array.size()) * 64 < p_n) {
 		array.append(0);
 	}

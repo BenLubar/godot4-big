@@ -183,8 +183,9 @@ extends TestSuite
 #	// Ensure the arguments were not modified.
 #	return equal(x, x1) && equal(y, y1)
 #}
-#
-#func TestAliasing(t *testing.T) {
+
+func TestAliasing(t: TestingT) -> void:
+	t.Error("TODO")
 #	for name, f := range map[string]any{
 #		"Abs": func(v, x bigInt) bool {
 #			return checkAliasingOneArg(t, (*big.Int).Abs, v.Int, x.Int)

@@ -37,8 +37,9 @@ extends TestSuite
 #	{NewInt(-991 * 991), NewInt(991), NewInt(-991)},
 #	// TODO(gri) add larger products
 #}
-#
-#func TestSignZ(t *testing.T) {
+
+func TestSignZ(t: TestingT) -> void:
+	t.Error("TODO")
 #	var zero Int
 #	for _, a := range sumZZ {
 #		s := a.z.Sign()
@@ -48,8 +49,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestSetZ(t *testing.T) {
+
+func TestSetZ(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, a := range sumZZ {
 #		var z Int
 #		z.Set(a.z)
@@ -61,8 +63,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestAbsZ(t *testing.T) {
+
+func TestAbsZ(t: TestingT) -> void:
+	t.Error("TODO")
 #	var zero Int
 #	for _, a := range sumZZ {
 #		var z Int
@@ -88,8 +91,9 @@ extends TestSuite
 #		t.Errorf("%v %s %v\n\tgot z = %v; want %v", a.x, msg, a.y, &z, a.z)
 #	}
 #}
-#
-#func TestSumZZ(t *testing.T) {
+
+func TestSumZZ(t: TestingT) -> void:
+	t.Error("TODO")
 #	AddZZ := func(z, x, y *Int) *Int { return z.Add(x, y) }
 #	SubZZ := func(z, x, y *Int) *Int { return z.Sub(x, y) }
 #	for _, a := range sumZZ {
@@ -106,8 +110,9 @@ extends TestSuite
 #		testFunZZ(t, "SubZZ symmetric", SubZZ, arg)
 #	}
 #}
-#
-#func TestProdZZ(t *testing.T) {
+
+func TestProdZZ(t: TestingT) -> void:
+	t.Error("TODO")
 #	MulZZ := func(z, x, y *Int) *Int { return z.Mul(x, y) }
 #	for _, a := range prodZZ {
 #		arg := a
@@ -161,8 +166,9 @@ extends TestSuite
 #
 #	return z1.Cmp(&z2) == 0
 #}
-#
-#func TestMul(t *testing.T) {
+
+func TestMul(t: TestingT) -> void:
+	t.Error("TODO")
 #	if err := quick.Check(checkMul, nil); err != nil {
 #		t.Error(err)
 #	}
@@ -198,8 +204,9 @@ extends TestSuite
 #	{math.MaxInt64 - 2, math.MaxInt64, "784637716923335094969050127519550606919189611815754530810"},
 #	{math.MaxInt64 - 3, math.MaxInt64, "7237005577332262206126809393809643289012107973151163787181513908099760521240"},
 #}
-#
-#func TestMulRangeZ(t *testing.T) {
+
+func TestMulRangeZ(t: TestingT) -> void:
+	t.Error("TODO")
 #	var tmp Int
 #	// test entirely positive ranges
 #	for i, r := range mulRangesN {
@@ -220,8 +227,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestBinomial(t *testing.T) {
+
+func TestBinomial(t: TestingT) -> void:
+	t.Error("TODO")
 #	var z Int
 #	for _, test := range []struct {
 #		n, k int64
@@ -274,8 +282,9 @@ extends TestSuite
 #	{1, 2, 0, 1, 0, 1},
 #	{8, 4, 2, 0, 2, 0},
 #}
-#
-#func TestDivisionSigns(t *testing.T) {
+
+func TestDivisionSigns(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range divisionSignsTests {
 #		x := NewInt(test.x)
 #		y := NewInt(test.y)
@@ -339,8 +348,9 @@ extends TestSuite
 #	}
 #	return x[:i]
 #}
-#
-#func TestBits(t *testing.T) {
+
+func TestBits(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []nat{
 #		nil,
 #		{0},
@@ -382,8 +392,9 @@ extends TestSuite
 #
 #	return hex1 == hex2
 #}
-#
-#func TestSetBytes(t *testing.T) {
+
+func TestSetBytes(t: TestingT) -> void:
+	t.Error("TODO")
 #	if err := quick.Check(checkSetBytes, nil); err != nil {
 #		t.Error(err)
 #	}
@@ -398,8 +409,9 @@ extends TestSuite
 #	b2 := new(Int).SetBytes(b).Bytes()
 #	return bytes.Equal(b, b2)
 #}
-#
-#func TestBytes(t *testing.T) {
+
+func TestBytes(t: TestingT) -> void:
+	t.Error("TODO")
 #	if err := quick.Check(checkBytes, nil); err != nil {
 #		t.Error(err)
 #	}
@@ -444,8 +456,9 @@ extends TestSuite
 #		"885443715537658812968",
 #	},
 #}
-#
-#func TestQuo(t *testing.T) {
+
+func TestQuo(t: TestingT) -> void:
+	t.Error("TODO")
 #	if err := quick.Check(checkQuo, nil); err != nil {
 #		t.Error(err)
 #	}
@@ -464,8 +477,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestQuoStepD6(t *testing.T) {
+
+func TestQuoStepD6(t: TestingT) -> void:
+	t.Error("TODO")
 #	// See Knuth, Volume 2, section 4.3.1, exercise 21. This code exercises
 #	// a code path which only triggers 1 in 10^{-19} cases.
 #
@@ -495,8 +509,9 @@ extends TestSuite
 #		q.QuoRem(y, x, r)
 #	}
 #}
-#
-#func TestIntDivide(t *testing.T) {
+
+func TestIntDivide(t: TestingT) -> void:
+	t.Error("TODO")
 #	x := new(Int)
 #	y := new(Int)
 #	q := new(Int)
@@ -581,8 +596,9 @@ extends TestSuite
 #	{"0x80000000000000000000", 80},
 #	{"-0x4000000000000000000000", 87},
 #}
-#
-#func TestBitLen(t *testing.T) {
+
+func TestBitLen(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range bitLenTests {
 #		x, ok := new(Int).SetString(test.in, 0)
 #		if !ok {
@@ -675,8 +691,9 @@ extends TestSuite
 #		"0x7858794B5897C29F4ED0B40913416AB6C48588484E6A45F2ED3E26C941D878E923575AAC434EE2750E6439A6976F9BB4D64CEDB2A53CE8D04DD48CADCDF8E46F22747C6B81C6CEA86C0D873FBF7CEF262BAAC43A522BD7F32F3CDAC52B9337C77B3DCFB3DB3EDD80476331E82F4B1DF8EFDC1220C92656DFC9197BDC1877804E28D928A2A284B8DED506CBA304435C9D0133C246C98A7D890D1DE60CBC53A024361DA83A9B8775019083D22AC6820ED7C3C68F8E801DD4EC779EE0A05C6EB682EF9840D285B838369BA7E148FA27691D524FAEAF7C6ECE2A4B99A294B9F2C241857B5B90CC8BFFCFCF18DFA7D676131D5CD3855A5A3E8EBFA0CDFADB4D198B4A",
 #	},
 #}
-#
-#func TestExp(t *testing.T) {
+
+func TestExp(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range expTests {
 #		x, ok1 := new(Int).SetString(test.x, 0)
 #		y, ok2 := new(Int).SetString(test.y, 0)
@@ -953,8 +970,9 @@ extends TestSuite
 #		t.Errorf("aliased x = b, y = a GCD(%s, %s, %s, %s): got y = %s, want %s", x, y, a, b, a2, y)
 #	}
 #}
-#
-#func TestGcd(t *testing.T) {
+
+func TestGcd(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range gcdTests {
 #		d, _ := new(Int).SetString(test.d, 0)
 #		x, _ := new(Int).SetString(test.x, 0)
@@ -1013,8 +1031,9 @@ extends TestSuite
 #	{"340282366920938463463374607431768211456", 64, "18446744073709551616"},
 #	{"340282366920938463463374607431768211456", 128, "1"},
 #}
-#
-#func TestRsh(t *testing.T) {
+
+func TestRsh(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range rshTests {
 #		in, _ := new(Int).SetString(test.in, 10)
 #		expected, _ := new(Int).SetString(test.out, 10)
@@ -1028,8 +1047,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestRshSelf(t *testing.T) {
+
+func TestRshSelf(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range rshTests {
 #		z, _ := new(Int).SetString(test.in, 10)
 #		expected, _ := new(Int).SetString(test.out, 10)
@@ -1065,8 +1085,9 @@ extends TestSuite
 #	{"18446744073709551616", 64, "340282366920938463463374607431768211456"},
 #	{"1", 128, "340282366920938463463374607431768211456"},
 #}
-#
-#func TestLsh(t *testing.T) {
+
+func TestLsh(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range lshTests {
 #		in, _ := new(Int).SetString(test.in, 10)
 #		expected, _ := new(Int).SetString(test.out, 10)
@@ -1080,8 +1101,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestLshSelf(t *testing.T) {
+
+func TestLshSelf(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range lshTests {
 #		z, _ := new(Int).SetString(test.in, 10)
 #		expected, _ := new(Int).SetString(test.out, 10)
@@ -1095,8 +1117,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestLshRsh(t *testing.T) {
+
+func TestLshRsh(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range rshTests {
 #		in, _ := new(Int).SetString(test.in, 10)
 #		out := new(Int).Lsh(in, test.shift)
@@ -1134,8 +1157,9 @@ extends TestSuite
 #	"2783678367462374683678456387645876387564783686583486",
 #	"32957394867987420967976567076075976570670947609750670956097509670576075067076027578341538",
 #}
-#
-#func TestCmpAbs(t *testing.T) {
+
+func TestCmpAbs(t: TestingT) -> void:
+	t.Error("TODO")
 #	values := make([]*Int, len(cmpAbsTests))
 #	var prev *Int
 #	for i, s := range cmpAbsTests {
@@ -1179,8 +1203,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestIntCmpSelf(t *testing.T) {
+
+func TestIntCmpSelf(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, s := range cmpAbsTests {
 #		x, ok := new(Int).SetString(s, 0)
 #		if !ok {
@@ -1213,8 +1238,9 @@ extends TestSuite
 #	"38579843757496759476987459679745",
 #	"-38579843757496759476987459679745",
 #}
-#
-#func TestInt64(t *testing.T) {
+
+func TestInt64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, s := range int64Tests {
 #		var x Int
 #		_, ok := x.SetString(s, 0)
@@ -1263,8 +1289,9 @@ extends TestSuite
 #	"-0x08000000000000000",
 #	"-1",
 #}
-#
-#func TestUint64(t *testing.T) {
+
+func TestUint64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, s := range uint64Tests {
 #		var x Int
 #		_, ok := x.SetString(s, 0)
@@ -1441,8 +1468,9 @@ extends TestSuite
 #	{"-0x2000000000000000000000000001", 109, 0},
 #	{"-0x2000000000000000000000000001", 110, 1},
 #}
-#
-#func TestBitSet(t *testing.T) {
+
+func TestBitSet(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range bitwiseTests {
 #		x := new(Int)
 #		x.SetString(test.x, 0)
@@ -1478,8 +1506,9 @@ extends TestSuite
 #	{"0x4000000000000000000", 74},
 #	{"-0x8000000000000000000", 75},
 #}
-#
-#func TestTrailingZeroBits(t *testing.T) {
+
+func TestTrailingZeroBits(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range tzbTests {
 #		in, _ := new(Int).SetString(test.in, 0)
 #		want := test.out
@@ -1577,8 +1606,9 @@ extends TestSuite
 #		x.modSqrt5Mod8Prime(x, p)
 #	}
 #}
-#
-#func TestBitwise(t *testing.T) {
+
+func TestBitwise(t: TestingT) -> void:
+	t.Error("TODO")
 #	x := new(Int)
 #	y := new(Int)
 #	for _, test := range bitwiseTests {
@@ -1610,8 +1640,9 @@ extends TestSuite
 #		"-298472983472983471903246121093472394872319615612417471234712062",
 #	},
 #}
-#
-#func TestNot(t *testing.T) {
+
+func TestNot(t: TestingT) -> void:
+	t.Error("TODO")
 #	in := new(Int)
 #	out := new(Int)
 #	expected := new(Int)
@@ -1639,8 +1670,9 @@ extends TestSuite
 #	{"10", "-13"},
 #	{"-17", "-13"},
 #}
-#
-#func TestModInverse(t *testing.T) {
+
+func TestModInverse(t: TestingT) -> void:
+	t.Error("TODO")
 #	var element, modulus, gcd, inverse Int
 #	one := NewInt(1)
 #	for _, test := range modInverseTests {
@@ -1720,8 +1752,9 @@ extends TestSuite
 #	sqrtsq.Mod(&sqrtsq, mod)
 #	return sq.Cmp(&sqrtsq) == 0
 #}
-#
-#func TestModSqrt(t *testing.T) {
+
+func TestModSqrt(t: TestingT) -> void:
+	t.Error("TODO")
 #	var elt, mod, modx4, sq, sqrt Int
 #	r := rand.New(rand.NewSource(9))
 #	for i, s := range primes[1:] { // skip 2, use only odd primes
@@ -1773,8 +1806,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestJacobi(t *testing.T) {
+
+func TestJacobi(t: TestingT) -> void:
+	t.Error("TODO")
 #	testCases := []struct {
 #		x, y   int64
 #		result int
@@ -1810,30 +1844,16 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestJacobiPanic(t *testing.T) {
-#	const failureMsg = "test failure"
-#	defer func() {
-#		msg := recover()
-#		if msg == nil || msg == failureMsg {
-#			panic(msg)
-#		}
-#		t.Log(msg)
-#	}()
-#	x := NewInt(1)
-#	y := NewInt(2)
-#	// Jacobi should panic when the second argument is even.
-#	Jacobi(x, y)
-#	panic(failureMsg)
-#}
-#
-#func TestIssue2607(t *testing.T) {
-#	// This code sequence used to hang.
-#	n := NewInt(10)
-#	n.Rand(rand.New(rand.NewSource(9)), n)
-#}
-#
-#func TestSqrt(t *testing.T) {
+
+func TestIssue2607(t: TestingT) -> void:
+	## This code sequence used to hang.
+	var r := RandomNumberGenerator.new()
+	r.seed = 9
+	var n := BigInt.NewInt(10)
+	n.Rand(r.randi, n)
+
+func TestSqrt(t: TestingT) -> void:
+	t.Error("TODO")
 #	root := 0
 #	r := new(Int)
 #	for i := 0; i < 10000; i++ {
@@ -1864,10 +1884,11 @@ extends TestSuite
 #		t.Errorf("Sqrt(100) = %v, want 10 (aliased output)", r.Int64())
 #	}
 #}
-#
-#// We can't test this together with the other Exp tests above because
-#// it requires a different receiver setup.
-#func TestIssue22830(t *testing.T) {
+
+## We can't test this together with the other Exp tests above because
+## it requires a different receiver setup.
+func TestIssue22830(t: TestingT) -> void:
+	t.Error("TODO")
 #	one := new(Int).SetInt64(1)
 #	base, _ := new(Int).SetString("84555555300000000000", 10)
 #	mod, _ := new(Int).SetString("66666670001111111111", 10)
@@ -1906,9 +1927,6 @@ extends TestSuite
 #
 #func BenchmarkIntSqr(b *testing.B) {
 #	for _, n := range sqrBenchSizes {
-#		if isRaceBuilder && n > 1e3 {
-#			continue
-#		}
 #		b.Run(fmt.Sprintf("%d", n), func(b *testing.B) {
 #			benchmarkIntSqr(b, n)
 #		})
@@ -1944,7 +1962,8 @@ extends TestSuite
 #	}
 #}
 #
-#func TestFillBytes(t *testing.T) {
+func TestFillBytes(t: TestingT) -> void:
+	t.Error("TODO")
 #	checkResult := func(t *testing.T, buf []byte, want *Int) {
 #		t.Helper()
 #		got := new(Int).SetBytes(buf)
@@ -1998,7 +2017,8 @@ extends TestSuite
 #	}
 #}
 #
-#func TestNewIntMinInt64(t *testing.T) {
+func TestNewIntMinInt64(t: TestingT) -> void:
+	t.Error("TODO")
 #	// Test for uint64 cast in NewInt.
 #	want := int64(math.MinInt64)
 #	if got := NewInt(want).Int64(); got != want {
@@ -2006,7 +2026,8 @@ extends TestSuite
 #	}
 #}
 #
-#func TestNewIntAllocs(t *testing.T) {
+func TestNewIntAllocs(t: TestingT) -> void:
+	t.Error("TODO")
 #	testenv.SkipIfOptimizationOff(t)
 #	for _, n := range []int64{0, 7, -7, 1 << 30, -1 << 30, 1 << 50, -1 << 50} {
 #		x := NewInt(3)
@@ -2021,8 +2042,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloat64(t *testing.T) {
+
+func TestFloat64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		istr string
 #		f    float64

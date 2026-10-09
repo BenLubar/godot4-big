@@ -36,8 +36,9 @@ extends TestSuite
 #	}
 #	return p
 #}
-#
-#func TestMulBits(t *testing.T) {
+
+func TestMulBits(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x, y, want Bits
 #	}{
@@ -80,7 +81,8 @@ extends TestSuite
 #	return z
 #}
 #
-#func TestNormBits(t *testing.T) {
+func TestNormBits(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x, want Bits
 #	}{
@@ -194,7 +196,8 @@ extends TestSuite
 #	return z
 #}
 #
-#func TestFromBits(t *testing.T) {
+func TestFromBits(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		bits Bits
 #		want string

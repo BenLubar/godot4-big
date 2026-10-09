@@ -5,6 +5,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+#include "godot_big_debug.h"
 #include "godot_big_int.h"
 
 #include <godot_cpp/classes/random_number_generator.hpp>
@@ -38,7 +39,7 @@ bool BigInt::ProbablyPrime(int64_t p_n) const {
 	// The comment does avoid saying "the" Baillie-PSW test
 	// because of this general ambiguity.
 
-	ERR_FAIL_COND_V_MSG(p_n < 0, false, "negative n for ProbablyPrime");
+	BIG_ERR_FAIL_COND_V_MSG(p_n < 0, false, "negative n for ProbablyPrime");
 	if (_neg || _abs.is_zero()) {
 		return false;
 	}

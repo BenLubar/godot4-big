@@ -111,7 +111,7 @@ Error BigNat::scan(godot::String &s, int64_t &base, bool fracOk, int64_t &fcount
 	bool baseOk = orig_base == 0 ||
 			(!fracOk && 2 <= orig_base && orig_base <= MAX_BASE) ||
 			(fracOk && (orig_base == 2 || orig_base == 8 || orig_base == 10 || orig_base == 16));
-	ERR_FAIL_COND_V_MSG(!baseOk, ERR_INVALID_PARAMETER, "invalid number base " + String::num_int64(orig_base));
+	BIG_ERR_FAIL_COND_V_MSG(!baseOk, ERR_INVALID_PARAMETER, "invalid number base " + String::num_int64(orig_base));
 
 	// prev encodes the previously seen char: it is one
 	// of '_', '0' (a digit), or '.' (anything else). A
@@ -251,7 +251,7 @@ Error BigNat::scan(godot::String &s, int64_t &base, bool fracOk, int64_t &fcount
 		si++;
 	}
 
-	ERR_FAIL_COND_V_MSG(invalSep || prev == '_', ERR_INVALID_DATA, "'_' must separate successive digits");
+	BIG_ERR_FAIL_COND_V_MSG(invalSep || prev == '_', ERR_INVALID_DATA, "'_' must separate successive digits");
 
 	s = s.substr(si);
 
@@ -266,7 +266,7 @@ Error BigNat::scan(godot::String &s, int64_t &base, bool fracOk, int64_t &fcount
 			return OK;
 		}
 
-		ERR_FAIL_V_MSG(ERR_INVALID_DATA, "number has no digits");
+		BIG_ERR_FAIL_V_MSG(ERR_INVALID_DATA, "number has no digits");
 	}
 
 	if (bn == 0) {
@@ -303,7 +303,7 @@ PackedByteArray BigNat::utoa(int64_t p_base) const {
 
 // itoa is like utoa but it prepends a '-' if neg && x != 0.
 PackedByteArray BigNat::itoa(bool p_neg, int64_t p_base) const {
-	ERR_FAIL_COND_V_MSG(p_base < 2 || p_base > MAX_BASE, {}, "invalid base");
+	BIG_ERR_FAIL_COND_V_MSG(p_base < 2 || p_base > MAX_BASE, {}, "invalid base");
 
 	// x == 0
 	if (is_zero()) {
@@ -401,6 +401,24 @@ PackedByteArray BigNat::itoa(bool p_neg, int64_t p_base) const {
 //	8 and 16 effective on 3.0 GHz Xeon "Clovertown" CPU (128 byte cache lines)
 //	8 and 16 effective on 2.66 GHz Core 2 Duo "Penryn" CPU
 CALIBRATION_SPECIFIERS int64_t leafSize = 8; // number of Word-size binary values treat as a monolithic block
+
+int64_t BigNat::test_override_leaf_size_bind(int64_t p_leaf_size) {
+#ifdef CALIBRATION_SPECIFIERS_MUTABLE
+	const int64_t old_leaf_size = leafSize;
+	leafSize = p_leaf_size;
+
+	cacheBase10_mutex.lock();
+	for (BigDivisor &d : *cacheBase10) {
+		d = {};
+	}
+	cacheBase10_mutex.unlock();
+
+	return old_leaf_size;
+#else
+	WARN_PRINT("BigInt._test_override_leaf_size does not change thresholds on release builds");
+	return 0;
+#endif
+}
 
 // Convert words of q to base b digits in s. If q is large, it is recursively "split in half"
 // by nat/nat division using tabulated divisors. Otherwise, it is converted iteratively using

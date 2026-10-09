@@ -8,7 +8,8 @@
 class_name RatTest
 extends TestSuite
 
-#func TestZeroRat(t *testing.T) {
+func TestZeroRat(t: TestingT) -> void:
+	t.Error("TODO")
 #	var x, y, z Rat
 #	y.SetFrac64(0, 42)
 #
@@ -47,8 +48,9 @@ extends TestSuite
 #	}()
 #	z.Quo(&x, &y)
 #}
-#
-#func TestRatSign(t *testing.T) {
+
+func TestRatSign(t: TestingT) -> void:
+	t.Error("TODO")
 #	zero := NewRat(0, 1)
 #	for _, a := range setStringTests {
 #		x, ok := new(Rat).SetString(a.in)
@@ -62,23 +64,25 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#var ratCmpTests = []struct {
+
+#struct {
 #	rat1, rat2 string
 #	out        int
-#}{
-#	{"0", "0/1", 0},
-#	{"1/1", "1", 0},
-#	{"-1", "-2/2", 0},
-#	{"1", "0", 1},
-#	{"0/1", "1/1", -1},
-#	{"-5/1434770811533343057144", "-5/1434770811533343057145", -1},
-#	{"49832350382626108453/8964749413", "49832350382626108454/8964749413", -1},
-#	{"-37414950961700930/7204075375675961", "37414950961700930/7204075375675961", -1},
-#	{"37414950961700930/7204075375675961", "74829901923401860/14408150751351922", 0},
 #}
-#
-#func TestRatCmp(t *testing.T) {
+const ratCmpTests: Array[Array] = [
+	["0", "0/1", 0],
+	["1/1", "1", 0],
+	["-1", "-2/2", 0],
+	["1", "0", 1],
+	["0/1", "1/1", -1],
+	["-5/1434770811533343057144", "-5/1434770811533343057145", -1],
+	["49832350382626108453/8964749413", "49832350382626108454/8964749413", -1],
+	["-37414950961700930/7204075375675961", "37414950961700930/7204075375675961", -1],
+	["37414950961700930/7204075375675961", "74829901923401860/14408150751351922", 0],
+]
+
+func TestRatCmp(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range ratCmpTests {
 #		x, _ := new(Rat).SetString(test.rat1)
 #		y, _ := new(Rat).SetString(test.rat2)
@@ -89,8 +93,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestIsInt(t *testing.T) {
+
+func TestIsInt(t: TestingT) -> void:
+	t.Error("TODO")
 #	one := NewInt(1)
 #	for _, a := range setStringTests {
 #		x, ok := new(Rat).SetString(a.in)
@@ -104,8 +109,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestRatAbs(t *testing.T) {
+
+func TestRatAbs(t: TestingT) -> void:
+	t.Error("TODO")
 #	zero := new(Rat)
 #	for _, a := range setStringTests {
 #		x, ok := new(Rat).SetString(a.in)
@@ -122,8 +128,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestRatNeg(t *testing.T) {
+
+func TestRatNeg(t: TestingT) -> void:
+	t.Error("TODO")
 #	zero := new(Rat)
 #	for _, a := range setStringTests {
 #		x, ok := new(Rat).SetString(a.in)
@@ -137,8 +144,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestRatInv(t *testing.T) {
+
+func TestRatInv(t: TestingT) -> void:
+	t.Error("TODO")
 #	zero := new(Rat)
 #	for _, a := range setStringTests {
 #		x, ok := new(Rat).SetString(a.in)
@@ -171,32 +179,34 @@ extends TestSuite
 #		t.Errorf("%s #%d got %s want %s", name, i, out, z)
 #	}
 #}
-#
-#var ratBinTests = []struct {
+
+#struct {
 #	x, y      string
 #	sum, prod string
-#}{
-#	{"0", "0", "0", "0"},
-#	{"0", "1", "1", "0"},
-#	{"-1", "0", "-1", "0"},
-#	{"-1", "1", "0", "-1"},
-#	{"1", "1", "2", "1"},
-#	{"1/2", "1/2", "1", "1/4"},
-#	{"1/4", "1/3", "7/12", "1/12"},
-#	{"2/5", "-14/3", "-64/15", "-28/15"},
-#	{"4707/49292519774798173060", "-3367/70976135186689855734", "84058377121001851123459/1749296273614329067191168098769082663020", "-1760941/388732505247628681598037355282018369560"},
-#	{"-61204110018146728334/3", "-31052192278051565633/2", "-215564796870448153567/6", "950260896245257153059642991192710872711/3"},
-#	{"-854857841473707320655/4237645934602118692642972629634714039", "-18/31750379913563777419", "-27/133467566250814981", "15387441146526731771790/134546868362786310073779084329032722548987800600710485341"},
-#	{"618575745270541348005638912139/19198433543745179392300736", "-19948846211000086/637313996471", "27674141753240653/30123979153216", "-6169936206128396568797607742807090270137721977/6117715203873571641674006593837351328"},
-#	{"-3/26206484091896184128", "5/2848423294177090248", "15310893822118706237/9330894968229805033368778458685147968", "-5/24882386581946146755650075889827061248"},
-#	{"26946729/330400702820", "41563965/225583428284", "1238218672302860271/4658307703098666660055", "224002580204097/14906584649915733312176"},
-#	{"-8259900599013409474/7", "-84829337473700364773/56707961321161574960", "-468402123685491748914621885145127724451/396955729248131024720", "350340947706464153265156004876107029701/198477864624065512360"},
-#	{"575775209696864/1320203974639986246357", "29/712593081308", "410331716733912717985762465/940768218243776489278275419794956", "808/45524274987585732633"},
-#	{"1786597389946320496771/2066653520653241", "6269770/1992362624741777", "3559549865190272133656109052308126637/4117523232840525481453983149257", "8967230/3296219033"},
-#	{"-36459180403360509753/32150500941194292113930", "9381566963714/9633539", "301622077145533298008420642898530153/309723104686531919656937098270", "-3784609207827/3426986245"},
 #}
-#
-#func TestRatBin(t *testing.T) {
+const ratBinTests: Array[Array] = [
+	["0", "0", "0", "0"],
+	["0", "1", "1", "0"],
+	["-1", "0", "-1", "0"],
+	["-1", "1", "0", "-1"],
+	["1", "1", "2", "1"],
+	["1/2", "1/2", "1", "1/4"],
+	["1/4", "1/3", "7/12", "1/12"],
+	["2/5", "-14/3", "-64/15", "-28/15"],
+	["4707/49292519774798173060", "-3367/70976135186689855734", "84058377121001851123459/1749296273614329067191168098769082663020", "-1760941/388732505247628681598037355282018369560"],
+	["-61204110018146728334/3", "-31052192278051565633/2", "-215564796870448153567/6", "950260896245257153059642991192710872711/3"],
+	["-854857841473707320655/4237645934602118692642972629634714039", "-18/31750379913563777419", "-27/133467566250814981", "15387441146526731771790/134546868362786310073779084329032722548987800600710485341"],
+	["618575745270541348005638912139/19198433543745179392300736", "-19948846211000086/637313996471", "27674141753240653/30123979153216", "-6169936206128396568797607742807090270137721977/6117715203873571641674006593837351328"],
+	["-3/26206484091896184128", "5/2848423294177090248", "15310893822118706237/9330894968229805033368778458685147968", "-5/24882386581946146755650075889827061248"],
+	["26946729/330400702820", "41563965/225583428284", "1238218672302860271/4658307703098666660055", "224002580204097/14906584649915733312176"],
+	["-8259900599013409474/7", "-84829337473700364773/56707961321161574960", "-468402123685491748914621885145127724451/396955729248131024720", "350340947706464153265156004876107029701/198477864624065512360"],
+	["575775209696864/1320203974639986246357", "29/712593081308", "410331716733912717985762465/940768218243776489278275419794956", "808/45524274987585732633"],
+	["1786597389946320496771/2066653520653241", "6269770/1992362624741777", "3559549865190272133656109052308126637/4117523232840525481453983149257", "8967230/3296219033"],
+	["-36459180403360509753/32150500941194292113930", "9381566963714/9633539", "301622077145533298008420642898530153/309723104686531919656937098270", "-3784609207827/3426986245"],
+]
+
+func TestRatBin(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range ratBinTests {
 #		arg := ratBinArg{test.x, test.y, test.sum}
 #		testRatBin(t, i, "Add", (*Rat).Add, arg)
@@ -227,8 +237,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestIssue820(t *testing.T) {
+
+func TestIssue820(t: TestingT) -> void:
+	t.Error("TODO")
 #	x := NewRat(3, 1)
 #	y := NewRat(2, 1)
 #	z := y.Quo(x, y)
@@ -252,21 +263,23 @@ extends TestSuite
 #		t.Errorf("got %s want %s", z, q)
 #	}
 #}
-#
-#var setFrac64Tests = []struct {
+
+#struct {
 #	a, b int64
 #	out  string
-#}{
-#	{0, 1, "0"},
-#	{0, -1, "0"},
-#	{1, 1, "1"},
-#	{-1, 1, "-1"},
-#	{1, -1, "-1"},
-#	{-1, -1, "1"},
-#	{-9223372036854775808, -9223372036854775808, "1"},
 #}
-#
-#func TestRatSetFrac64Rat(t *testing.T) {
+const setFrac64Tests: Array[Array] = [
+	[0, 1, "0"],
+	[0, -1, "0"],
+	[1, 1, "1"],
+	[-1, 1, "-1"],
+	[1, -1, "-1"],
+	[-1, -1, "1"],
+	[-9223372036854775808, -9223372036854775808, "1"],
+]
+
+func TestRatSetFrac64Rat(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range setFrac64Tests {
 #		x := new(Rat).SetFrac64(test.a, test.b)
 #		if x.RatString() != test.out {
@@ -274,8 +287,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestIssue2379(t *testing.T) {
+
+func TestIssue2379(t: TestingT) -> void:
+	t.Error("TODO")
 #	// 1) no aliasing
 #	q := NewRat(3, 2)
 #	x := new(Rat)
@@ -314,8 +328,9 @@ extends TestSuite
 #		t.Errorf("5) got %s want %s", x, q)
 #	}
 #}
-#
-#func TestIssue3521(t *testing.T) {
+
+func TestIssue3521(t: TestingT) -> void:
+	t.Error("TODO")
 #	a := new(Int)
 #	b := new(Int)
 #	a.SetString("64375784358435883458348587", 0)
@@ -389,8 +404,9 @@ extends TestSuite
 #		t.Errorf("3) got %s want %s", x, q53)
 #	}
 #}
-#
-#func TestFloat32Distribution(t *testing.T) {
+
+func TestFloat32Distribution(t: TestingT) -> void:
+	t.Error("TODO")
 #	// Generate a distribution of (sign, mantissa, exp) values
 #	// broader than the float32 range, and check Rat.Float32()
 #	// always picks the closest float32 approximation.
@@ -437,8 +453,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloat64Distribution(t *testing.T) {
+
+func TestFloat64Distribution(t: TestingT) -> void:
+	t.Error("TODO")
 #	// Generate a distribution of (sign, mantissa, exp) values
 #	// broader than the float64 range, and check Rat.Float64()
 #	// always picks the closest float64 approximation.
@@ -485,10 +502,11 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#// TestSetFloat64NonFinite checks that SetFloat64 of a non-finite value
-#// returns nil.
-#func TestSetFloat64NonFinite(t *testing.T) {
+
+## TestSetFloat64NonFinite checks that SetFloat64 of a non-finite value
+## returns nil.
+func TestSetFloat64NonFinite(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, f := range []float64{math.NaN(), math.Inf(+1), math.Inf(-1)} {
 #		var r Rat
 #		if r2 := r.SetFloat64(f); r2 != nil {
@@ -612,11 +630,21 @@ extends TestSuite
 #	}
 #	return true
 #}
-#
-#func isEven32(f float32) bool { return math.Float32bits(f)&1 == 0 }
-#func isEven64(f float64) bool { return math.Float64bits(f)&1 == 0 }
-#
-#func TestIsFinite(t *testing.T) {
+
+func isEven32(f: float) -> bool:
+	var buf: PackedByteArray
+	buf.resize(4)
+	buf.encode_float(0, f)
+	return (buf[0] & 1) == 0
+
+func isEven64(f: float) -> bool:
+	var buf: PackedByteArray
+	buf.resize(8)
+	buf.encode_double(0, f)
+	return (buf[0] & 1) == 0
+
+func TestIsFinite(t: TestingT) -> void:
+	t.Error("TODO")
 #	finites := []float64{
 #		1.0 / 3,
 #		4891559871276714924261e+222,
@@ -641,8 +669,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestRatSetInt64(t *testing.T) {
+
+func TestRatSetInt64(t: TestingT) -> void:
+	t.Error("TODO")
 #	var testCases = []int64{
 #		0,
 #		1,
@@ -668,8 +697,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestRatSetUint64(t *testing.T) {
+
+func TestRatSetUint64(t: TestingT) -> void:
+	t.Error("TODO")
 #	var testCases = []uint64{
 #		0,
 #		1,
@@ -692,54 +722,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func BenchmarkRatCmp(b *testing.B) {
-#	x, y := NewRat(4, 1), NewRat(7, 2)
-#	for i := 0; i < b.N; i++ {
-#		x.Cmp(y)
-#	}
-#}
-#
-#// TestIssue34919 verifies that a Rat's denominator is not modified
-#// when simply accessing the Rat value.
-#func TestIssue34919(t *testing.T) {
-#	for _, acc := range []struct {
-#		name string
-#		f    func(*Rat)
-#	}{
-#		{"Float32", func(x *Rat) { x.Float32() }},
-#		{"Float64", func(x *Rat) { x.Float64() }},
-#		{"Inv", func(x *Rat) { new(Rat).Inv(x) }},
-#		{"Sign", func(x *Rat) { x.Sign() }},
-#		{"IsInt", func(x *Rat) { x.IsInt() }},
-#		{"Num", func(x *Rat) { x.Num() }},
-#		// {"Denom", func(x *Rat) { x.Denom() }}, TODO(gri) should we change the API? See issue #33792.
-#	} {
-#		// A denominator of length 0 is interpreted as 1. Make sure that
-#		// "materialization" of the denominator doesn't lead to setting
-#		// the underlying array element 0 to 1.
-#		r := &Rat{Int{abs: nat{991}}, Int{abs: make(nat, 0, 1)}}
-#		acc.f(r)
-#		if d := r.b.abs[:1][0]; d != 0 {
-#			t.Errorf("%s modified denominator: got %d, want 0", acc.name, d)
-#		}
-#	}
-#}
-#
-#func TestDenomRace(t *testing.T) {
-#	x := NewRat(1, 2)
-#	const N = 3
-#	c := make(chan bool, N)
-#	for i := 0; i < N; i++ {
-#		go func() {
-#			// Denom (also used by Float.SetRat) used to mutate x unnecessarily,
-#			// provoking race reports when run in the race detector.
-#			x.Denom()
-#			new(Float).SetRat(x)
-#			c <- true
-#		}()
-#	}
-#	for i := 0; i < N; i++ {
-#		<-c
-#	}
-#}
+
+func BenchmarkRatCmp(b: TestingB) -> void:
+	var x := BigRat.NewRat(4, 1)
+	var y := BigRat.NewRat(7, 2)
+	for i in b.N:
+		x.Cmp(y)

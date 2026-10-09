@@ -1,3 +1,4 @@
+#include "godot_big_debug.h"
 #include "godot_big_float.h"
 #include "godot_big_int.h"
 #include "godot_big_naturals.h"
@@ -158,11 +159,11 @@ int64_t BigFloat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 
 	// first byte is packed with _mode, _acc+1, _form, and _neg as bits: mmmaaffn
 	const uint8_t first_byte = p_bytes[p_offset];
-	ERR_FAIL_COND_V_MSG(((first_byte >> 5) & 7) > 5, 0, "invalid rounding mode");
+	BIG_ERR_FAIL_COND_V_MSG(((first_byte >> 5) & 7) > 5, 0, "invalid rounding mode");
 	const RoundingMode mode = static_cast<RoundingMode>((first_byte >> 5) & 7);
-	ERR_FAIL_COND_V_MSG(((first_byte >> 3) & 3) > 2, 0, "invalid accuracy");
+	BIG_ERR_FAIL_COND_V_MSG(((first_byte >> 3) & 3) > 2, 0, "invalid accuracy");
 	const BigAccuracy acc = static_cast<BigAccuracy>(((first_byte >> 3) & 3) - 1);
-	ERR_FAIL_COND_V_MSG(((first_byte >> 1) & 3) > 2, 0, "invalid form");
+	BIG_ERR_FAIL_COND_V_MSG(((first_byte >> 1) & 3) > 2, 0, "invalid form");
 	const Form form = static_cast<Form>((first_byte >> 1) & 3);
 	const bool neg = (first_byte & 1) == 1;
 
@@ -189,9 +190,9 @@ int64_t BigFloat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 	int64_t advance = 1 + 4 + 4;
 	BigNat mantissa_len;
 	const uint64_t mantissa_len_advance = mantissa_len.from_uvarint(Span(p_bytes.ptr() + p_offset + advance, p_bytes.size() - p_offset - advance));
-	ERR_FAIL_COND_V_MSG(mantissa_len_advance == 0 || mantissa_len.array.size() != 1, 0, "invalid mantissa length");
+	BIG_ERR_FAIL_COND_V_MSG(mantissa_len_advance == 0 || mantissa_len.array.size() != 1, 0, "invalid mantissa length");
 	advance += mantissa_len_advance;
-	ERR_FAIL_COND_V_MSG(p_bytes.size() < p_offset + advance + (mantissa_len[0] * 8), 0, "buffer ends during mantissa");
+	BIG_ERR_FAIL_COND_V_MSG(p_bytes.size() < p_offset + advance + (mantissa_len[0] * 8), 0, "buffer ends during mantissa");
 
 	const int32_t exp = p_bytes.decode_s32(p_offset + 1 + 4);
 
@@ -205,8 +206,8 @@ int64_t BigFloat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 
 	// check what _validate would check on debug builds here as well before we put the data in
 	constexpr BigWord msb = 1LLU << (64 - 1);
-	ERR_FAIL_COND_V_MSG((mant[mantissa_len[0] - 1] & msb) == 0, 0, "msb not set in last word");
-	ERR_FAIL_COND_V_MSG(prec == 0, 0, "zero precision finite number");
+	BIG_ERR_FAIL_COND_V_MSG((mant[mantissa_len[0] - 1] & msb) == 0, 0, "msb not set in last word");
+	BIG_ERR_FAIL_COND_V_MSG(prec == 0, 0, "zero precision finite number");
 
 	_mode = mode;
 	_acc = acc;

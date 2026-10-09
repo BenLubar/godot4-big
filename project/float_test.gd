@@ -8,6 +8,13 @@
 class_name FloatTest
 extends TestSuite
 
+## PORT: I don't trust GDScript to parse float constants correctly
+static func float64_constant(x: int) -> float:
+	var buf: PackedByteArray
+	buf.resize(8)
+	buf.encode_u64(0, x)
+	return buf.decode_double(0)
+
 #// Verify that ErrNaN implements the error interface.
 #var _ error = ErrNaN{}
 #
@@ -26,8 +33,9 @@ extends TestSuite
 #	}
 #	return i
 #}
-#
-#func TestFloatZeroValue(t *testing.T) {
+
+func TestFloatZeroValue(t: TestingT) -> void:
+	t.Error("TODO")
 #	// zero (uninitialized) value is a ready-to-use 0.0
 #	var x Float
 #	if s := x.Text('f', 1); s != "0.0" {
@@ -94,8 +102,9 @@ extends TestSuite
 #	}
 #	return x
 #}
-#
-#func TestFloatSetPrec(t *testing.T) {
+
+func TestFloatSetPrec(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x    string
 #		prec uint
@@ -135,8 +144,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatMinPrec(t *testing.T) {
+
+func TestFloatMinPrec(t: TestingT) -> void:
+	t.Error("TODO")
 #	const max = 100
 #	for _, test := range []struct {
 #		x    string
@@ -160,8 +170,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatSign(t *testing.T) {
+
+func TestFloatSign(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x string
 #		s int
@@ -195,8 +206,9 @@ extends TestSuite
 #	// we can ignore NaNs
 #	return x == y && math.Signbit(x) == math.Signbit(y)
 #}
-#
-#func TestFloatMantExp(t *testing.T) {
+
+func TestFloatMantExp(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x    string
 #		mant string
@@ -221,8 +233,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatMantExpAliasing(t *testing.T) {
+
+func TestFloatMantExpAliasing(t: TestingT) -> void:
+	t.Error("TODO")
 #	x := makeFloat("0.5p10")
 #	if e := x.MantExp(x); e != 10 {
 #		t.Fatalf("Float.MantExp aliasing error: got %d; want 10", e)
@@ -231,8 +244,9 @@ extends TestSuite
 #		t.Fatalf("Float.MantExp aliasing error: got %s; want %s", x.Text('g', 10), want.Text('g', 10))
 #	}
 #}
-#
-#func TestFloatSetMantExp(t *testing.T) {
+
+func TestFloatSetMantExp(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		frac string
 #		exp  int
@@ -269,8 +283,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatPredicates(t *testing.T) {
+
+func TestFloatPredicates(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x            string
 #		sign         int
@@ -295,8 +310,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatIsInt(t *testing.T) {
+
+func TestFloatIsInt(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []string{
 #		"0 int",
 #		"-0 int",
@@ -320,7 +336,7 @@ extends TestSuite
 #		}
 #	}
 #}
-#
+
 #func fromBinary(s string) int64 {
 #	x, err := strconv.ParseInt(s, 2, 64)
 #	if err != nil {
@@ -328,11 +344,11 @@ extends TestSuite
 #	}
 #	return x
 #}
-#
+
 #func toBinary(x int64) string {
 #	return strconv.FormatInt(x, 2)
 #}
-#
+
 #func testFloatRound(t *testing.T, x, r int64, prec uint, mode RoundingMode) {
 #	// verify test data
 #	var ok bool
@@ -414,9 +430,10 @@ extends TestSuite
 #		return
 #	}
 #}
-#
-#// TestFloatRound tests basic rounding.
-#func TestFloatRound(t *testing.T) {
+
+## TestFloatRound tests basic rounding.
+func TestFloatRound(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		prec                        uint
 #		x, zero, neven, naway, away string // input, results rounded to prec bits
@@ -512,11 +529,12 @@ extends TestSuite
 #		testFloatRound(t, -x, -z, prec, ToPositiveInf)
 #	}
 #}
-#
-#// TestFloatRound24 tests that rounding a float64 to 24 bits
-#// matches IEEE 754 rounding to nearest when converting a
-#// float64 to a float32 (excluding denormal numbers).
-#func TestFloatRound24(t *testing.T) {
+
+## TestFloatRound24 tests that rounding a float64 to 24 bits
+## matches IEEE 754 rounding to nearest when converting a
+## float64 to a float32 (excluding denormal numbers).
+func TestFloatRound24(t: TestingT) -> void:
+	t.Error("TODO")
 #	const x0 = 1<<26 - 0x10 // 11...110000 (26 bits)
 #	for d := 0; d <= 0x10; d++ {
 #		x := float64(x0 + d)
@@ -528,8 +546,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatSetUint64(t *testing.T) {
+
+func TestFloatSetUint64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, want := range []uint64{
 #		0,
 #		1,
@@ -558,8 +577,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatSetInt64(t *testing.T) {
+
+func TestFloatSetInt64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, want := range []int64{
 #		0,
 #		1,
@@ -593,8 +613,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatSetFloat64(t *testing.T) {
+
+func TestFloatSetFloat64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, want := range []float64{
 #		0,
 #		1,
@@ -647,8 +668,9 @@ extends TestSuite
 #	// should not reach here
 #	t.Errorf("got %s; want ErrNaN panic", f.Text('p', 0))
 #}
-#
-#func TestFloatSetInt(t *testing.T) {
+
+func TestFloatSetInt(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, want := range []string{
 #		"0",
 #		"1",
@@ -685,8 +707,9 @@ extends TestSuite
 #
 #	// TODO(gri) test basic rounding behavior
 #}
-#
-#func TestFloatSetRat(t *testing.T) {
+
+func TestFloatSetRat(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, want := range []string{
 #		"0",
 #		"1",
@@ -725,8 +748,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatSetInf(t *testing.T) {
+
+func TestFloatSetInf(t: TestingT) -> void:
+	t.Error("TODO")
 #	var f Float
 #	for _, test := range []struct {
 #		signbit bool
@@ -744,8 +768,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatUint64(t *testing.T) {
+
+func TestFloatUint64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x   string
 #		out uint64
@@ -774,8 +799,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatInt64(t *testing.T) {
+
+func TestFloatInt64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x   string
 #		out int64
@@ -814,8 +840,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatFloat32(t *testing.T) {
+
+func TestFloatFloat32(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x   string
 #		out float32
@@ -927,8 +954,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatFloat64(t *testing.T) {
+
+func TestFloatFloat64(t: TestingT) -> void:
+	t.Error("TODO")
 #	const smallestNormalFloat64 = 2.2250738585072014e-308 // 1p-1022
 #	for _, test := range []struct {
 #		x   string
@@ -1034,8 +1062,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatInt(t *testing.T) {
+
+func TestFloatInt(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x    string
 #		want string
@@ -1079,8 +1108,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatRat(t *testing.T) {
+
+func TestFloatRat(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x, want string
 #		acc     Accuracy
@@ -1133,8 +1163,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatAbs(t *testing.T) {
+
+func TestFloatAbs(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []string{
 #		"0",
 #		"1",
@@ -1157,8 +1188,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatNeg(t *testing.T) {
+
+func TestFloatNeg(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []string{
 #		"0",
 #		"1",
@@ -1180,8 +1212,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatInc(t *testing.T) {
+
+func TestFloatInc(t: TestingT) -> void:
+	t.Error("TODO")
 #	const n = 10
 #	for _, prec := range precList {
 #		if 1<<prec < n {
@@ -1215,12 +1248,13 @@ extends TestSuite
 #	{0, -1, -2, -10},
 #	// TODO(gri) add more test cases
 #}
-#
-#// TestFloatAdd tests Float.Add/Sub by comparing the result of a "manual"
-#// addition/subtraction of arguments represented by Bits values with the
-#// respective Float addition/subtraction for a variety of precisions
-#// and rounding modes.
-#func TestFloatAdd(t *testing.T) {
+
+## TestFloatAdd tests Float.Add/Sub by comparing the result of a "manual"
+## addition/subtraction of arguments represented by Bits values with the
+## respective Float addition/subtraction for a variety of precisions
+## and rounding modes.
+func TestFloatAdd(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, xbits := range bitsList {
 #		for _, ybits := range bitsList {
 #			// exact values
@@ -1250,11 +1284,12 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#// TestFloatAddRoundZero tests Float.Add/Sub rounding when the result is exactly zero.
-#// x + (-x) or x - x for non-zero x should be +0 in all cases except when
-#// the rounding mode is ToNegativeInf in which case it should be -0.
-#func TestFloatAddRoundZero(t *testing.T) {
+
+## TestFloatAddRoundZero tests Float.Add/Sub rounding when the result is exactly zero.
+## x + (-x) or x - x for non-zero x should be +0 in all cases except when
+## the rounding mode is ToNegativeInf in which case it should be -0.
+func TestFloatAddRoundZero(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, mode := range [...]RoundingMode{ToNearestEven, ToNearestAway, ToZero, AwayFromZero, ToPositiveInf, ToNegativeInf} {
 #		x := NewFloat(5.0)
 #		y := new(Float).Neg(x)
@@ -1275,11 +1310,12 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#// TestFloatAdd32 tests that Float.Add/Sub of numbers with
-#// 24bit mantissa behaves like float32 addition/subtraction
-#// (excluding denormal numbers).
-#func TestFloatAdd32(t *testing.T) {
+
+## TestFloatAdd32 tests that Float.Add/Sub of numbers with
+## 24bit mantissa behaves like float32 addition/subtraction
+## (excluding denormal numbers).
+func TestFloatAdd32(t: TestingT) -> void:
+	t.Error("TODO")
 #	// chose base such that we cross the mantissa precision limit
 #	const base = 1<<26 - 0x10 // 11...110000 (26 bits)
 #	for d := 0; d <= 0x10; d++ {
@@ -1309,10 +1345,11 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#// TestFloatAdd64 tests that Float.Add/Sub of numbers with
-#// 53bit mantissa behaves like float64 addition/subtraction.
-#func TestFloatAdd64(t *testing.T) {
+
+## TestFloatAdd64 tests that Float.Add/Sub of numbers with
+## 53bit mantissa behaves like float64 addition/subtraction.
+func TestFloatAdd64(t: TestingT) -> void:
+	t.Error("TODO")
 #	// chose base such that we cross the mantissa precision limit
 #	const base = 1<<55 - 0x10 // 11...110000 (55 bits)
 #	for d := 0; d <= 0x10; d++ {
@@ -1342,8 +1379,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestIssue20490(t *testing.T) {
+
+func TestIssue20490(t: TestingT) -> void:
+	t.Error("TODO")
 #	var tests = []struct {
 #		a, b float64
 #	}{
@@ -1370,12 +1408,13 @@ extends TestSuite
 #
 #	}
 #}
-#
-#// TestFloatMul tests Float.Mul/Quo by comparing the result of a "manual"
-#// multiplication/division of arguments represented by Bits values with the
-#// respective Float multiplication/division for a variety of precisions
-#// and rounding modes.
-#func TestFloatMul(t *testing.T) {
+
+## TestFloatMul tests Float.Mul/Quo by comparing the result of a "manual"
+## multiplication/division of arguments represented by Bits values with the
+## respective Float multiplication/division for a variety of precisions
+## and rounding modes.
+func TestFloatMul(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, xbits := range bitsList {
 #		for _, ybits := range bitsList {
 #			// exact values
@@ -1408,10 +1447,11 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#// TestFloatMul64 tests that Float.Mul/Quo of numbers with
-#// 53bit mantissa behaves like float64 multiplication/division.
-#func TestFloatMul64(t *testing.T) {
+
+## TestFloatMul64 tests that Float.Mul/Quo of numbers with
+## 53bit mantissa behaves like float64 multiplication/division.
+func TestFloatMul64(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x, y float64
 #	}{
@@ -1459,8 +1499,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestIssue6866(t *testing.T) {
+
+func TestIssue6866(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, prec := range precList {
 #		two := new(Float).SetPrec(prec).SetInt64(2)
 #		one := new(Float).SetPrec(prec).SetInt64(1)
@@ -1493,8 +1534,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatQuo(t *testing.T) {
+
+func TestFloatQuo(t: TestingT) -> void:
+	t.Error("TODO")
 #	// TODO(gri) make the test vary these precisions
 #	preci := 200 // precision of integer part
 #	precf := 20  // precision of fractional part
@@ -1541,12 +1583,11 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#var long = flag.Bool("long", false, "run very long tests")
-#
-#// TestFloatQuoSmoke tests all divisions x/y for values x, y in the range [-n, +n];
-#// it serves as a smoke test for basic correctness of division.
-#func TestFloatQuoSmoke(t *testing.T) {
+
+## TestFloatQuoSmoke tests all divisions x/y for values x, y in the range [-n, +n];
+## it serves as a smoke test for basic correctness of division.
+func TestFloatQuoSmoke(t: TestingT) -> void:
+	t.Error("TODO")
 #	n := 10
 #	if *long {
 #		n = 1000
@@ -1584,11 +1625,12 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#// TestFloatArithmeticSpecialValues tests that Float operations produce the
-#// correct results for combinations of zero (±0), finite (±1 and ±2.71828),
-#// and infinite (±Inf) operands.
-#func TestFloatArithmeticSpecialValues(t *testing.T) {
+
+## TestFloatArithmeticSpecialValues tests that Float operations produce the
+## correct results for combinations of zero (±0), finite (±1 and ±2.71828),
+## and infinite (±Inf) operands.
+func TestFloatArithmeticSpecialValues(t: TestingT) -> void:
+	t.Error("TODO")
 #	zero := 0.0
 #	args := []float64{math.Inf(-1), -2.71828, -1, -zero, zero, 1, 2.71828, math.Inf(1)}
 #	xx := new(Float)
@@ -1660,8 +1702,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatArithmeticOverflow(t *testing.T) {
+
+func TestFloatArithmeticOverflow(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		prec       uint
 #		mode       RoundingMode
@@ -1722,15 +1765,16 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#// TODO(gri) Add tests that check correctness in the presence of aliasing.
-#
-#// For rounding modes ToNegativeInf and ToPositiveInf, rounding is affected
-#// by the sign of the value to be rounded. Test that rounding happens after
-#// the sign of a result has been set.
-#// This test uses specific values that are known to fail if rounding is
-#// "factored" out before setting the result sign.
-#func TestFloatArithmeticRounding(t *testing.T) {
+
+## TODO(gri) Add tests that check correctness in the presence of aliasing.
+
+## For rounding modes ToNegativeInf and ToPositiveInf, rounding is affected
+## by the sign of the value to be rounded. Test that rounding happens after
+## the sign of a result has been set.
+## This test uses specific values that are known to fail if rounding is
+## "factored" out before setting the result sign.
+func TestFloatArithmeticRounding(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		mode       RoundingMode
 #		prec       uint
@@ -1776,11 +1820,12 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#// TestFloatCmpSpecialValues tests that Cmp produces the correct results for
-#// combinations of zero (±0), finite (±1 and ±2.71828), and infinite (±Inf)
-#// operands.
-#func TestFloatCmpSpecialValues(t *testing.T) {
+
+## TestFloatCmpSpecialValues tests that Cmp produces the correct results for
+## combinations of zero (±0), finite (±1 and ±2.71828), and infinite (±Inf)
+## operands.
+func TestFloatCmpSpecialValues(t: TestingT) -> void:
+	t.Error("TODO")
 #	zero := 0.0
 #	args := []float64{math.Inf(-1), -2.71828, -1, -zero, zero, 1, 2.71828, math.Inf(1)}
 #	xx := new(Float)

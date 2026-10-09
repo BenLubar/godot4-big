@@ -72,7 +72,7 @@ using namespace godot;
 // with precision 53 and rounding mode [ToNearestEven].
 // NewFloat panics with [ErrNaN] if x is a NaN.
 Ref<BigFloat> BigFloat::NewFloat(double p_x) {
-	ERR_FAIL_COND_V(Math::is_nan(p_x), nullptr);
+	BIG_ERR_FAIL_COND_V(Math::is_nan(p_x), nullptr);
 
 	Ref<BigFloat> f{ memnew(BigFloat) };
 	[[maybe_unused]] const Error err = f->SetFloat64(p_x);
@@ -325,7 +325,7 @@ void BigFloat::_validate() const {
 	const int64_t m = _mant.array.size();
 	CRASH_COND_MSG(m == 0, "nonzero finite number with empty mantissa");
 
-	static constexpr uint64_t msb = UINT64_C(1) < (64 - 1);
+	static constexpr uint64_t msb = UINT64_C(1) << (64 - 1);
 	CRASH_COND_MSG((_mant[m - 1] & msb) == 0, vformat("msb not set in last word 0x%016x of %s", _mant[m - 1], String(FORMAT_HEX_NORMAL, 0)));
 
 	CRASH_COND_MSG(_prec == 0, "zero precision finite number");
@@ -510,7 +510,7 @@ Error BigFloat::SetFloat64(double p_x) {
 		_prec = 53;
 	}
 
-	ERR_FAIL_COND_V(Math::is_nan(p_x), ERR_INVALID_PARAMETER);
+	BIG_ERR_FAIL_COND_V(Math::is_nan(p_x), ERR_INVALID_PARAMETER);
 
 	_acc = ACC_EXACT;
 	_neg = std::signbit(p_x); // handle -0, -Inf correctly
@@ -1522,7 +1522,7 @@ Error BigFloat::Add(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 
 		emit_changed();
 
-		ERR_FAIL_V_MSG(ERR_INVALID_PARAMETER, "addition of infinities with opposite signs");
+		BIG_ERR_FAIL_V_MSG(ERR_INVALID_PARAMETER, "addition of infinities with opposite signs");
 	}
 
 	if (p_x->_form == FORM_ZERO && p_y->_form == FORM_ZERO) {
@@ -1607,7 +1607,7 @@ Error BigFloat::Sub(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 
 		emit_changed();
 
-		ERR_FAIL_V_MSG(ERR_INVALID_PARAMETER, "subtraction of infinities with equal signs");
+		BIG_ERR_FAIL_V_MSG(ERR_INVALID_PARAMETER, "subtraction of infinities with equal signs");
 	}
 
 	if (p_x->_form == FORM_ZERO && p_y->_form == FORM_ZERO) {
@@ -1675,7 +1675,7 @@ Error BigFloat::Mul(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 
 		emit_changed();
 
-		ERR_FAIL_V_MSG(ERR_INVALID_PARAMETER, "multiplication of zero with infinity");
+		BIG_ERR_FAIL_V_MSG(ERR_INVALID_PARAMETER, "multiplication of zero with infinity");
 	}
 
 	if (p_x->_form == FORM_INF || p_y->_form == FORM_INF) {
@@ -1736,7 +1736,7 @@ Error BigFloat::Quo(const Ref<BigFloat> &p_x, const Ref<BigFloat> &p_y) {
 
 		emit_changed();
 
-		ERR_FAIL_V_MSG(ERR_INVALID_PARAMETER, p_x->_form == FORM_ZERO ? "division of zero by zero" : "division of infinity by infinity");
+		BIG_ERR_FAIL_V_MSG(ERR_INVALID_PARAMETER, p_x->_form == FORM_ZERO ? "division of zero by zero" : "division of infinity by infinity");
 	}
 
 	if (p_x->_form == FORM_ZERO || p_y->_form == FORM_INF) {

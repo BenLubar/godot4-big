@@ -9,6 +9,7 @@
 
 #include "godot_big_rat.h"
 
+#include "godot_big_debug.h"
 #include "godot_big_int.h"
 
 #include <bit>
@@ -29,7 +30,7 @@ extern Ref<BigInt> *intOne;
 
 // NewRat creates a new [Rat] with numerator a and denominator b.
 Ref<BigRat> BigRat::NewRat(int64_t p_a, int64_t p_b) {
-	ERR_FAIL_COND_V_MSG(p_b == 0, nullptr, "division by zero");
+	BIG_ERR_FAIL_COND_V_MSG(p_b == 0, nullptr, "division by zero");
 
 	Ref<BigRat> r{ memnew(BigRat) };
 	[[maybe_unused]] const Error err = r->SetFrac64(p_a, p_b);
@@ -46,7 +47,7 @@ Error BigRat::SetFloat64(double p_f) {
 	uint64_t mantissa = bits & ((UINT64_C(1) << 52) - 1);
 	int64_t exp = static_cast<int64_t>(bits >> 52) & expMask;
 
-	ERR_FAIL_COND_V_MSG(exp == expMask, ERR_INVALID_PARAMETER, "float is non-finite");
+	BIG_ERR_FAIL_COND_V_MSG(exp == expMask, ERR_INVALID_PARAMETER, "float is non-finite");
 
 	if (exp == 0) { // denormal
 		exp -= 1022;
@@ -300,7 +301,7 @@ Error BigRat::SetFrac(const Ref<BigInt> &p_a, const Ref<BigInt> &p_b) {
 	ERR_FAIL_NULL_V(*p_a, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_b, ERR_INVALID_PARAMETER);
 
-	ERR_FAIL_COND_V_MSG(p_b->_abs.is_zero(), ERR_INVALID_PARAMETER, "division by zero");
+	BIG_ERR_FAIL_COND_V_MSG(p_b->_abs.is_zero(), ERR_INVALID_PARAMETER, "division by zero");
 
 	_neg = p_a->_neg != p_b->_neg;
 	_a = p_a->_abs;
@@ -316,7 +317,7 @@ Error BigRat::SetFrac(const Ref<BigInt> &p_a, const Ref<BigInt> &p_b) {
 // SetFrac64 sets z to a/b and returns z.
 // If b == 0, SetFrac64 panics.
 Error BigRat::SetFrac64(int64_t p_a, int64_t p_b) {
-	ERR_FAIL_COND_V_MSG(p_b == 0, ERR_INVALID_PARAMETER, "division by zero");
+	BIG_ERR_FAIL_COND_V_MSG(p_b == 0, ERR_INVALID_PARAMETER, "division by zero");
 
 	_neg = (p_a < 0) != (p_b < 0);
 	_a.setUint64(static_cast<uint64_t>(p_a < 0 ? -p_a : +p_a));
@@ -399,7 +400,7 @@ void BigRat::Neg(const Ref<BigRat> &p_x) {
 // If x == 0, Inv panics.
 Error BigRat::Inv(const Ref<BigRat> &p_x) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V_MSG(p_x->_a.is_zero(), ERR_INVALID_PARAMETER, "division by zero");
+	BIG_ERR_FAIL_COND_V_MSG(p_x->_a.is_zero(), ERR_INVALID_PARAMETER, "division by zero");
 
 	_neg = p_x->_neg;
 	_a = p_x->_a;
@@ -599,7 +600,7 @@ void BigRat::Mul(const Ref<BigRat> &p_x, const Ref<BigRat> &p_y) {
 Error BigRat::Quo(const Ref<BigRat> &p_x, const Ref<BigRat> &p_y) {
 	ERR_FAIL_NULL_V(*p_x, ERR_INVALID_PARAMETER);
 	ERR_FAIL_NULL_V(*p_y, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V_MSG(p_y->_a.is_zero(), ERR_INVALID_PARAMETER, "division by zero");
+	BIG_ERR_FAIL_COND_V_MSG(p_y->_a.is_zero(), ERR_INVALID_PARAMETER, "division by zero");
 
 	BigNat a;
 	BigNat b;

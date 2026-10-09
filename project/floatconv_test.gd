@@ -10,7 +10,8 @@ extends TestSuite
 
 #var zero_ float64
 #
-#func TestFloatSetFloat64String(t *testing.T) {
+func TestFloatSetFloat64String(t: TestingT) -> void:
+	t.Error("TODO")
 #	inf := math.Inf(0)
 #	nan := math.NaN()
 #
@@ -192,8 +193,9 @@ extends TestSuite
 #	below1e23 = 99999999999999974834176
 #	above1e23 = 100000000000000008388608
 #)
-#
-#func TestFloat64Text(t *testing.T) {
+
+func TestFloat64Text(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x      float64
 #		format byte
@@ -378,8 +380,9 @@ extends TestSuite
 #	}
 #	return 53
 #}
-#
-#func TestRoundShortestNormal(t *testing.T) {
+
+func TestRoundShortestNormal(t: TestingT) -> void:
+	t.Error("TODO")
 #	// See go.dev/issue/80206.
 #	text := func(x float64) string {
 #		return new(Float).SetPrec(53).SetFloat64(x).Text('g', -1)
@@ -397,8 +400,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatText(t *testing.T) {
+
+func TestFloatText(t: TestingT) -> void:
+	t.Error("TODO")
 #	const defaultRound = ^RoundingMode(0)
 #
 #	for _, test := range []struct {
@@ -586,8 +590,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatFormat(t *testing.T) {
+
+func TestFloatFormat(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		format string
 #		value  any // float32, float64, or string (== 512bit *Float)
@@ -786,8 +791,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestFloatScan(t *testing.T) {
+
+func TestFloatScan(t: TestingT) -> void:
+	t.Error("TODO")
 #	floatScanTests := []struct {
 #		input     string
 #		format    string

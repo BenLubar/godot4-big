@@ -1,3 +1,4 @@
+#include "godot_big_debug.h"
 #include "godot_big_decimal.h"
 #include "godot_big_float.h"
 #include "godot_big_int.h"
@@ -222,6 +223,13 @@ int32_t BigFloat::_get_exp() const {
 	BigNat::bits_Div(p_hi, p_lo, p_y, quo, rem);
 	return { static_cast<int64_t>(quo), static_cast<int64_t>(rem) };
 }
+static void test_disable_error_printing_bind([[maybe_unused]] bool p_disable) {
+#ifdef DEBUG_ENABLED
+	BigNat::is_test_suite = p_disable;
+#else
+	WARN_PRINT("BigInt._disable_error_printing is not available on release builds");
+#endif
+}
 
 void BigInt::_bind_methods() {
 	// serialization (Resource)
@@ -320,8 +328,9 @@ void BigInt::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("ProbablyPrime", "n"), &BigInt::ProbablyPrime);
 
 	// internals exported for test suite
-	ClassDB::bind_method(D_METHOD("_lehmerGCD", "x", "y", "a", "b"), &BigInt::_lehmerGCD);
-	ClassDB::bind_method(D_METHOD("_test_mul_range_unsigned", "a", "b"), &BigInt::_test_mul_range_unsigned);
+	ClassDB::bind_method(D_METHOD("_expSlow", "x", "y", "m"), &BigInt::_expSlow);
+	ClassDB::bind_method(D_METHOD("_subMod2N", "x", "y", "n"), &BigInt::_subMod2N);
+	ClassDB::bind_method(D_METHOD("_mulRangeUnsigned", "a", "b"), &BigInt::_mulRangeUnsigned);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_probablyPrimeLucas", "x"), &probablyPrimeLucas_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_probablyPrimeMillerRabin", "x", "reps", "force2"), &probablyPrimeMillerRabin_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Add", "x", "y", "carry"), &bits_Add_bind);
@@ -330,6 +339,9 @@ void BigInt::_bind_methods() {
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Div", "hi", "lo", "y"), &bits_Div_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_mul", "karatsuba_threshold", "x", "y"), &BigNat::test_mul_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_sqr", "basic_sqr_threshold", "karatsuba_sqr_threshold", "x"), &BigNat::test_sqr_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_div", "div_recursive_threshold", "u", "v"), &BigNat::test_div_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_override_leaf_size", "leaf_size"), &BigNat::test_override_leaf_size_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_disable_error_printing", "disable"), &test_disable_error_printing_bind);
 }
 
 void BigInt::_set_neg(bool p_neg) {

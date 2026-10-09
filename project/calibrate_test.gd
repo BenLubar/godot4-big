@@ -19,10 +19,12 @@ extends TestSuite
 #var calibrate = flag.Bool("calibrate", false, "run calibration test")
 #var calibrateOnce sync.Once
 #
-#func TestCalibrate(t *testing.T) {
-#	if !*calibrate {
-#		return
-#	}
+func TestCalibrate(t: TestingT) -> void:
+	if not calibrate:
+		t.Skip()
+		return
+
+	t.Error("TODO")
 #
 #	t.Run("KaratsubaMul", computeKaratsubaThreshold)
 #	t.Run("BasicSqr", computeBasicSqrThreshold)

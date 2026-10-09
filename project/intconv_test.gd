@@ -83,8 +83,9 @@ extends TestSuite
 #	{"+0o_660", "432", 0, 0660, true},
 #	{"-0xF00D_1E", "-15731998", 0, -0xf00d1e, true},
 #}
-#
-#func TestIntText(t *testing.T) {
+
+func TestIntText(t: TestingT) -> void:
+	t.Error("TODO")
 #	z := new(Int)
 #	for _, test := range stringTests {
 #		if !test.ok {
@@ -107,8 +108,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestAppendText(t *testing.T) {
+
+func TestAppendText(t: TestingT) -> void:
+	t.Error("TODO")
 #	z := new(Int)
 #	var buf []byte
 #	for _, test := range stringTests {
@@ -146,8 +148,9 @@ extends TestSuite
 #	}
 #	return "%d"
 #}
-#
-#func TestGetString(t *testing.T) {
+
+func TestGetString(t: TestingT) -> void:
+	t.Error("TODO")
 #	z := new(Int)
 #	for i, test := range stringTests {
 #		if !test.ok {
@@ -174,8 +177,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestSetString(t *testing.T) {
+
+func TestSetString(t: TestingT) -> void:
+	t.Error("TODO")
 #	tmp := new(Int)
 #	for i, test := range stringTests {
 #		// initialize to a non-zero value so that issues with parsing
@@ -369,8 +373,9 @@ extends TestSuite
 #	{"0", "%.0d", ""},
 #	{"0", "%3.d", ""},
 #}
-#
-#func TestFormat(t *testing.T) {
+
+func TestFormat(t: TestingT) -> void:
+	t.Error("TODO")
 #	testFormat(t)
 #}
 #
@@ -442,8 +447,9 @@ extends TestSuite
 #		scanTests = append(scanTests, scanTest{input: string(d), format: "%d", output: string(d)})
 #	}
 #}
-#
-#func TestScan(t *testing.T) {
+
+func TestScan(t: TestingT) -> void:
+	t.Error("TODO")
 #	var buf bytes.Buffer
 #	for i, test := range scanTests {
 #		x := new(Int)

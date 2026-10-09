@@ -6,6 +6,7 @@
 #include <godot_cpp/variant/packed_byte_array.hpp>
 #include <godot_cpp/variant/packed_int64_array.hpp>
 #include <godot_cpp/variant/string.hpp>
+#include <godot_cpp/variant/typed_array.hpp>
 
 #include <functional>
 
@@ -250,6 +251,7 @@ struct BigNat {
 
 	// natconv.go
 	static constexpr int64_t MAX_BASE = 10 + ('z' - 'a' + 1) + ('Z' - 'A' + 1);
+	[[nodiscard]] static int64_t test_override_leaf_size_bind(int64_t p_leaf_size);
 	[[nodiscard]] static BigWord pow(BigWord x, int64_t n);
 	[[nodiscard]] godot::Error scan(godot::String &s, int64_t &base, bool fracOk, int64_t &fcount);
 	[[nodiscard]] godot::PackedByteArray utoa(int64_t p_base) const;
@@ -259,6 +261,7 @@ struct BigNat {
 	static void divisors(int64_t p_m, BigWord p_b, int64_t p_ndigits, BigWord p_bb, godot::LocalVector<BigDivisor> &r_table);
 
 	// natdiv.go
+	[[nodiscard]] static godot::TypedArray<godot::PackedInt64Array> test_div_bind(uint64_t p_div_recursive_threshold, const godot::PackedInt64Array &p_u, const godot::PackedInt64Array &p_v);
 	void rem(BigNat p_u, BigNat p_v);
 	void div(BigNat p_u, BigNat p_v, BigNat &r_r);
 	[[nodiscard]] BigWord divW(BigNat p_x, BigWord p_y);
@@ -295,6 +298,12 @@ struct BigNat {
 	// godot_big_varint.cpp
 	[[nodiscard]] godot::PackedByteArray to_uvarint() const;
 	[[nodiscard]] uint64_t from_uvarint(const godot::Span<uint8_t> &p_bytes);
+
+#ifdef DEBUG_ENABLED
+	static inline bool is_test_suite = false;
+#else
+	static constexpr bool is_test_suite = false;
+#endif
 };
 
 struct BigDivisor {

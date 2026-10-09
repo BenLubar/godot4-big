@@ -8,7 +8,8 @@
 class_name DecimalTest
 extends TestSuite
 
-#func TestDecimalString(t *testing.T) {
+func TestDecimalString(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x    decimal
 #		want string
@@ -25,8 +26,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestDecimalInit(t *testing.T) {
+
+func TestDecimalInit(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x     Word
 #		shift int
@@ -51,8 +53,9 @@ extends TestSuite
 #		}
 #	}
 #}
-#
-#func TestDecimalRounding(t *testing.T) {
+
+func TestDecimalRounding(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, test := range []struct {
 #		x              uint64
 #		n              int

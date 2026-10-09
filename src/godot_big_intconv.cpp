@@ -7,6 +7,7 @@
 
 // This file implements int-to-string conversion functions.
 
+#include "godot_big_debug.h"
 #include "godot_big_int.h"
 
 using namespace godot;
@@ -40,8 +41,8 @@ Error BigInt::_scan(godot::String &s, int64_t &base) {
 	// determine mantissa
 	BigNat abs;
 	[[maybe_unused]] int64_t fcount;
-	Error err = abs.scan(s, base, false, fcount);
-	ERR_FAIL_COND_V(err != OK, err);
+	const Error err = abs.scan(s, base, false, fcount);
+	BIG_ERR_FAIL_COND_V(err != OK, err);
 
 	_neg = !abs.is_zero() && neg; // 0 has no sign
 	_abs = abs;

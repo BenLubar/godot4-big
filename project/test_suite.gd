@@ -44,3 +44,8 @@ func run_benchmark(name: String) -> TestingB:
 	# TODO: loop to figure out iteration count
 	call(name, b)
 	return b
+
+static var short := false
+static var long := false
+static var calibrate := false
+static var run_regexp: RegEx = null

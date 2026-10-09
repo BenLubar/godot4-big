@@ -58,7 +58,8 @@ const exponentTests := [
 	["e-1_2__3", false, true, -123, 10, errInvalSep, 0],
 ]
 
-#func TestScanExponent(t *testing.T) {
+func TestScanExponent(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, a := range exponentTests {
 #		r := strings.NewReader(a.s)
 #		x, b, err := scanExponent(r, a.base2ok, a.sepOk)
@@ -81,136 +82,131 @@ const exponentTests := [
 #		}
 #	}
 #}
-#
-#type StringTest struct {
+
+#struct {
 #	in, out string
 #	ok      bool
 #}
-#
-#var setStringTests = []StringTest{
-#	// invalid
-#	{in: "1e"},
-#	{in: "1.e"},
-#	{in: "1e+14e-5"},
-#	{in: "1e4.5"},
-#	{in: "r"},
-#	{in: "a/b"},
-#	{in: "a.b"},
-#	{in: "1/0"},
-#	{in: "4/3/2"}, // issue 17001
-#	{in: "4/3/"},
-#	{in: "4/3."},
-#	{in: "4/"},
-#	{in: "13e-9223372036854775808"}, // CVE-2022-23772
-#
-#	// valid
-#	{"0", "0", true},
-#	{"-0", "0", true},
-#	{"1", "1", true},
-#	{"-1", "-1", true},
-#	{"1.", "1", true},
-#	{"1e0", "1", true},
-#	{"1.e1", "10", true},
-#	{"-0.1", "-1/10", true},
-#	{"-.1", "-1/10", true},
-#	{"2/4", "1/2", true},
-#	{".25", "1/4", true},
-#	{"-1/5", "-1/5", true},
-#	{"8129567.7690E14", "812956776900000000000", true},
-#	{"78189e+4", "781890000", true},
-#	{"553019.8935e+8", "55301989350000", true},
-#	{"98765432109876543210987654321e-10", "98765432109876543210987654321/10000000000", true},
-#	{"9877861857500000E-7", "3951144743/4", true},
-#	{"2169378.417e-3", "2169378417/1000000", true},
-#	{"884243222337379604041632732738665534", "884243222337379604041632732738665534", true},
-#	{"53/70893980658822810696", "53/70893980658822810696", true},
-#	{"106/141787961317645621392", "53/70893980658822810696", true},
-#	{"204211327800791583.81095", "4084226556015831676219/20000", true},
-#	{"0e9999999999", "0", true}, // issue #16176
-#}
-#
-#// These are not supported by fmt.Fscanf.
-#var setStringTests2 = []StringTest{
-#	// invalid
-#	{in: "4/3x"},
-#	{in: "0/-1"},
-#	{in: "-1/-1"},
-#
-#	// invalid with separators
-#	// (smoke tests only - a comprehensive set of tests is in natconv_test.go)
-#	{in: "10_/1"},
-#	{in: "_10/1"},
-#	{in: "1/1__0"},
-#
-#	// valid
-#	{"0b1000/3", "8/3", true},
-#	{"0B1000/0x8", "1", true},
-#	{"-010/1", "-8", true}, // 0-prefix indicates octal in this case
-#	{"-010.0", "-10", true},
-#	{"-0o10/1", "-8", true},
-#	{"0x10/1", "16", true},
-#	{"0x10/0x20", "1/2", true},
-#
-#	{"0010", "10", true}, // 0-prefix is ignored in this case (not a fraction)
-#	{"0x10.0", "16", true},
-#	{"0x1.8", "3/2", true},
-#	{"0X1.8p4", "24", true},
-#	{"0x1.1E2", "2289/2048", true}, // E is part of hex mantissa, not exponent
-#	{"0b1.1E2", "150", true},
-#	{"0B1.1P3", "12", true},
-#	{"0o10e-2", "2/25", true},
-#	{"0O10p-3", "1", true},
-#
-#	// valid with separators
-#	// (smoke tests only - a comprehensive set of tests is in natconv_test.go)
-#	{"0b_1000/3", "8/3", true},
-#	{"0B_10_00/0x8", "1", true},
-#	{"0xdead/0B1101_1110_1010_1101", "1", true},
-#	{"0B1101_1110_1010_1101/0XD_E_A_D", "1", true},
-#	{"1_000.0", "1000", true},
-#
-#	{"0x_10.0", "16", true},
-#	{"0x1_0.0", "16", true},
-#	{"0x1.8_0", "3/2", true},
-#	{"0X1.8p0_4", "24", true},
-#	{"0b1.1_0E2", "150", true},
-#	{"0o1_0e-2", "2/25", true},
-#	{"0O_10p-3", "1", true},
-#}
-#
-#func TestRatSetString(t *testing.T) {
-#	var tests []StringTest
-#	tests = append(tests, setStringTests...)
-#	tests = append(tests, setStringTests2...)
-#
-#	for i, test := range tests {
-#		x, ok := new(Rat).SetString(test.in)
-#
-#		if ok {
-#			if !test.ok {
-#				t.Errorf("#%d SetString(%q) expected failure", i, test.in)
-#			} else if x.RatString() != test.out {
-#				t.Errorf("#%d SetString(%q) got %s want %s", i, test.in, x.RatString(), test.out)
-#			}
-#		} else {
-#			if test.ok {
-#				t.Errorf("#%d SetString(%q) expected success", i, test.in)
-#			} else if x != null {
-#				t.Errorf("#%d SetString(%q) got %p want null", i, test.in, x)
-#			}
-#		}
-#	}
-#}
-#
-#func TestRatSetStringZero(t *testing.T) {
-#	got, _ := new(Rat).SetString("0")
-#	want := new(Rat).SetInt64(0)
-#	if !reflect.DeepEqual(got, want) {
-#		t.Errorf("got %#+v, want %#+v", got, want)
-#	}
-#}
-#
-#func TestRatScan(t *testing.T) {
+const setStringTests: Array[Array] = [
+	## invalid
+	["1e", "", false],
+	["1.e", "", false],
+	["1e+14e-5", "", false],
+	["1e4.5", "", false],
+	["r", "", false],
+	["a/b", "", false],
+	["a.b", "", false],
+	["1/0", "", false],
+	["4/3/2", "", false], ## issue 17001
+	["4/3/", "", false],
+	["4/3.", "", false],
+	["4/", "", false],
+	["13e-9223372036854775808", "", false], ## CVE-2022-23772
+
+	## valid
+	["0", "0", true],
+	["-0", "0", true],
+	["1", "1", true],
+	["-1", "-1", true],
+	["1.", "1", true],
+	["1e0", "1", true],
+	["1.e1", "10", true],
+	["-0.1", "-1/10", true],
+	["-.1", "-1/10", true],
+	["2/4", "1/2", true],
+	[".25", "1/4", true],
+	["-1/5", "-1/5", true],
+	["8129567.7690E14", "812956776900000000000", true],
+	["78189e+4", "781890000", true],
+	["553019.8935e+8", "55301989350000", true],
+	["98765432109876543210987654321e-10", "98765432109876543210987654321/10000000000", true],
+	["9877861857500000E-7", "3951144743/4", true],
+	["2169378.417e-3", "2169378417/1000000", true],
+	["884243222337379604041632732738665534", "884243222337379604041632732738665534", true],
+	["53/70893980658822810696", "53/70893980658822810696", true],
+	["106/141787961317645621392", "53/70893980658822810696", true],
+	["204211327800791583.81095", "4084226556015831676219/20000", true],
+	["0e9999999999", "0", true], ## issue #16176
+]
+
+## These are not supported by fmt.Fscanf.
+const setStringTests2: Array[Array] = [
+	## invalid
+	["4/3x", "", false],
+	["0/-1", "", false],
+	["-1/-1", "", false],
+
+	## invalid with separators
+	## (smoke tests only - a comprehensive set of tests is in natconv_test.go)
+	["10_/1", "", false],
+	["_10/1", "", false],
+	["1/1__0", "", false],
+
+	## valid
+	["0b1000/3", "8/3", true],
+	["0B1000/0x8", "1", true],
+	["-010/1", "-8", true], ## 0-prefix indicates octal in this case
+	["-010.0", "-10", true],
+	["-0o10/1", "-8", true],
+	["0x10/1", "16", true],
+	["0x10/0x20", "1/2", true],
+
+	["0010", "10", true], ## 0-prefix is ignored in this case (not a fraction)
+	["0x10.0", "16", true],
+	["0x1.8", "3/2", true],
+	["0X1.8p4", "24", true],
+	["0x1.1E2", "2289/2048", true], ## E is part of hex mantissa, not exponent
+	["0b1.1E2", "150", true],
+	["0B1.1P3", "12", true],
+	["0o10e-2", "2/25", true],
+	["0O10p-3", "1", true],
+
+	## valid with separators
+	## (smoke tests only - a comprehensive set of tests is in natconv_test.go)
+	["0b_1000/3", "8/3", true],
+	["0B_10_00/0x8", "1", true],
+	["0xdead/0B1101_1110_1010_1101", "1", true],
+	["0B1101_1110_1010_1101/0XD_E_A_D", "1", true],
+	["1_000.0", "1000", true],
+
+	["0x_10.0", "16", true],
+	["0x1_0.0", "16", true],
+	["0x1.8_0", "3/2", true],
+	["0X1.8p0_4", "24", true],
+	["0b1.1_0E2", "150", true],
+	["0o1_0e-2", "2/25", true],
+	["0O_10p-3", "1", true],
+]
+
+func TestRatSetString(t: TestingT) -> void:
+	var tests: Array[Array]
+	tests.append_array(setStringTests)
+	tests.append_array(setStringTests2)
+
+	for i in len(tests):
+		var test := tests[i]
+		var x := BigRat.new()
+		var err := x.SetString(test[0])
+
+		if err == OK:
+			if not test[2]:
+				t.Error("#%d SetString(\"%s\") expected failure" % [i, test[0]])
+			elif x.RatString() != test[1]:
+				t.Error("#%d SetString(\"%s\") got %s want %s" % [i, test[0], x.RatString(), test[1]])
+		else:
+			if test[2]:
+				t.Error("#%d SetString(\"%s\") expected success" % [i, test[0]])
+
+func TestRatSetStringZero(t: TestingT) -> void:
+	var got := BigRat.new()
+	got.SetString("0")
+	var want := BigRat.new()
+	want.SetInt64(0)
+	if got._neg != want._neg or got._a != want._a or got._b != want._b:
+		t.Error("got %s, want %s" % [got, want])
+
+func TestRatScan(t: TestingT) -> void:
+	t.Error("TODO")
 #	var buf bytes.Buffer
 #	for i, test := range setStringTests {
 #		x := new(Rat)
@@ -231,32 +227,34 @@ const exponentTests := [
 #		}
 #	}
 #}
-#
-#var floatStringTests = []struct {
+
+#struct {
 #	in   string
 #	prec int
 #	out  string
-#}{
-#	{"0", 0, "0"},
-#	{"0", 4, "0.0000"},
-#	{"1", 0, "1"},
-#	{"1", 2, "1.00"},
-#	{"-1", 0, "-1"},
-#	{"0.05", 1, "0.1"},
-#	{"-0.05", 1, "-0.1"},
-#	{".25", 2, "0.25"},
-#	{".25", 1, "0.3"},
-#	{".25", 3, "0.250"},
-#	{"-1/3", 3, "-0.333"},
-#	{"-2/3", 4, "-0.6667"},
-#	{"0.96", 1, "1.0"},
-#	{"0.999", 2, "1.00"},
-#	{"0.9", 0, "1"},
-#	{".25", -1, "0"},
-#	{".55", -1, "1"},
 #}
-#
-#func TestFloatString(t *testing.T) {
+const floatStringTests: Array[Array] = [
+	["0", 0, "0"],
+	["0", 4, "0.0000"],
+	["1", 0, "1"],
+	["1", 2, "1.00"],
+	["-1", 0, "-1"],
+	["0.05", 1, "0.1"],
+	["-0.05", 1, "-0.1"],
+	[".25", 2, "0.25"],
+	[".25", 1, "0.3"],
+	[".25", 3, "0.250"],
+	["-1/3", 3, "-0.333"],
+	["-2/3", 4, "-0.6667"],
+	["0.96", 1, "1.0"],
+	["0.999", 2, "1.00"],
+	["0.9", 0, "1"],
+	[".25", -1, "0"],
+	[".55", -1, "1"],
+]
+
+func TestFloatString(t: TestingT) -> void:
+	t.Error("TODO")
 #	for i, test := range floatStringTests {
 #		x, _ := new(Rat).SetString(test.in)
 #
@@ -265,212 +263,212 @@ const exponentTests := [
 #		}
 #	}
 #}
-#
-#// Test inputs to Rat.SetString. The prefix "long:" causes the test
-#// to be skipped except in -long mode.  (The threshold is about 500us.)
-#var float64inputs = []string{
-#	// Constants plundered from strconv/testfp.txt.
-#
-#	// Table 1: Stress Inputs for Conversion to 53-bit Binary, < 1/2 ULP
-#	"5e+125",
-#	"69e+267",
-#	"999e-026",
-#	"7861e-034",
-#	"75569e-254",
-#	"928609e-261",
-#	"9210917e+080",
-#	"84863171e+114",
-#	"653777767e+273",
-#	"5232604057e-298",
-#	"27235667517e-109",
-#	"653532977297e-123",
-#	"3142213164987e-294",
-#	"46202199371337e-072",
-#	"231010996856685e-073",
-#	"9324754620109615e+212",
-#	"78459735791271921e+049",
-#	"272104041512242479e+200",
-#	"6802601037806061975e+198",
-#	"20505426358836677347e-221",
-#	"836168422905420598437e-234",
-#	"4891559871276714924261e+222",
-#
-#	// Table 2: Stress Inputs for Conversion to 53-bit Binary, > 1/2 ULP
-#	"9e-265",
-#	"85e-037",
-#	"623e+100",
-#	"3571e+263",
-#	"81661e+153",
-#	"920657e-023",
-#	"4603285e-024",
-#	"87575437e-309",
-#	"245540327e+122",
-#	"6138508175e+120",
-#	"83356057653e+193",
-#	"619534293513e+124",
-#	"2335141086879e+218",
-#	"36167929443327e-159",
-#	"609610927149051e-255",
-#	"3743626360493413e-165",
-#	"94080055902682397e-242",
-#	"899810892172646163e+283",
-#	"7120190517612959703e+120",
-#	"25188282901709339043e-252",
-#	"308984926168550152811e-052",
-#	"6372891218502368041059e+064",
-#
-#	// Table 14: Stress Inputs for Conversion to 24-bit Binary, <1/2 ULP
-#	"5e-20",
-#	"67e+14",
-#	"985e+15",
-#	"7693e-42",
-#	"55895e-16",
-#	"996622e-44",
-#	"7038531e-32",
-#	"60419369e-46",
-#	"702990899e-20",
-#	"6930161142e-48",
-#	"25933168707e+13",
-#	"596428896559e+20",
-#
-#	// Table 15: Stress Inputs for Conversion to 24-bit Binary, >1/2 ULP
-#	"3e-23",
-#	"57e+18",
-#	"789e-35",
-#	"2539e-18",
-#	"76173e+28",
-#	"887745e-11",
-#	"5382571e-37",
-#	"82381273e-35",
-#	"750486563e-38",
-#	"3752432815e-39",
-#	"75224575729e-45",
-#	"459926601011e+15",
-#
-#	// Constants plundered from strconv/atof_test.go.
-#
-#	"0",
-#	"1",
-#	"+1",
-#	"1e23",
-#	"1E23",
-#	"100000000000000000000000",
-#	"1e-100",
-#	"123456700",
-#	"99999999999999974834176",
-#	"100000000000000000000001",
-#	"100000000000000008388608",
-#	"100000000000000016777215",
-#	"100000000000000016777216",
-#	"-1",
-#	"-0.1",
-#	"-0", // NB: exception made for this input
-#	"1e-20",
-#	"625e-3",
-#
-#	// largest float64
-#	"1.7976931348623157e308",
-#	"-1.7976931348623157e308",
-#	// next float64 - too large
-#	"1.7976931348623159e308",
-#	"-1.7976931348623159e308",
-#	// the border is ...158079
-#	// borderline - okay
-#	"1.7976931348623158e308",
-#	"-1.7976931348623158e308",
-#	// borderline - too large
-#	"1.797693134862315808e308",
-#	"-1.797693134862315808e308",
-#
-#	// a little too large
-#	"1e308",
-#	"2e308",
-#	"1e309",
-#
-#	// way too large
-#	"1e310",
-#	"-1e310",
-#	"1e400",
-#	"-1e400",
-#	"long:1e400000",
-#	"long:-1e400000",
-#
-#	// denormalized
-#	"1e-305",
-#	"1e-306",
-#	"1e-307",
-#	"1e-308",
-#	"1e-309",
-#	"1e-310",
-#	"1e-322",
-#	// smallest denormal
-#	"5e-324",
-#	"4e-324",
-#	"3e-324",
-#	// too small
-#	"2e-324",
-#	// way too small
-#	"1e-350",
-#	"long:1e-400000",
-#	// way too small, negative
-#	"-1e-350",
-#	"long:-1e-400000",
-#
-#	// try to overflow exponent
-#	// [Disabled: too slow and memory-hungry with rationals.]
-#	// "1e-4294967296",
-#	// "1e+4294967296",
-#	// "1e-18446744073709551616",
-#	// "1e+18446744073709551616",
-#
-#	// https://www.exploringbinary.com/java-hangs-when-converting-2-2250738585072012e-308/
-#	"2.2250738585072012e-308",
-#	// https://www.exploringbinary.com/php-hangs-on-numeric-value-2-2250738585072011e-308/
-#	"2.2250738585072011e-308",
-#
-#	// A very large number (initially wrongly parsed by the fast algorithm).
-#	"4.630813248087435e+307",
-#
-#	// A different kind of very large number.
-#	"22.222222222222222",
-#	"long:2." + strings.Repeat("2", 4000) + "e+1",
-#
-#	// Exactly halfway between 1 and math.Nextafter(1, 2).
-#	// Round to even (down).
-#	"1.00000000000000011102230246251565404236316680908203125",
-#	// Slightly lower; still round down.
-#	"1.00000000000000011102230246251565404236316680908203124",
-#	// Slightly higher; round up.
-#	"1.00000000000000011102230246251565404236316680908203126",
-#	// Slightly higher, but you have to read all the way to the end.
-#	"long:1.00000000000000011102230246251565404236316680908203125" + strings.Repeat("0", 10000) + "1",
-#
-#	// Smallest denormal, 2^(-1022-52)
-#	"4.940656458412465441765687928682213723651e-324",
-#	// Half of smallest denormal, 2^(-1022-53)
-#	"2.470328229206232720882843964341106861825e-324",
-#	// A little more than the exact half of smallest denormal
-#	// 2^-1075 + 2^-1100.  (Rounds to 1p-1074.)
-#	"2.470328302827751011111470718709768633275e-324",
-#	// The exact halfway between smallest normal and largest denormal:
-#	// 2^-1022 - 2^-1075.  (Rounds to 2^-1022.)
-#	"2.225073858507201136057409796709131975935e-308",
-#
-#	"1152921504606846975",  //   1<<60 - 1
-#	"-1152921504606846975", // -(1<<60 - 1)
-#	"1152921504606846977",  //   1<<60 + 1
-#	"-1152921504606846977", // -(1<<60 + 1)
-#
-#	"1/3",
-#}
-#
-#// isFinite reports whether f represents a finite rational value.
-#// It is equivalent to !math.IsNan(f) && !math.IsInf(f, 0).
-#func isFinite(f float64) bool {
-#	return math.Abs(f) <= math.MaxFloat64
-#}
-#
-#func TestFloat32SpecialCases(t *testing.T) {
+
+## Test inputs to Rat.SetString. The prefix "long:" causes the test
+## to be skipped except in -long mode.  (The threshold is about 500us.)
+static var float64inputs: PackedStringArray = [
+	## Constants plundered from strconv/testfp.txt.
+
+	## Table 1: Stress Inputs for Conversion to 53-bit Binary, < 1/2 ULP
+	"5e+125",
+	"69e+267",
+	"999e-026",
+	"7861e-034",
+	"75569e-254",
+	"928609e-261",
+	"9210917e+080",
+	"84863171e+114",
+	"653777767e+273",
+	"5232604057e-298",
+	"27235667517e-109",
+	"653532977297e-123",
+	"3142213164987e-294",
+	"46202199371337e-072",
+	"231010996856685e-073",
+	"9324754620109615e+212",
+	"78459735791271921e+049",
+	"272104041512242479e+200",
+	"6802601037806061975e+198",
+	"20505426358836677347e-221",
+	"836168422905420598437e-234",
+	"4891559871276714924261e+222",
+
+	## Table 2: Stress Inputs for Conversion to 53-bit Binary, > 1/2 ULP
+	"9e-265",
+	"85e-037",
+	"623e+100",
+	"3571e+263",
+	"81661e+153",
+	"920657e-023",
+	"4603285e-024",
+	"87575437e-309",
+	"245540327e+122",
+	"6138508175e+120",
+	"83356057653e+193",
+	"619534293513e+124",
+	"2335141086879e+218",
+	"36167929443327e-159",
+	"609610927149051e-255",
+	"3743626360493413e-165",
+	"94080055902682397e-242",
+	"899810892172646163e+283",
+	"7120190517612959703e+120",
+	"25188282901709339043e-252",
+	"308984926168550152811e-052",
+	"6372891218502368041059e+064",
+
+	## Table 14: Stress Inputs for Conversion to 24-bit Binary, <1/2 ULP
+	"5e-20",
+	"67e+14",
+	"985e+15",
+	"7693e-42",
+	"55895e-16",
+	"996622e-44",
+	"7038531e-32",
+	"60419369e-46",
+	"702990899e-20",
+	"6930161142e-48",
+	"25933168707e+13",
+	"596428896559e+20",
+
+	## Table 15: Stress Inputs for Conversion to 24-bit Binary, >1/2 ULP
+	"3e-23",
+	"57e+18",
+	"789e-35",
+	"2539e-18",
+	"76173e+28",
+	"887745e-11",
+	"5382571e-37",
+	"82381273e-35",
+	"750486563e-38",
+	"3752432815e-39",
+	"75224575729e-45",
+	"459926601011e+15",
+
+	## Constants plundered from strconv/atof_test.go.
+
+	"0",
+	"1",
+	"+1",
+	"1e23",
+	"1E23",
+	"100000000000000000000000",
+	"1e-100",
+	"123456700",
+	"99999999999999974834176",
+	"100000000000000000000001",
+	"100000000000000008388608",
+	"100000000000000016777215",
+	"100000000000000016777216",
+	"-1",
+	"-0.1",
+	"-0", ## NB: exception made for this input
+	"1e-20",
+	"625e-3",
+
+	## largest float64
+	"1.7976931348623157e308",
+	"-1.7976931348623157e308",
+	## next float64 - too large
+	"1.7976931348623159e308",
+	"-1.7976931348623159e308",
+	## the border is ...158079
+	## borderline - okay
+	"1.7976931348623158e308",
+	"-1.7976931348623158e308",
+	## borderline - too large
+	"1.797693134862315808e308",
+	"-1.797693134862315808e308",
+
+	## a little too large
+	"1e308",
+	"2e308",
+	"1e309",
+
+	## way too large
+	"1e310",
+	"-1e310",
+	"1e400",
+	"-1e400",
+	"long:1e400000",
+	"long:-1e400000",
+
+	## denormalized
+	"1e-305",
+	"1e-306",
+	"1e-307",
+	"1e-308",
+	"1e-309",
+	"1e-310",
+	"1e-322",
+	## smallest denormal
+	"5e-324",
+	"4e-324",
+	"3e-324",
+	## too small
+	"2e-324",
+	## way too small
+	"1e-350",
+	"long:1e-400000",
+	## way too small, negative
+	"-1e-350",
+	"long:-1e-400000",
+
+	## try to overflow exponent
+	## [Disabled: too slow and memory-hungry with rationals.]
+	#"1e-4294967296",
+	#"1e+4294967296",
+	#"1e-18446744073709551616",
+	#"1e+18446744073709551616",
+
+	## https://www.exploringbinary.com/java-hangs-when-converting-2-2250738585072012e-308/
+	"2.2250738585072012e-308",
+	## https://www.exploringbinary.com/php-hangs-on-numeric-value-2-2250738585072011e-308/
+	"2.2250738585072011e-308",
+
+	## A very large number (initially wrongly parsed by the fast algorithm).
+	"4.630813248087435e+307",
+
+	## A different kind of very large number.
+	"22.222222222222222",
+	"long:2." + "2".repeat(4000) + "e+1",
+
+	## Exactly halfway between 1 and math.Nextafter(1, 2).
+	## Round to even (down).
+	"1.00000000000000011102230246251565404236316680908203125",
+	## Slightly lower; still round down.
+	"1.00000000000000011102230246251565404236316680908203124",
+	## Slightly higher; round up.
+	"1.00000000000000011102230246251565404236316680908203126",
+	## Slightly higher, but you have to read all the way to the end.
+	"long:1.00000000000000011102230246251565404236316680908203125" + "0".repeat(10000) + "1",
+
+	## Smallest denormal, 2^(-1022-52)
+	"4.940656458412465441765687928682213723651e-324",
+	## Half of smallest denormal, 2^(-1022-53)
+	"2.470328229206232720882843964341106861825e-324",
+	## A little more than the exact half of smallest denormal
+	## 2^-1075 + 2^-1100.  (Rounds to 1p-1074.)
+	"2.470328302827751011111470718709768633275e-324",
+	## The exact halfway between smallest normal and largest denormal:
+	## 2^-1022 - 2^-1075.  (Rounds to 2^-1022.)
+	"2.225073858507201136057409796709131975935e-308",
+
+	"1152921504606846975",  ##   1<<60 - 1
+	"-1152921504606846975", ## -(1<<60 - 1)
+	"1152921504606846977",  ##   1<<60 + 1
+	"-1152921504606846977", ## -(1<<60 + 1)
+
+	"1/3",
+]
+
+## isFinite reports whether f represents a finite rational value.
+## It is equivalent to !math.IsNan(f) && !math.IsInf(f, 0).
+func isFinite(f: float) -> bool:
+	return absf(f) <= FloatTest.float64_constant(0x7fefffffffffffff)
+
+func TestFloat32SpecialCases(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, input := range float64inputs {
 #		if strings.HasPrefix(input, "long:") {
 #			if !*long {
@@ -525,8 +523,9 @@ const exponentTests := [
 #		}
 #	}
 #}
-#
-#func TestFloat64SpecialCases(t *testing.T) {
+
+func TestFloat64SpecialCases(t: TestingT) -> void:
+	t.Error("TODO")
 #	for _, input := range float64inputs {
 #		if strings.HasPrefix(input, "long:") {
 #			if !*long {
@@ -580,46 +579,41 @@ const exponentTests := [
 #		}
 #	}
 #}
-#
-#func TestIssue31184(t *testing.T) {
-#	var x Rat
-#	for _, want := range []string{
-#		"-213.090",
-#		"8.192",
-#		"16.000",
-#	} {
-#		x.SetString(want)
-#		got := x.FloatString(3)
-#		if got != want {
-#			t.Errorf("got %s, want %s", got, want)
-#		}
-#	}
-#}
-#
-#func TestIssue45910(t *testing.T) {
-#	var x Rat
-#	for _, test := range []struct {
-#		input string
-#		want  bool
-#	}{
-#		{"1e-1000001", false},
-#		{"1e-1000000", true},
-#		{"1e+1000000", true},
-#		{"1e+1000001", false},
-#
-#		{"0p1000000000000", true},
-#		{"1p-10000001", false},
-#		{"1p-10000000", true},
-#		{"1p+10000000", true},
-#		{"1p+10000001", false},
-#		{"1.770p02041010010011001001", false}, // test case from issue
-#	} {
-#		_, got := x.SetString(test.input)
-#		if got != test.want {
-#			t.Errorf("SetString(%s) got ok = %v; want %v", test.input, got, test.want)
-#		}
-#	}
-#}
+
+func TestIssue31184(t: TestingT) -> void:
+	var x := BigRat.new()
+	for want in [
+		"-213.090",
+		"8.192",
+		"16.000",
+	]:
+		x.SetString(want)
+		var got := x.FloatString(3)
+		if got != want:
+			t.Error("got %s, want %s" % [got, want])
+
+func TestIssue45910(t: TestingT) -> void:
+	var x := BigRat.new()
+	#struct {
+	#	input string
+	#	want  bool
+	#}
+	for test in [
+		["1e-1000001", false],
+		["1e-1000000", true],
+		["1e+1000000", true],
+		["1e+1000001", false],
+
+		["0p1000000000000", true],
+		["1p-10000001", false],
+		["1p-10000000", true],
+		["1p+10000000", true],
+		["1p+10000001", false],
+		["1.770p02041010010011001001", false], ## test case from issue
+	]:
+		var got := x.SetString(test[0]) == OK
+		if got != test[1]:
+			t.Error("SetString(%s) got ok = %s; want %s" % [test[0], got, test[1]])
 
 func TestFloatPrec(t: TestingT) -> void:
 	#struct {
