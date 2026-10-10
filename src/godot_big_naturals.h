@@ -49,7 +49,15 @@ struct BigNat {
 	explicit BigNat(godot::PackedInt64Array &&p_array) noexcept : array(std::move(p_array)) {}
 	BigNat(const BigNat &p_from) noexcept = default;
 	BigNat(BigNat &&p_other) noexcept = default;
-	BigNat(std::initializer_list<BigWord> p_init) noexcept : array{ reinterpret_cast<std::initializer_list<int64_t> &>(p_init) } {}
+	_FORCE_INLINE_ BigNat(std::initializer_list<BigWord> p_init) noexcept {
+		ERR_FAIL_COND(array.resize(p_init.size()) != 0);
+
+		BigWord *p = ptrw();
+		for (const BigWord &element : p_init) {
+			*p = element;
+			p++;
+		}
+	}
 	~BigNat() noexcept = default;
 
 	_FORCE_INLINE_ BigNat &operator=(const BigNat &p_other) noexcept {
