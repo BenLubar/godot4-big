@@ -59,8 +59,8 @@ Error BigRat::SetString(const godot::String &p_s) {
 		BIG_ERR_FAIL_COND_V_MSG(!s.is_empty(), ERR_INVALID_DATA, "extra data after denominator");
 		BIG_ERR_FAIL_COND_V_MSG(b.is_zero(), ERR_INVALID_DATA, "denominator cannot be zero");
 
-		_a = a;
-		_b = b;
+		_a = std::move(a);
+		_b = std::move(b);
 		_neg = neg && !_a.is_zero(); // 0 has no sign
 
 		_norm();
@@ -169,7 +169,7 @@ Error BigRat::SetString(const godot::String &p_s) {
 			a.mul(a, pow5);
 			b.setUint64(1);
 		} else {
-			b = pow5;
+			b = std::move(pow5);
 		}
 	} else {
 		b.setUint64(1);
@@ -184,8 +184,8 @@ Error BigRat::SetString(const godot::String &p_s) {
 		b.lsh(b, static_cast<uint64_t>(-exp2));
 	}
 
-	_a = a;
-	_b = b;
+	_a = std::move(a);
+	_b = std::move(b);
 	_neg = neg && !_a.is_zero(); // 0 has no sign
 
 	_norm();

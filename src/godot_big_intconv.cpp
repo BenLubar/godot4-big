@@ -45,7 +45,7 @@ Error BigInt::_scan(godot::String &s, int64_t &base) {
 	BIG_ERR_FAIL_COND_V(err != OK, err);
 
 	_neg = !abs.is_zero() && neg; // 0 has no sign
-	_abs = abs;
+	_abs = std::move(abs);
 
 	return OK;
 }

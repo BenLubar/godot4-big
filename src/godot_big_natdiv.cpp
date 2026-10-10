@@ -638,8 +638,8 @@ void BigNat::divLarge(BigNat p_u, BigNat p_v, BigNat &r_r) { // NOLINT(performan
 	const int shift = nlz(p_v[n - 1]);
 	BigNat v;
 	if (shift == 0) {
-		v = p_v;
-		r_r = p_u;
+		v = std::move(p_v);
+		r_r = std::move(p_u);
 		r_r.array.append(0);
 	} else {
 		v.array.resize(n);

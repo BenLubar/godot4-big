@@ -1,5 +1,7 @@
 #pragma once
 
+// IWYU pragma: always_keep
+
 #ifdef DEV_ENABLED
 #define DEBUG_FLOAT_ENABLED
 #define DEBUG_KARATSUBA_ENABLED

@@ -285,7 +285,7 @@ Error BigNat::scan(godot::String &s, int64_t &base, bool fracOk, int64_t &fcount
 		// Add remaining digit chunk to result.
 		z.mulAddWW(z, pow(b1, i), di);
 	}
-	*this = z;
+	*this = std::move(z);
 
 	// adjust count for fraction, if any
 	if (dp >= 0) {

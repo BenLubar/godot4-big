@@ -115,7 +115,7 @@ void BigNat::sub(BigNat p_x, BigNat p_y) { // NOLINT(performance-unnecessary-val
 	}
 	if (n == 0) {
 		// result is x
-		*this = p_x;
+		*this = std::move(p_x);
 		return;
 	}
 	// m > 0

@@ -607,8 +607,8 @@ Error BigRat::Quo(const Ref<BigRat> &p_x, const Ref<BigRat> &p_y) {
 	a.mul(p_x->_a, p_y->_b);
 	b.mul(p_y->_a, p_x->_b);
 
-	_a = a;
-	_b = b;
+	_a = std::move(a);
+	_b = std::move(b);
 	_neg = p_x->_neg != p_y->_neg;
 
 	_norm();

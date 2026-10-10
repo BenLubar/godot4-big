@@ -59,7 +59,7 @@ uint64_t BigNat::from_uvarint(const Span<uint8_t> &p_bytes) {
 		current.lsh(current, advance * 7);
 		total.add(total, current);
 		if ((p_bytes[advance] & 0x80) == 0) {
-			array = total.array;
+			array = std::move(total.array);
 			return advance + 1;
 		}
 	}
@@ -77,7 +77,7 @@ int64_t BigInt::from_uvarint(const PackedByteArray &p_bytes, int64_t p_offset) {
 	const uint64_t advance = abs.from_uvarint(Span(p_bytes.ptr() + p_offset, p_bytes.size() - p_offset));
 	if (advance != 0 && (_neg || _abs.array != abs.array)) {
 		_neg = false;
-		_abs.array = abs.array;
+		_abs.array = std::move(abs.array);
 		emit_changed();
 	}
 	return advance;
@@ -104,7 +104,7 @@ int64_t BigInt::from_svarint(const PackedByteArray &p_bytes, int64_t p_offset) {
 
 		if (_neg != neg || _abs.array != abs.array) {
 			_neg = neg;
-			_abs.array = abs.array;
+			_abs.array = std::move(abs.array);
 			emit_changed();
 		}
 	}
@@ -215,7 +215,7 @@ int64_t BigFloat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 	_neg = neg;
 	_prec = prec;
 	_exp = exp;
-	_mant = mant;
+	_mant = std::move(mant);
 
 #ifdef DEBUG_FLOAT_ENABLED
 	_validate();
@@ -247,7 +247,7 @@ int64_t BigRat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 	}
 
 	const bool neg = n->_neg;
-	const BigNat a = n->_abs;
+	BigNat a = n->_abs;
 
 	const int64_t advance_denom = n->from_uvarint(p_bytes, p_offset + advance_num);
 	if (unlikely(advance_denom == 0)) {
@@ -260,8 +260,8 @@ int64_t BigRat::from_bytes(const PackedByteArray &p_bytes, int64_t p_offset) {
 	}
 
 	_neg = neg;
-	_a = a;
-	_b = n->_abs;
+	_a = std::move(a);
+	_b = std::move(n->_abs);
 	emit_changed();
 
 	return advance_num + advance_denom;
