@@ -16,27 +16,22 @@
 class_name CalibrateTest
 extends TestSuite
 
-#var calibrate = flag.Bool("calibrate", false, "run calibration test")
-#var calibrateOnce sync.Once
-#
-func TestCalibrate(t: TestingT) -> void:
+func TestCalibrate(t0: TestingT) -> void:
 	if not calibrate:
-		t.Skip()
+		t0.Skip()
 		return
 
+	t0.Run("KaratsubaMul", computeKaratsubaThreshold)
+	t0.Run("BasicSqr", computeBasicSqrThreshold)
+	t0.Run("KaratsubaSqr", computeKaratsubaSqrThreshold)
+	t0.Run("DivRecursive", computeDivRecursiveThreshold)
+
+func computeKaratsubaThreshold(t: TestingT) -> void:
 	t.Error("TODO")
-#
-#	t.Run("KaratsubaMul", computeKaratsubaThreshold)
-#	t.Run("BasicSqr", computeBasicSqrThreshold)
-#	t.Run("KaratsubaSqr", computeKaratsubaSqrThreshold)
-#	t.Run("DivRecursive", computeDivRecursiveThreshold)
-#}
-#
-#func computeKaratsubaThreshold(t *testing.T) {
 #	set := func(n int) { karatsubaThreshold = n }
 #	computeThreshold(t, "karatsuba", set, 0, 4, 200, benchMul, 200, 8, 400)
 #}
-#
+
 #func benchMul(size int) func() {
 #	x := rndNat(size)
 #	y := rndNat(size)
@@ -45,30 +40,32 @@ func TestCalibrate(t: TestingT) -> void:
 #		z.mul(nil, x, y)
 #	}
 #}
-#
-#func computeBasicSqrThreshold(t *testing.T) {
+
+func computeBasicSqrThreshold(t: TestingT) -> void:
+	t.Error("TODO")
 #	setDuringTest(t, &karatsubaSqrThreshold, 1e9)
 #	set := func(n int) { basicSqrThreshold = n }
 #	computeThreshold(t, "basicSqr", set, 2, 1, 40, benchBasicSqr, 1, 1, 40)
 #}
-#
+
 #func benchBasicSqr(size int) func() {
 #	x := rndNat(size)
 #	var z nat
 #	return func() {
-#		// Run 100 squarings because 1 is too fast at the small sizes we consider.
-#		// Some systems don't even have precise enough clocks to measure it accurately.
+#		## Run 100 squarings because 1 is too fast at the small sizes we consider.
+#		## Some systems don't even have precise enough clocks to measure it accurately.
 #		for range 100 {
 #			z.sqr(nil, x)
 #		}
 #	}
 #}
-#
-#func computeKaratsubaSqrThreshold(t *testing.T) {
+
+func computeKaratsubaSqrThreshold(t: TestingT) -> void:
+	t.Error("TODO")
 #	set := func(n int) { karatsubaSqrThreshold = n }
 #	computeThreshold(t, "karatsubaSqr", set, 0, 4, 200, benchSqr, 200, 8, 400)
 #}
-#
+
 #func benchSqr(size int) func() {
 #	x := rndNat(size)
 #	var z nat
@@ -76,12 +73,13 @@ func TestCalibrate(t: TestingT) -> void:
 #		z.sqr(nil, x)
 #	}
 #}
-#
-#func computeDivRecursiveThreshold(t *testing.T) {
+
+func computeDivRecursiveThreshold(t: TestingT) -> void:
+	t.Error("TODO")
 #	set := func(n int) { divRecursiveThreshold = n }
 #	computeThreshold(t, "divRecursive", set, 4, 4, 200, benchDiv, 200, 8, 400)
 #}
-#
+
 #func benchDiv(size int) func() {
 #	divx := rndNat(2 * size)
 #	divy := rndNat(size)
@@ -90,9 +88,9 @@ func TestCalibrate(t: TestingT) -> void:
 #		z.div(nil, r, divx, divy)
 #	}
 #}
-#
+
 #func computeThreshold(t *testing.T, name string, set func(int), thresholdLo, thresholdStep, thresholdHi int, bench func(int) func(), sizeLo, sizeStep, sizeHi int) {
-#	// Start CSV output; wrapped in txtar framing to separate CSV from other test ouptut.
+#	## Start CSV output; wrapped in txtar framing to separate CSV from other test ouptut.
 #	fmt.Printf("-- calibrate-%s.csv --\n", name)
 #	defer fmt.Printf("-- eof --\n")
 #
@@ -101,7 +99,7 @@ func TestCalibrate(t: TestingT) -> void:
 #	fmt.Printf("cpu,%s\n", sysinfo.CPUName())
 #	fmt.Printf("calibrate,%s\n", name)
 #
-#	// Expand lists of sizes and thresholds we will test.
+#	## Expand lists of sizes and thresholds we will test.
 #	var sizes, thresholds []int
 #	for size := sizeLo; size <= sizeHi; size += sizeStep {
 #		sizes = append(sizes, size)
@@ -112,7 +110,7 @@ func TestCalibrate(t: TestingT) -> void:
 #
 #	fmt.Printf("%s\n", csv("size \\ threshold", thresholds))
 #
-#	// Track minimum time observed for each size, threshold pair.
+#	## Track minimum time observed for each size, threshold pair.
 #	times := make([][]float64, len(sizes))
 #	for i := range sizes {
 #		times[i] = make([]float64, len(thresholds))
@@ -121,11 +119,11 @@ func TestCalibrate(t: TestingT) -> void:
 #		}
 #	}
 #
-#	// For each size, run at most MaxRounds of considering every threshold.
-#	// If we run a threshold Stable times in a row without seeing more
-#	// than a 1% improvement in the observed minimum, move on to the next one.
-#	// After we run Converged rounds (not necessarily in a row)
-#	// without seeing any threshold improve by more than 1%, stop.
+#	## For each size, run at most MaxRounds of considering every threshold.
+#	## If we run a threshold Stable times in a row without seeing more
+#	## than a 1% improvement in the observed minimum, move on to the next one.
+#	## After we run Converged rounds (not necessarily in a row)
+#	## without seeing any threshold improve by more than 1%, stop.
 #	const (
 #		MaxRounds = 1600
 #		Stable    = 20
@@ -138,24 +136,24 @@ func TestCalibrate(t: TestingT) -> void:
 #		for range MaxRounds {
 #			better := false
 #			for j, threshold := range thresholds {
-#				// No point if threshold is far beyond size
+#				## No point if threshold is far beyond size
 #				if false && threshold > size+2*sizeStep {
 #					continue
 #				}
 #
-#				// BasicSqr is different from the recursive thresholds: it either applies or not,
-#				// without any question of recursive subproblems. Only try the thresholds
-#				//	size-1, size, size+1, size+2
-#				// to get two data points using basic multiplication and two using basic squaring.
-#				// This avoids gathering many redundant data points.
-#				// (The others have redundant data points as well, but for them the math is less trivial
-#				// and best not duplicated in the calibration code.)
+#				## BasicSqr is different from the recursive thresholds: it either applies or not,
+#				## without any question of recursive subproblems. Only try the thresholds
+#				##	size-1, size, size+1, size+2
+#				## to get two data points using basic multiplication and two using basic squaring.
+#				## This avoids gathering many redundant data points.
+#				## (The others have redundant data points as well, but for them the math is less trivial
+#				## and best not duplicated in the calibration code.)
 #				if false && name == "basicSqr" && (threshold < size-1 || threshold > size+3) {
 #					continue
 #				}
 #
 #				set(threshold)
-#				b() // warm up
+#				b() ## warm up
 #				b()
 #				tmin := times[i][j]
 #				for k := 0; k < Stable; k++ {
@@ -182,11 +180,11 @@ func TestCalibrate(t: TestingT) -> void:
 #		fmt.Printf("%s\n", csv(fmt.Sprint(size), times[i]))
 #	}
 #
-#	// For each size, normalize timings by the minimum achieved for that size.
+#	## For each size, normalize timings by the minimum achieved for that size.
 #	fmt.Printf("%s\n", csv("size \\ threshold", thresholds))
 #	norms := make([][]float64, len(sizes))
 #	for i, times := range times {
-#		m := min(1e100, slices.Min(times)) // make finite so divide preserves inf values
+#		m := min(1e100, slices.Min(times)) ## make finite so divide preserves inf values
 #		norms[i] = make([]float64, len(times))
 #		for j, d := range times {
 #			norms[i][j] = d / m
@@ -194,7 +192,7 @@ func TestCalibrate(t: TestingT) -> void:
 #		fmt.Printf("%s\n", csv(fmt.Sprint(sizes[i]), norms[i]))
 #	}
 #
-#	// For each threshold, compute geomean of normalized timings across all sizes.
+#	## For each threshold, compute geomean of normalized timings across all sizes.
 #	geomeans := make([]float64, len(thresholds))
 #	for j := range thresholds {
 #		p := 1.0
@@ -213,7 +211,7 @@ func TestCalibrate(t: TestingT) -> void:
 #	}
 #	fmt.Printf("%s\n", csv("geomean", geomeans))
 #
-#	// Add best threshold and smallest, largest within 10% and 5% of best.
+#	## Add best threshold and smallest, largest within 10% and 5% of best.
 #	var lo10, lo5, best, hi5, hi10 int
 #	for i, g := range geomeans {
 #		if g < geomeans[best] {
@@ -244,9 +242,9 @@ func TestCalibrate(t: TestingT) -> void:
 #
 #	set(thresholds[best])
 #}
-#
-#// csv returns a single csv line starting with name and followed by the values.
-#// Values that are float64 +infinity, denoting missing data, are replaced by an empty string.
+
+## csv returns a single csv line starting with name and followed by the values.
+## Values that are float64 +infinity, denoting missing data, are replaced by an empty string.
 #func csv[T int | float64](name string, values []T) string {
 #	line := []string{name}
 #	for _, v := range values {

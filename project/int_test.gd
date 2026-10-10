@@ -17,26 +17,29 @@ extends TestSuite
 #}
 #
 #type funZZ func(z, x, y *Int) *Int
-#type argZZ struct {
+
+#struct {
 #	z, x, y *Int
 #}
-#
-#var sumZZ = []argZZ{
-#	{NewInt(0), NewInt(0), NewInt(0)},
-#	{NewInt(1), NewInt(1), NewInt(0)},
-#	{NewInt(1111111110), NewInt(123456789), NewInt(987654321)},
-#	{NewInt(-1), NewInt(-1), NewInt(0)},
-#	{NewInt(864197532), NewInt(-123456789), NewInt(987654321)},
-#	{NewInt(-1111111110), NewInt(-123456789), NewInt(-987654321)},
+static var sumZZ: Array[Array] = [
+	[BigInt.NewInt(0), BigInt.NewInt(0), BigInt.NewInt(0)],
+	[BigInt.NewInt(1), BigInt.NewInt(1), BigInt.NewInt(0)],
+	[BigInt.NewInt(1111111110), BigInt.NewInt(123456789), BigInt.NewInt(987654321)],
+	[BigInt.NewInt(-1), BigInt.NewInt(-1), BigInt.NewInt(0)],
+	[BigInt.NewInt(864197532), BigInt.NewInt(-123456789), BigInt.NewInt(987654321)],
+	[BigInt.NewInt(-1111111110), BigInt.NewInt(-123456789), BigInt.NewInt(-987654321)],
+]
+
+#struct {
+#	z, x, y *Int
 #}
-#
-#var prodZZ = []argZZ{
-#	{NewInt(0), NewInt(0), NewInt(0)},
-#	{NewInt(0), NewInt(1), NewInt(0)},
-#	{NewInt(1), NewInt(1), NewInt(1)},
-#	{NewInt(-991 * 991), NewInt(991), NewInt(-991)},
-#	// TODO(gri) add larger products
-#}
+static var prodZZ: Array[Array] = [
+	[BigInt.NewInt(0), BigInt.NewInt(0), BigInt.NewInt(0)],
+	[BigInt.NewInt(0), BigInt.NewInt(1), BigInt.NewInt(0)],
+	[BigInt.NewInt(1), BigInt.NewInt(1), BigInt.NewInt(1)],
+	[BigInt.NewInt(-991 * 991), BigInt.NewInt(991), BigInt.NewInt(-991)],
+	## TODO(gri) add larger products
+]
 
 func TestSignZ(t: TestingT) -> void:
 	t.Error("TODO")
@@ -65,22 +68,17 @@ func TestSetZ(t: TestingT) -> void:
 #}
 
 func TestAbsZ(t: TestingT) -> void:
-	t.Error("TODO")
-#	var zero Int
-#	for _, a := range sumZZ {
-#		var z Int
-#		z.Abs(a.z)
-#		var e Int
-#		e.Set(a.z)
-#		if e.Cmp(&zero) < 0 {
-#			e.Sub(&zero, &e)
-#		}
-#		if z.Cmp(&e) != 0 {
-#			t.Errorf("got z = %v; want %v", z, e)
-#		}
-#	}
-#}
-#
+	var zero := BigInt.new()
+	for a in sumZZ:
+		var z := BigInt.new()
+		z.Abs(a[0])
+		var e := BigInt.new()
+		e.Set(a[0])
+		if e.Cmp(zero) < 0:
+			e.Sub(zero, e)
+		if z.Cmp(e) != 0:
+			t.Error("got z = %s; want %s" % [z, e])
+
 #func testFunZZ(t *testing.T, msg string, f funZZ, a argZZ) {
 #	var z Int
 #	f(&z, a.x, a.y)

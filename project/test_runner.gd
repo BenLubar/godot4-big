@@ -41,7 +41,7 @@ func _ready() -> void:
 		elif arg == "--calibrate":
 			TestSuite.calibrate = true
 		elif arg.begins_with("--run="):
-			TestSuite.run_regexp = RegEx.create_from_string(arg.trim_prefix("--run="))
+			TestSuite.run_matcher = TestMatcher.splitRegexp(arg.trim_prefix("--run="))
 
 	_suites.append_array(suite_scripts.map(func(s: Script) -> TestSuite: return s.new()))
 
@@ -116,7 +116,7 @@ func _process(_delta: float) -> void:
 func _run_test_or_example(i: int) -> void:
 	if i < len(_queued_tests):
 		var test := _queued_tests[i]
-		if TestSuite.run_regexp and not TestSuite.run_regexp.search(test.name):
+		if TestSuite.run_matcher and not TestSuite.run_matcher.matches(test.name.split("/")):
 			_mutex.lock()
 			test.skipped = true
 			_mutex.unlock()
@@ -130,7 +130,7 @@ func _run_test_or_example(i: int) -> void:
 		_on_test_finished.call_deferred(i)
 	else:
 		var example := _queued_examples[i - len(_queued_tests)]
-		if TestSuite.run_regexp and not TestSuite.run_regexp.search(example.name):
+		if TestSuite.run_matcher and not TestSuite.run_matcher.matches(example.name.split("/")):
 			_mutex.lock()
 			example.skipped = true
 			_mutex.unlock()
@@ -144,7 +144,7 @@ func _run_test_or_example(i: int) -> void:
 
 func _run_benchmark(i: int) -> void:
 	var benchmark := _queued_benchmarks[i]
-	if TestSuite.run_regexp and not TestSuite.run_regexp.search(benchmark.name):
+	if TestSuite.run_matcher and not TestSuite.run_matcher.matches(benchmark.name.split("/")):
 		_mutex.lock()
 		benchmark.skipped = true
 		_mutex.unlock()
@@ -191,5 +191,13 @@ func _on_example_finished(i: int) -> void:
 	# TODO
 
 func _on_benchmark_finished(i: int) -> void:
-	var _benchmark := _queued_benchmarks[i]
+	var benchmark := _queued_benchmarks[i]
+	_mutex.lock()
+	if benchmark.skipped:
+		benchmark.tree_item.set_text(1, tr(&"SKIP"))
+		benchmark.tree_item.set_custom_color(1, Color.CYAN)
+	else:
+		benchmark.tree_item.set_text(1, tr(&"%dns") % [benchmark.benchmark_result._total_time * 1000 / benchmark.benchmark_result.N])
+		benchmark.tree_item.clear_custom_color(1)
+	_mutex.unlock()
 	# TODO

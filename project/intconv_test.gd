@@ -220,12 +220,13 @@ func TestSetString(t: TestingT) -> void:
 #		}
 #	}
 #}
-#
-#var formatTests = []struct {
+
+#struct {
 #	input  string
 #	format string
 #	output string
-#}{
+#}
+const formatTests: Array[Array] = [
 #	{"<nil>", "%x", "<nil>"},
 #	{"<nil>", "%#x", "<nil>"},
 #	{"<nil>", "%#y", "%!y(big.Int=<nil>)"},
@@ -372,38 +373,159 @@ func TestSetString(t: TestingT) -> void:
 #	{"0", "%.d", ""},
 #	{"0", "%.0d", ""},
 #	{"0", "%3.d", ""},
-#}
+]
 
 func TestFormat(t: TestingT) -> void:
-	t.Error("TODO")
-#	testFormat(t)
-#}
-#
-#func testFormat(t testing.TB) {
-#	for i, test := range formatTests {
-#		var x *Int
-#		if test.input != "<nil>" {
-#			var ok bool
-#			x, ok = new(Int).SetString(test.input, 0)
-#			if !ok {
-#				t.Errorf("#%d failed reading input %s", i, test.input)
-#			}
-#		}
-#		output := fmt.Sprintf(test.format, x)
-#		if output != test.output {
-#			t.Errorf("#%d got %q; want %q, {%q, %q, %q}", i, output, test.output, test.input, test.format, test.output)
-#		}
-#	}
-#}
-#
-#func BenchmarkFormat(b *testing.B) {
-#	// This benchmark is very rough but it's good enough to show
-#	// https://go.dev/issue/71465 results.
-#	for range b.N {
-#		testFormat(b)
-#	}
-#}
-#
+	testFormat(t)
+
+static func sprintf(format: String, x: BigInt) -> String:
+	## PORT: since Godot doesn't have interfaces like fmt.Formatter, let's just fake it for this test
+	## (ported from (*big.Int).Format)
+	assert(format[0] == '%')
+	format = format.substr(1)
+
+	var sharp := false
+	var zero := false
+	var plus := false
+	var minus := false
+	var space := false
+	var width := 0
+	var widthSet := false
+	var precision := 0
+	var precisionSet := false
+	var ch := format[-1]
+
+	var widthAndPrecision := format.substr(0, len(format) - 1).lstrip("#0+- ")
+	for i in len(format) - 1 - len(widthAndPrecision):
+		match format[i]:
+			'#':
+				sharp = true
+			'0':
+				zero = true
+			'+':
+				plus = true
+			'-':
+				minus = true
+			' ':
+				space = true
+			_:
+				assert(false)
+
+	var wp := widthAndPrecision.split(".")
+	widthSet = not wp[0].is_empty()
+	width = wp[0].to_int()
+	if len(wp) == 2:
+		precisionSet = true
+		precision = wp[1].to_int()
+
+	## Format implements [fmt.Formatter]. It accepts the formats
+	## 'b' (binary), 'o' (octal with 0 prefix), 'O' (octal with 0o prefix),
+	## 'd' (decimal), 'x' (lowercase hexadecimal), and
+	## 'X' (uppercase hexadecimal).
+	## Also supported are the full suite of package fmt's format
+	## flags for integral types, including '+' and ' ' for sign
+	## control, '#' for leading zero in octal and for hexadecimal,
+	## a leading "0x" or "0X" for "%#x" and "%#X" respectively,
+	## specification of minimum digits precision, output field
+	## width, space or zero padding, and '-' for left or right
+	## justification.
+
+	## determine base
+	var base := 0
+	match ch:
+		'b':
+			base = 2
+		'o', 'O':
+			base = 8
+		'd', 's', 'v':
+			base = 10
+		'x', 'X':
+			base = 16
+		_:
+			## unknown format
+			return "%!" + ch + "(big.Int=" + sprintf("%v", x) + ")"
+
+	if x == null:
+		return "<nil>"
+
+	## determine sign character
+	var sign := ""
+	if x._neg:
+		sign = "-"
+	elif plus: ## supersedes ' ' when both specified
+		sign = "+"
+	elif space:
+		sign = " "
+
+	## determine prefix characters for indicating output base
+	var prefix := ""
+	if sharp:
+		match format[-1]:
+			'b': ## binary
+				prefix = "0b"
+			'o': ## octal
+				prefix = "0"
+			'x': ## hexadecimal
+				prefix = "0x"
+			'X':
+				prefix = "0X"
+	if ch == 'O':
+		prefix = "0o"
+
+	var abs := BigInt.new()
+	abs.Abs(x)
+	var digits := abs.String(base)
+	if ch == 'X':
+		digits = digits.to_upper()
+
+	## number of characters for the three classes of number padding
+	var left := 0  ## space characters to left of digits for right justification ("%8d")
+	var zeros := 0 ## zero characters (actually cs[0]) as left-most digits ("%.8d")
+	var right := 0 ## space characters to right of digits for left justification ("%-8d")
+
+	## determine number padding from precision: the least number of digits to output
+	if precisionSet:
+		if len(digits) < precision:
+			zeros = precision - len(digits) ## count of zero padding
+		elif digits == "0" and precision == 0:
+			return "" ## print nothing if zero value (x == 0) and zero precision ("." or ".0")
+
+	## determine field pad from width: the least number of characters to output
+	var length := len(sign) + len(prefix) + zeros + len(digits)
+	if widthSet and length < width: ## pad as specified
+		var d := width - length
+		if minus:
+			## pad on the right with spaces; supersedes '0' when both specified
+			right = d
+		elif zero and not precisionSet:
+			## pad with zeros unless precision also specified
+			zeros = d
+		else:
+			## pad on the left with spaces
+			left = d
+
+	## print number as [left pad][sign][prefix][zero pad][digits][right pad]
+	return " ".repeat(left) + sign + prefix + "0".repeat(zeros) + digits + " ".repeat(right)
+
+static func testFormat(t: TestingT) -> void:
+	for i in len(formatTests):
+		var test := formatTests[i]
+		var x: BigInt
+		if test[0] != "<nil>":
+			x = BigInt.new()
+			var err := x.SetString(test[0], 0)
+			if err != OK:
+				t.Error("#%d failed reading input %s" % [i, test[0]])
+		var output := sprintf(test[1], x)
+		if output != test[2]:
+			t.Error("#%d got \"%s\"; want \"%s\", {\"%s\", \"%s\", \"%s\"}" % [i, output, test[2], test[0], test[1], test[2]])
+
+func BenchmarkFormat(b: TestingB) -> void:
+	## This benchmark is very rough but it's good enough to show
+	## https://go.dev/issue/71465 results.
+	for i in b.N:
+		testFormat(null)
+
 #type scanTest struct {
 #	input     string
 #	format    string

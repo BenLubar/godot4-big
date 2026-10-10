@@ -17,7 +17,7 @@ func TestMaxBase(t: TestingT) -> void:
 ## log2 computes the integer binary logarithm of x.
 ## The result is the integer n for which 2^n <= x < 2^(n+1).
 ## If x == 0, the result is -1.
-func log2(x: int) -> int:
+static func log2(x: int) -> int:
 	if x < 0:
 		return 63
 	if x == 0:
@@ -43,7 +43,7 @@ func log2(x: int) -> int:
 		n += 1
 	return n
 
-func itoa(x: BigInt, base: int) -> String:
+static func itoa(x: BigInt, base: int) -> String:
 	## special cases
 	assert(base >= 2, "illegal base")
 	if (x._abs.is_empty()):
@@ -330,10 +330,6 @@ func TestScanPi(t: TestingT) -> void:
 	if err != OK:
 		t.Error("scanning pi: %s" % [error_string(err)])
 
-	if true:
-		t.Skip() ## PORT: FIXME: division seems to be broken right now (crash)
-		return
-
 	var s := x.String(10)
 	if s != pi:
 		t.Error("scanning pi: got %s" % [s])
@@ -360,36 +356,28 @@ func BenchmarkScan(b0: TestingB) -> void:
 				for i in b.N:
 					z.SetString(s, base))
 
-#func BenchmarkString(b *testing.B) {
-#	stk := getStack()
-#	defer stk.free()
-#
-#	const x = 10
-#	for _, base := range []int{2, 8, 10, 16} {
-#		for _, y := range []Word{10, 100, 1000, 10000, 100000} {
-#			b.Run(fmt.Sprintf("%d/Base%d", y, base), func(b *testing.B) {
-#				b.StopTimer()
-#				var z nat
-#				z = z.expWW(stk, x, y)
-#				z.utoa(base) // warm divisor cache
-#				b.StartTimer()
-#
-#				for i := 0; i < b.N; i++ {
-#					_ = z.utoa(base)
-#				}
-#			})
-#		}
-#	}
-#}
+func BenchmarkString(b0: TestingB) -> void:
+	const x := 10
+	for base in [2, 8, 10, 16]:
+		for y in [10, 100, 1000, 10000, 100000]:
+			b0.Run("%d/Base%d" % [y, base], func(b: TestingB) -> void:
+				b.StopTimer()
+				var z := BigInt.new()
+				z.Exp(BigInt.NewInt(x), BigInt.NewInt(y))
+				z.String(base) ## warm divisor cache
+				b.StartTimer()
+
+				for i in b.N:
+					z.String(base))
 
 func BenchmarkLeafSize(b0: TestingB) -> void:
 	for n in 16:
-		b0.Run(str(n), LeafSizeHelper.bind(10, n))
+		b0.Run(str(n), leafSizeHelper.bind(10, n))
 	## Try some large lengths
 	for n in [32, 64]:
-		b0.Run(str(n), LeafSizeHelper.bind(10, n))
+		b0.Run(str(n), leafSizeHelper.bind(10, n))
 
-func LeafSizeHelper(b: TestingB, base: int, size: int) -> void:
+static func leafSizeHelper(b: TestingB, base: int, size: int) -> void:
 	b.StopTimer()
 	var originalLeafSize := BigInt._test_override_leaf_size(size)
 	b.StartTimer()

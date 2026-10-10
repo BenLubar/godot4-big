@@ -279,6 +279,7 @@ Error BigNat::scanExponent(godot::String &s, bool base2ok, bool sepOk, int64_t &
 	BIG_ERR_FAIL_COND_V_MSG(!hasDigits, ERR_INVALID_DATA, "exponent has no digits");
 
 	// Godot doesn't have an integer parsing function with error checking, so let's use libc:
+	digits.append('\0');
 	errno = 0;
 #if __WORDSIZE == 64
 	static_assert(sizeof(int64_t) == sizeof(long));

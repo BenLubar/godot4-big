@@ -223,6 +223,21 @@ int32_t BigFloat::_get_exp() const {
 	BigNat::bits_Div(p_hi, p_lo, p_y, quo, rem);
 	return { static_cast<int64_t>(quo), static_cast<int64_t>(rem) };
 }
+[[nodiscard]] static uint64_t reciprocalWord_bind(uint64_t p_d1) {
+	return BigNat::reciprocalWord(p_d1);
+}
+[[nodiscard]] static PackedInt64Array divWW_bind(uint64_t p_x1, uint64_t p_x0, uint64_t p_y, uint64_t p_m) {
+	uint64_t quo;
+	uint64_t rem;
+	BigNat::divWW(p_x1, p_x0, p_y, p_m, quo, rem);
+	return { static_cast<int64_t>(quo), static_cast<int64_t>(rem) };
+}
+[[nodiscard]] static PackedInt64Array mulAddWWW_bind(uint64_t p_x, uint64_t p_y, uint64_t p_c) {
+	uint64_t z1;
+	uint64_t z0;
+	BigNat::mulAddWWW(p_x, p_y, p_c, z1, z0);
+	return { static_cast<int64_t>(z1), static_cast<int64_t>(z0) };
+}
 static void test_disable_error_printing_bind([[maybe_unused]] bool p_disable) {
 #ifdef DEBUG_ENABLED
 	BigNat::is_test_suite = p_disable;
@@ -331,12 +346,16 @@ void BigInt::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_expSlow", "x", "y", "m"), &BigInt::_expSlow);
 	ClassDB::bind_method(D_METHOD("_subMod2N", "x", "y", "n"), &BigInt::_subMod2N);
 	ClassDB::bind_method(D_METHOD("_mulRangeUnsigned", "a", "b"), &BigInt::_mulRangeUnsigned);
+	ClassDB::bind_method(D_METHOD("_sticky", "i"), &BigInt::_sticky);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_probablyPrimeLucas", "x"), &probablyPrimeLucas_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_probablyPrimeMillerRabin", "x", "reps", "force2"), &probablyPrimeMillerRabin_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Add", "x", "y", "carry"), &bits_Add_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Sub", "x", "y", "borrow"), &bits_Sub_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Mul", "x", "y"), &bits_Mul_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_bits_Div", "hi", "lo", "y"), &bits_Div_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_reciprocalWord", "d1"), &reciprocalWord_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_divWW", "x1", "x0", "y", "m"), &divWW_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_mulAddWWW", "x", "y", "c"), &mulAddWWW_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_mul", "karatsuba_threshold", "x", "y"), &BigNat::test_mul_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_sqr", "basic_sqr_threshold", "karatsuba_sqr_threshold", "x"), &BigNat::test_sqr_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_div", "div_recursive_threshold", "u", "v"), &BigNat::test_div_bind);
@@ -441,6 +460,8 @@ PackedInt64Array BigRat::_get_a() const {
 	return _a.array;
 }
 void BigRat::_set_b(const PackedInt64Array &p_b) {
+	ERR_FAIL_COND_MSG(p_b.is_empty(), "division by zero");
+
 	if (_b.array != p_b) {
 		_b.array = p_b;
 		emit_changed();

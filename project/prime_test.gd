@@ -161,7 +161,7 @@ func TestLucasPseudoprimes(t: TestingT) -> void:
 		# https://oeis.org/A217719
 		[989, 3239, 5777, 10877, 27971, 29681, 30739, 31631, 39059, 72389, 73919, 75077])
 
-func testPseudoprimes(t: TestingT, name: String, cond: Callable, want: PackedInt64Array) -> void:
+static func testPseudoprimes(t: TestingT, name: String, cond: Callable, want: PackedInt64Array) -> void:
 	var n: PackedInt64Array = [1]
 	for i in range(3, 100000, 2):
 		n[0] = i

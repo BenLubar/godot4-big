@@ -631,13 +631,13 @@ func TestSetFloat64NonFinite(t: TestingT) -> void:
 #	return true
 #}
 
-func isEven32(f: float) -> bool:
+static func isEven32(f: float) -> bool:
 	var buf: PackedByteArray
 	buf.resize(4)
 	buf.encode_float(0, f)
 	return (buf[0] & 1) == 0
 
-func isEven64(f: float) -> bool:
+static func isEven64(f: float) -> bool:
 	var buf: PackedByteArray
 	buf.resize(8)
 	buf.encode_double(0, f)

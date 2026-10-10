@@ -8,138 +8,112 @@
 class_name ExampleTest
 extends TestSuite
 
-#func ExampleRat_SetString() {
-#	r := new(big.Rat)
-#	r.SetString("355/113")
-#	fmt.Println(r.FloatString(3))
-#	// Output: 3.142
-#}
-#
-#func ExampleInt_SetString() {
-#	i := new(big.Int)
-#	i.SetString("644", 8) // octal
-#	fmt.Println(i)
-#	// Output: 420
-#}
-#
-#func ExampleFloat_SetString() {
-#	f := new(big.Float)
-#	f.SetString("3.14159")
-#	fmt.Println(f)
-#	// Output: 3.14159
-#}
-#
-#func ExampleRat_Scan() {
-#	// The Scan function is rarely used directly;
-#	// the fmt package recognizes it as an implementation of fmt.Scanner.
-#	r := new(big.Rat)
-#	_, err := fmt.Sscan("1.5000", r)
-#	if err != nil {
-#		log.Println("error scanning value:", err)
-#	} else {
-#		fmt.Println(r)
-#	}
-#	// Output: 3/2
-#}
-#
-#func ExampleInt_Scan() {
-#	// The Scan function is rarely used directly;
-#	// the fmt package recognizes it as an implementation of fmt.Scanner.
-#	i := new(big.Int)
-#	_, err := fmt.Sscan("18446744073709551617", i)
-#	if err != nil {
-#		log.Println("error scanning value:", err)
-#	} else {
-#		fmt.Println(i)
-#	}
-#	// Output: 18446744073709551617
-#}
-#
-#func ExampleFloat_Scan() {
-#	// The Scan function is rarely used directly;
-#	// the fmt package recognizes it as an implementation of fmt.Scanner.
-#	f := new(big.Float)
-#	_, err := fmt.Sscan("1.19282e99", f)
-#	if err != nil {
-#		log.Println("error scanning value:", err)
-#	} else {
-#		fmt.Println(f)
-#	}
-#	// Output: 1.19282e+99
-#}
-#
-#// This example demonstrates how to use big.Int to compute the smallest
-#// Fibonacci number with 100 decimal digits and to test whether it is prime.
-#func Example_fibonacci() {
-#	// Initialize two big ints with the first two numbers in the sequence.
-#	a := big.NewInt(0)
-#	b := big.NewInt(1)
-#
-#	// Initialize limit as 10^99, the smallest integer with 100 digits.
-#	var limit big.Int
-#	limit.Exp(big.NewInt(10), big.NewInt(99), nil)
-#
-#	// Loop while a is smaller than 1e100.
-#	for a.Cmp(&limit) < 0 {
-#		// Compute the next Fibonacci number, storing it in a.
-#		a.Add(a, b)
-#		// Swap a and b so that b is the next number in the sequence.
-#		a, b = b, a
-#	}
-#	fmt.Println(a) // 100-digit Fibonacci number
-#
-#	// Test a for primality.
-#	// (ProbablyPrimes' argument sets the number of Miller-Rabin
-#	// rounds to be performed. 20 is a good value.)
-#	fmt.Println(a.ProbablyPrime(20))
-#
-#	// Output:
-#	// 1344719667586153181419716641724567886890850696275767987106294472017884974410332069524504824747437757
-#	// false
-#}
-#
-#// This example shows how to use big.Float to compute the square root of 2 with
-#// a precision of 200 bits, and how to print the result as a decimal number.
-#func Example_sqrt2() {
-#	// We'll do computations with 200 bits of precision in the mantissa.
-#	const prec = 200
-#
-#	// Compute the square root of 2 using Newton's Method. We start with
-#	// an initial estimate for sqrt(2), and then iterate:
-#	//     x_{n+1} = 1/2 * ( x_n + (2.0 / x_n) )
-#
-#	// Since Newton's Method doubles the number of correct digits at each
-#	// iteration, we need at least log_2(prec) steps.
-#	steps := int(math.Log2(prec))
-#
-#	// Initialize values we need for the computation.
-#	two := new(big.Float).SetPrec(prec).SetInt64(2)
-#	half := new(big.Float).SetPrec(prec).SetFloat64(0.5)
-#
-#	// Use 1 as the initial estimate.
-#	x := new(big.Float).SetPrec(prec).SetInt64(1)
-#
-#	// We use t as a temporary variable. There's no need to set its precision
-#	// since big.Float values with unset (== 0) precision automatically assume
-#	// the largest precision of the arguments when used as the result (receiver)
-#	// of a big.Float operation.
-#	t := new(big.Float)
-#
-#	// Iterate.
-#	for i := 0; i <= steps; i++ {
-#		t.Quo(two, x)  // t = 2.0 / x_n
-#		t.Add(x, t)    // t = x_n + (2.0 / x_n)
-#		x.Mul(half, t) // x_{n+1} = 0.5 * t
-#	}
-#
-#	// We can use the usual fmt.Printf verbs since big.Float implements fmt.Formatter
-#	fmt.Printf("sqrt(2) = %.50f\n", x)
-#
-#	// Print the error between 2 and x*x.
-#	t.Mul(x, x) // t = x*x
-#	fmt.Printf("error = %e\n", t.Sub(two, t))
-#
-#	// Output:
-#	// sqrt(2) = 1.41421356237309504880168872420969807856967187537695
-#	// error = 0.000000e+00
-#}
+func ExampleRat_SetString(e: TestingE) -> void:
+	var r := BigRat.new()
+	r.SetString("355/113")
+	e.Output(r.FloatString(3))
+
+const ExampleRat_SetString_expected_output: PackedStringArray = [
+	"3.142",
+]
+
+func ExampleInt_SetString(e: TestingE) -> void:
+	var i := BigInt.new()
+	i.SetString("644", 8) ## octal
+	e.Output(i)
+
+const ExampleInt_SetString_expected_output: PackedStringArray = [
+	"420",
+]
+
+func ExampleFloat_SetString(e: TestingE) -> void:
+	var f := BigFloat.new()
+	f.SetString("3.14159")
+	e.Output(f)
+
+const ExampleFloat_SetString_expected_output: PackedStringArray = [
+	"3.14159",
+]
+
+## This example demonstrates how to use big.Int to compute the smallest
+## Fibonacci number with 100 decimal digits and to test whether it is prime.
+func Example_fibonacci(e: TestingE) -> void:
+	## Initialize two big ints with the first two numbers in the sequence.
+	var a := BigInt.NewInt(0)
+	var b := BigInt.NewInt(1)
+
+	## Initialize limit as 10^99, the smallest integer with 100 digits.
+	var limit := BigInt.new()
+	limit.Exp(BigInt.NewInt(10), BigInt.NewInt(99))
+
+	## Loop while a is smaller than 1e100.
+	while a.Cmp(limit) < 0:
+		## Compute the next Fibonacci number, storing it in a.
+		a.Add(a, b)
+		## Swap a and b so that b is the next number in the sequence.
+		var temp := a
+		a = b
+		b = temp
+	e.Output(a)
+
+	## Test a for primality.
+	## (ProbablyPrimes' argument sets the number of Miller-Rabin
+	## rounds to be performed. 20 is a good value.)
+	e.Output(a.ProbablyPrime(20))
+
+const Example_fibonacci_expected_output: PackedStringArray = [
+	"1344719667586153181419716641724567886890850696275767987106294472017884974410332069524504824747437757",
+	"false",
+]
+
+## This example shows how to use big.Float to compute the square root of 2 with
+## a precision of 200 bits, and how to print the result as a decimal number.
+func Example_sqrt2(e: TestingE) -> void:
+	## We'll do computations with 200 bits of precision in the mantissa.
+	const prec := 200
+
+	## Compute the square root of 2 using Newton's Method. We start with
+	## an initial estimate for sqrt(2), and then iterate:
+	##     x_{n+1} = 1/2 * ( x_n + (2.0 / x_n) )
+
+	## Since Newton's Method doubles the number of correct digits at each
+	## iteration, we need at least log_2(prec) steps.
+	var steps := int(log(prec) / log(2)) + 1
+
+	## Initialize values we need for the computation.
+	var two := BigFloat.new()
+	two.SetPrec(prec)
+	two.SetInt64(2)
+	var half := BigFloat.new()
+	half.SetPrec(prec)
+	half.SetFloat64(0.5)
+
+	## Use 1 as the initial estimate.
+	var x := BigFloat.new()
+	x.SetPrec(prec)
+	x.SetInt64(1)
+
+	## We use t as a temporary variable. There's no need to set its precision
+	## since big.Float values with unset (== 0) precision automatically assume
+	## the largest precision of the arguments when used as the result (receiver)
+	## of a big.Float operation.
+	var t := BigFloat.new()
+
+	## Iterate.
+	for i in steps:
+		t.Quo(two, x)  ## t = 2.0 / x_n
+		t.Add(x, t)    ## t = x_n + (2.0 / x_n)
+		x.Mul(half, t) ## x_{n+1} = 0.5 * t
+
+	## We can use the usual fmt.Printf verbs since big.Float implements fmt.Formatter
+	e.Output("sqrt(2) = %s" % [x.String(BigFloat.FORMAT_PLAIN, 50)])
+
+	## Print the error between 2 and x*x.
+	t.Mul(x, x) ## t = x*x
+	t.Sub(two, t)
+	e.Output("error = %s" % [t.String(BigFloat.FORMAT_SCIENTIFIC)])
+
+const Example_sqrt2_expected_output: PackedStringArray = [
+	"sqrt(2) = 1.41421356237309504880168872420969807856967187537695",
+	"error = 0.000000e+00",
+]

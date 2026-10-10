@@ -1380,7 +1380,7 @@ void BigFloat::_uquo(const BigFloat *p_x, const BigFloat *p_y) {
 
 	// Compute d before division since there may be aliasing of x.mant
 	// (via xadj) or y.mant with z.mant.
-	d = xadj.array.size() - p_x->_mant.array.size();
+	d = xadj.array.size() - p_y->_mant.array.size();
 
 	// divide
 	BigNat r;

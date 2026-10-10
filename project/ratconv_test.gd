@@ -464,7 +464,7 @@ static var float64inputs: PackedStringArray = [
 
 ## isFinite reports whether f represents a finite rational value.
 ## It is equivalent to !math.IsNan(f) && !math.IsInf(f, 0).
-func isFinite(f: float) -> bool:
+static func isFinite(f: float) -> bool:
 	return absf(f) <= FloatTest.float64_constant(0x7fefffffffffffff)
 
 func TestFloat32SpecialCases(t: TestingT) -> void:

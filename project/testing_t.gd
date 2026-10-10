@@ -13,7 +13,7 @@ func Run(sub_name: String, test_case: Callable) -> void:
 	var sub_t := TestingT.new()
 	sub_t.name = name + "/" + sub_name
 	sub_tests.append(sub_t)
-	if TestSuite.run_regexp and not TestSuite.run_regexp.search(sub_t.name):
+	if TestSuite.run_matcher and not TestSuite.run_matcher.matches(sub_t.name.split("/")):
 		sub_t.Skip()
 	else:
 		test_case.call(sub_t)
@@ -28,7 +28,7 @@ func Error(message: String) -> void:
 const _num_quick_checks := 100
 const _max_quick_bytes := 50
 
-func _generate_random_bytes(crypto: Crypto) -> PackedByteArray:
+static func _generate_random_bytes(crypto: Crypto) -> PackedByteArray:
 	var random_bytes := crypto.generate_random_bytes(4 + _max_quick_bytes - 1)
 	var count := random_bytes.decode_u32(0) % _max_quick_bytes
 	return random_bytes.slice(4, count + 4)

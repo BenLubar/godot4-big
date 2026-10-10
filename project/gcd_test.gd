@@ -12,7 +12,7 @@ class_name GCDTest
 extends TestSuite
 
 ## randInt returns a pseudo-random Int in the range [1<<(size-1), (1<<size) - 1]
-func randInt(r: RandomNumberGenerator, size: int) -> BigInt:
+static func randInt(r: RandomNumberGenerator, size: int) -> BigInt:
 	var n := BigInt.NewInt(1)
 	n.Lsh(n, size-1)
 	var x := BigInt.new()
@@ -20,13 +20,13 @@ func randInt(r: RandomNumberGenerator, size: int) -> BigInt:
 	x.Add(x, n) # make sure result > 1<<(size-1)
 	return x
 
-func runGCD(b0: TestingB, aSize: int, bSize: int) -> void:
+static func runGCD(b0: TestingB, aSize: int, bSize: int) -> void:
 	b0.Run("WithoutXY", func(b: TestingB) -> void:
 		runGCDExt(b, aSize, bSize, false))
 	b0.Run("WithXY", func(b: TestingB) -> void:
 		runGCDExt(b, aSize, bSize, true))
 
-func runGCDExt(b: TestingB, aSize: int, bSize: int, calcXY: bool) -> void:
+static func runGCDExt(b: TestingB, aSize: int, bSize: int, calcXY: bool) -> void:
 	b.StopTimer()
 	var r := RandomNumberGenerator.new()
 	r.seed = 1234

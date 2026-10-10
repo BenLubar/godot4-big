@@ -33,19 +33,17 @@ func run_test(name: String) -> TestingT:
 func run_example(name: String) -> TestingE:
 	var e := TestingE.new()
 	e.name = name
+	e.expected_output = get(name + "_expected_output")
 	call(name, e)
-	# TODO: verify
 	return e
 
 func run_benchmark(name: String) -> TestingB:
 	var b := TestingB.new()
 	b.name = name
-	b.N = 1
-	# TODO: loop to figure out iteration count
-	call(name, b)
+	b._run1(Callable(self, name))
 	return b
 
 static var short := false
 static var long := false
 static var calibrate := false
-static var run_regexp: RegEx = null
+static var run_matcher: TestMatcher

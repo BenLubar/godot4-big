@@ -112,7 +112,7 @@ class Matrix:
 			s += "\n"
 		return s
 
-func doHilbert(t: TestingT, n: int) -> void:
+static func doHilbert(t: TestingT, n: int) -> void:
 	var a := Matrix.newHilbert(n)
 	var b := Matrix.newInverseHilbert(n)
 	var I := Matrix.newUnit(n)

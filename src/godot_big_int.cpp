@@ -1390,6 +1390,10 @@ uint64_t BigInt::Bit(int64_t p_i) const {
 	return _abs.bit(static_cast<uint64_t>(p_i));
 }
 
+uint64_t BigInt::_sticky(uint64_t p_i) const {
+	return _abs.sticky(p_i);
+}
+
 // SetBit sets z to x, with x's i'th bit set to b (0 or 1).
 // That is,
 //   - if b is 1, SetBit sets z = x | (1 << i);

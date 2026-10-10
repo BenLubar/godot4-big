@@ -52,7 +52,13 @@ struct BigNat {
 	BigNat(std::initializer_list<BigWord> p_init) noexcept : array{ reinterpret_cast<std::initializer_list<int64_t> &>(p_init) } {}
 	~BigNat() noexcept = default;
 
-	_FORCE_INLINE_ BigNat &operator=(const BigNat &p_other) noexcept = default;
+	_FORCE_INLINE_ BigNat &operator=(const BigNat &p_other) noexcept {
+		// work around godot-cpp bug https://github.com/godotengine/godot-cpp/issues/2071
+		if (this != &p_other) {
+			array = p_other.array;
+		}
+		return *this;
+	}
 	_FORCE_INLINE_ BigNat &operator=(BigNat &&p_other) noexcept = default;
 	[[nodiscard]] _ALWAYS_INLINE_ const BigWord &operator[](int64_t p_index) const {
 		return reinterpret_cast<const BigWord &>(array[p_index]);
@@ -179,10 +185,16 @@ struct BigNat {
 	}
 
 	// bits.go
-	static constexpr void bits_Add(BigWord p_x, BigWord p_y, BigWord p_carry, BigWord &r_out, BigWord &r_carryout) noexcept;
-	static constexpr void bits_Sub(BigWord p_x, BigWord p_y, BigWord p_borrow, BigWord &r_out, BigWord &r_borrowout) noexcept;
-	static constexpr void bits_Mul(BigWord p_x, BigWord p_y, BigWord &r_hi, BigWord &r_lo) noexcept;
-	static constexpr void bits_Div(BigWord p_hi, BigWord p_lo, BigWord p_y, BigWord &r_quo, BigWord &r_rem) noexcept;
+#ifdef _MSC_VER
+#define BITMATH_CONSTEXPR
+#else
+#define BITMATH_CONSTEXPR constexpr
+#endif
+	static BITMATH_CONSTEXPR void bits_Add(BigWord p_x, BigWord p_y, BigWord p_carry, BigWord &r_out, BigWord &r_carryout) noexcept;
+	static BITMATH_CONSTEXPR void bits_Sub(BigWord p_x, BigWord p_y, BigWord p_borrow, BigWord &r_out, BigWord &r_borrowout) noexcept;
+	static BITMATH_CONSTEXPR void bits_Mul(BigWord p_x, BigWord p_y, BigWord &r_hi, BigWord &r_lo) noexcept;
+	static BITMATH_CONSTEXPR void bits_Div(BigWord p_hi, BigWord p_lo, BigWord p_y, BigWord &r_quo, BigWord &r_rem) noexcept;
+#undef BITMATH_CONSTEXPR
 
 	// arith.go
 	static void mulWW(BigWord p_x, BigWord p_y, BigWord &r_z1, BigWord &r_z0) noexcept;
@@ -314,22 +326,22 @@ struct BigDivisor {
 
 #ifdef _MSC_VER
 #include <immintrin.h>
-constexpr void BigNat::bits_Add(BigWord p_x, BigWord p_y, BigWord p_carry, BigWord &r_out, BigWord &r_carryout) noexcept {
+void BigNat::bits_Add(BigWord p_x, BigWord p_y, BigWord p_carry, BigWord &r_out, BigWord &r_carryout) noexcept {
 	uint8_t carryout1, carryout2;
 	carryout1 = _addcarry_u64(0, p_x, p_y, &r_out);
 	carryout2 = _addcarry_u64(0, r_out, p_carry, &r_out);
 	r_carryout = static_cast<BigWord>(carryout1 + carryout2);
 }
-constexpr void BigNat::bits_Sub(BigWord p_x, BigWord p_y, BigWord p_borrow, BigWord &r_out, BigWord &r_borrowout) noexcept {
+void BigNat::bits_Sub(BigWord p_x, BigWord p_y, BigWord p_borrow, BigWord &r_out, BigWord &r_borrowout) noexcept {
 	uint8_t borrowout1, borrowout2;
 	borrowout1 = _subborrow_u64(0, p_x, p_y, &r_out);
 	borrowout2 = _subborrow_u64(0, r_out, p_borrow, &r_out);
 	r_borrowout = static_cast<BigWord>(borrowout1 + borrowout2);
 }
-constexpr void BigNat::bits_Mul(BigWord p_x, BigWord p_y, BigWord &r_hi BigWord &r_lo) noexcept {
+void BigNat::bits_Mul(BigWord p_x, BigWord p_y, BigWord &r_hi, BigWord &r_lo) noexcept {
 	r_lo = _umul128(p_x, p_y, &r_hi);
 }
-constexpr void BigNat::bits_Div(BigWord p_hi, BigWord p_lo, BigWord p_y, BigWord &r_quo, BigWord &r_rem) noexcept {
+void BigNat::bits_Div(BigWord p_hi, BigWord p_lo, BigWord p_y, BigWord &r_quo, BigWord &r_rem) noexcept {
 	r_quo = _udiv128(p_hi, p_lo, p_y, &r_rem);
 }
 #else

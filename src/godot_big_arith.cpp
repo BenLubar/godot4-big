@@ -305,7 +305,7 @@ void BigNat::divWW(BigWord p_x1, BigWord p_x0, BigWord p_y, BigWord p_m, BigWord
 	BigWord r0;
 	BigWord b;
 	bits_Sub(p_x0, dq0, 0, r0, b);
-	bits_Sub(p_x1, dq1, 0, r1, discard);
+	bits_Sub(p_x1, dq1, b, r1, discard);
 
 	// The remainder we just computed is bounded above by B+d:
 	// r = x1*B + x0 - d*q.

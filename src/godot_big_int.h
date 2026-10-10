@@ -100,6 +100,7 @@ public:
 	void Lsh(const godot::Ref<BigInt> &p_x, uint64_t p_n);
 	void Rsh(const godot::Ref<BigInt> &p_x, uint64_t p_n);
 	[[nodiscard]] uint64_t Bit(int64_t p_i) const;
+	[[nodiscard]] uint64_t _sticky(uint64_t p_i) const;
 	void SetBit(const godot::Ref<BigInt> &p_x, int64_t p_i, uint64_t p_b);
 	void And(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);
 	void AndNot(const godot::Ref<BigInt> &p_x, const godot::Ref<BigInt> &p_y);

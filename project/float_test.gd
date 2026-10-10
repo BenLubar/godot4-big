@@ -1856,42 +1856,37 @@ func TestFloatCmpSpecialValues(t: TestingT) -> void:
 #		}
 #	}
 #}
-#
-#func BenchmarkFloatAdd(b *testing.B) {
-#	x := new(Float)
-#	y := new(Float)
-#	z := new(Float)
-#
-#	for _, prec := range []uint{10, 1e2, 1e3, 1e4, 1e5} {
-#		x.SetPrec(prec).SetRat(NewRat(1, 3))
-#		y.SetPrec(prec).SetRat(NewRat(1, 6))
-#		z.SetPrec(prec)
-#
-#		b.Run(fmt.Sprintf("%v", prec), func(b *testing.B) {
-#			b.ReportAllocs()
-#			for i := 0; i < b.N; i++ {
-#				z.Add(x, y)
-#			}
-#		})
-#	}
-#}
-#
-#func BenchmarkFloatSub(b *testing.B) {
-#	x := new(Float)
-#	y := new(Float)
-#	z := new(Float)
-#
-#	for _, prec := range []uint{10, 1e2, 1e3, 1e4, 1e5} {
-#		x.SetPrec(prec).SetRat(NewRat(1, 3))
-#		y.SetPrec(prec).SetRat(NewRat(1, 6))
-#		z.SetPrec(prec)
-#
-#		b.Run(fmt.Sprintf("%v", prec), func(b *testing.B) {
-#			b.ReportAllocs()
-#			for i := 0; i < b.N; i++ {
-#				z.Sub(x, y)
-#			}
-#		})
-#	}
-#}
 
+func BenchmarkFloatAdd(b0: TestingB) -> void:
+	var x := BigFloat.new()
+	var y := BigFloat.new()
+	var z := BigFloat.new()
+
+	for prec in [10, 100, 1000, 10000, 100000]:
+		x.SetPrec(prec)
+		x.SetRat(BigRat.NewRat(1, 3))
+		y.SetPrec(prec)
+		y.SetRat(BigRat.NewRat(1, 6))
+		z.SetPrec(prec)
+
+		b0.Run(str(prec), func(b: TestingB) -> void:
+			b.ReportAllocs()
+			for i in b.N:
+				z.Add(x, y))
+
+func BenchmarkFloatSub(b0: TestingB) -> void:
+	var x := BigFloat.new()
+	var y := BigFloat.new()
+	var z := BigFloat.new()
+
+	for prec in [10, 100, 1000, 10000, 100000]:
+		x.SetPrec(prec)
+		x.SetRat(BigRat.NewRat(1, 3))
+		y.SetPrec(prec)
+		y.SetRat(BigRat.NewRat(1, 6))
+		z.SetPrec(prec)
+
+		b0.Run(str(prec), func(b: TestingB) -> void:
+			b.ReportAllocs()
+			for i in b.N:
+				z.Sub(x, y))

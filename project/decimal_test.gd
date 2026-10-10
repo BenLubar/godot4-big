@@ -109,28 +109,18 @@ func TestDecimalRounding(t: TestingT) -> void:
 #		}
 #	}
 #}
-#
-#var sink string
-#
-#func BenchmarkDecimalConversion(b *testing.B) {
-#	for i := 0; i < b.N; i++ {
-#		for shift := -100; shift <= +100; shift++ {
-#			var d decimal
-#			d.init(natOne, shift)
-#			sink = d.String()
-#		}
-#	}
-#}
-#
-#func BenchmarkFloatString(b *testing.B) {
-#	x := new(Float)
-#	for _, prec := range []uint{1e2, 1e3, 1e4, 1e5} {
-#		x.SetPrec(prec).SetRat(NewRat(1, 3))
-#		b.Run(fmt.Sprintf("%v", prec), func(b *testing.B) {
-#			b.ReportAllocs()
-#			for i := 0; i < b.N; i++ {
-#				sink = x.String()
-#			}
-#		})
-#	}
-#}
+
+func BenchmarkDecimalConversion(b: TestingB) -> void:
+	for i in b.N:
+		for shift in range(-100, +101):
+			BigFloat._test_decimal_string([1], shift)
+
+func BenchmarkFloatString(b0: TestingB) -> void:
+	var x := BigFloat.new()
+	for prec in [100, 1000, 10000, 100000]:
+		x.SetPrec(prec)
+		x.SetRat(BigRat.NewRat(1, 3))
+		b0.Run(str(prec), func(b: TestingB) -> void:
+			b.ReportAllocs()
+			for i in b.N:
+				x.String())
