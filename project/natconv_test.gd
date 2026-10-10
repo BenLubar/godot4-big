@@ -373,6 +373,7 @@ func BenchmarkString(b0: TestingB) -> void:
 func BenchmarkLeafSize(b0: TestingB) -> void:
 	for n in 16:
 		b0.Run(str(n), leafSizeHelper.bind(10, n))
+
 	## Try some large lengths
 	for n in [32, 64]:
 		b0.Run(str(n), leafSizeHelper.bind(10, n))
@@ -397,25 +398,19 @@ static func leafSizeHelper(b: TestingB, base: int, size: int) -> void:
 	b.StartTimer()
 
 func TestStringPowers(t: TestingT) -> void:
-	t.Error("TODO")
-#	stk := getStack()
-#	defer stk.free()
-#
-#	var p Word
-#	for b := 2; b <= 16; b++ {
-#		for p = 0; p <= 512; p++ {
-#			if testing.Short() && p > 10 {
-#				break
-#			}
-#			x := nat(nil).expWW(stk, Word(b), p)
-#			xs := x.utoa(b)
-#			xs2 := itoa(x, b)
-#			if !bytes.Equal(xs, xs2) {
-#				t.Errorf("failed at %d ** %d in base %d: %s != %s", b, p, b, xs, xs2)
-#			}
-#		}
-#		if b >= 3 && testing.Short() {
-#			break
-#		}
-#	}
-#}
+	for b in range(2, 17):
+		for p in 512:
+			if short and p > 10:
+				break
+
+			var x := BigInt.new()
+			x.Exp(BigInt.NewInt(b), BigInt.NewInt(p))
+
+			var xs := x.String(b)
+			var xs2 := itoa(x, b)
+
+			if xs != xs2:
+				t.Error("failed at %d ** %d in base %d: %s != %s" % [b, p, b, xs, xs2])
+
+		if b >= 3 and short:
+			break
