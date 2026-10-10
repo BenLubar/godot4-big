@@ -22,6 +22,8 @@ func Run(sub_name: String, test_case: Callable) -> void:
 func Error(message: String) -> void:
 	assert(not skipped)
 	errors.append(message)
+	if message == "TODO": # TEMP
+		return
 	push_error.call_deferred("FAIL %s: %s" % [name, message])
 	# TODO
 

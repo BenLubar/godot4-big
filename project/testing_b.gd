@@ -31,7 +31,6 @@ func _run1(benchmark: Callable) -> void:
 	assert(sub_benchmarks.is_empty())
 	N = 1
 	while true:
-		print("trying benchmark ", name, " with iterations ", N)
 		_skip_time = 0
 		_stopped_at = 0
 

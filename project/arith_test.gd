@@ -11,64 +11,37 @@
 class_name ArithTest
 extends TestSuite
 
-## PORT: FIXME: TODO all of these
-static func addVV(_z: BigInt, _x: BigInt, _y: BigInt) -> int:
-	return 0
-static func addVV_g(_z: BigInt, _x: BigInt, _y: BigInt) -> int:
-	return 0
-static func subVV(_z: BigInt, _x: BigInt, _y: BigInt) -> int:
-	return 0
-static func subVV_g(_z: BigInt, _x: BigInt, _y: BigInt) -> int:
-	return 0
-static func addVW(_z: BigInt, _x: BigInt, _y: int) -> int:
-	return 0
-static func addVW_ref(_z: BigInt, _x: BigInt, _y: int) -> int:
-	return 0
-static func subVW(_z: BigInt, _x: BigInt, _y: int) -> int:
-	return 0
-static func subVW_ref(_z: BigInt, _x: BigInt, _y: int) -> int:
-	return 0
-static func lshVU(_z: BigInt, _x: BigInt, _s: int) -> int:
-	return 0
-static func lshVU_g(_z: BigInt, _x: BigInt, _s: int) -> int:
-	return 0
-static func rshVU(_z: BigInt, _x: BigInt, _s: int) -> int:
-	return 0
-static func rshVU_g(_z: BigInt, _x: BigInt, _s: int) -> int:
-	return 0
-static func mulAddVWW(_z: BigInt, _x: BigInt, _y: int, _a: int) -> int:
-	return 0
-static func mulAddVWW_g(_z: BigInt, _x: BigInt, _y: int, _a: int) -> int:
-	return 0
-static func addMulVVWW(_z: BigInt, _x: BigInt, _y: BigInt, _m: int, _a: int) -> int:
-	return 0
-static func addMulVVWW_g(_z: BigInt, _x: BigInt, _y: BigInt, _m: int, _a: int) -> int:
-	return 0
-static func divWVW(_z: BigInt, _xn: int, _x: BigInt, _y: int) -> int:
-	return 0
+static func u64ge(x: int, y: int) -> bool:
+	var x1 := (x >> 32) & UINT32_MAX
+	var x0 := x & UINT32_MAX
+	var y1 := (y >> 32) & UINT32_MAX
+	var y0 := y & UINT32_MAX
+	return x1 > y1 or (x1 == y1 and x0 >= y0)
 
 const words4: PackedInt64Array = [0, 1, -2, -1]
 const words2: PackedInt64Array = [0, -1]
+@warning_ignore("integer_division")
 const muls: PackedInt64Array = [0, 1, 2, 3, 4, 5, INT64_MAX / 2, INT64_MAX, -4, -3, -2, -1]
 const adds: PackedInt64Array = [0, 1, -2, -1]
+@warning_ignore("integer_division")
 const shifts: PackedInt64Array = [1, 2, 3, (64 / 4) - 1, 64 / 4, (64 / 4) + 1, (64 / 2) - 1, 64 / 2, (64 / 2) + 1, 64 - 3, 64 - 2, 64 - 1]
 
 func TestAddVV(t: TestingT) -> void:
-	testVV(t, "addVV", addVV, addVV_g)
+	testVV(t, "addVV", BigInt._addVV, BigInt._addVV_g)
 func TestSubVV(t: TestingT) -> void:
-	testVV(t, "subVV", subVV, subVV_g)
+	testVV(t, "subVV", BigInt._subVV, BigInt._subVV_g)
 func TestAddVW(t: TestingT) -> void:
-	testVW(t, "addVW", addVW, addVW_ref, words4)
+	testVW(t, "addVW", BigInt._addVW, BigInt._addVW_ref, words4)
 func TestSubVW(t: TestingT) -> void:
-	testVW(t, "subVW", subVW, subVW_ref, words4)
+	testVW(t, "subVW", BigInt._subVW, BigInt._subVW_ref, words4)
 func TestLshVU(t: TestingT) -> void:
-	testVU(t, "lshVU", lshVU, lshVU_g, shifts)
+	testVU(t, "lshVU", BigInt._lshVU, BigInt._lshVU_g, shifts)
 func TestRshVU(t: TestingT) -> void:
-	testVU(t, "rshVU", rshVU, rshVU_g, shifts)
+	testVU(t, "rshVU", BigInt._rshVU, BigInt._rshVU_g, shifts)
 func TestMulAddVWW(t: TestingT) -> void:
-	testVWW(t, "mulAddVWW", mulAddVWW, mulAddVWW_g, muls)
+	testVWW(t, "mulAddVWW", BigInt._mulAddVWW, BigInt._mulAddVWW_g, muls)
 func TestAddMulVVWW(t: TestingT) -> void:
-	testVVWW(t, "addMulVVWW", addMulVVWW, addMulVVWW_g, muls, adds)
+	testVVWW(t, "addMulVVWW", BigInt._addMulVVWW, BigInt._addMulVVWW_g, muls, adds)
 
 ## Note: It would be nice to avoid all the duplication of these test variants,
 ## but the only obvious way is to use reflection. These tests are already
@@ -76,7 +49,7 @@ func TestAddMulVVWW(t: TestingT) -> void:
 ## reduce the amount of exhaustive testing it's reasonable to do, so instead
 ## we put up with the duplication.
 
-func testVV(t: TestingT, name: String, fn: Callable, ref: Callable) -> void:
+static func testVV(t: TestingT, name: String, fn: Callable, ref: Callable) -> void:
 	t.Error("TODO")
 #	for size := range 100 {
 #		xx := make([]Word, 1+size+1)
@@ -128,7 +101,7 @@ func testVV(t: TestingT, name: String, fn: Callable, ref: Callable) -> void:
 #	}
 #}
 
-func testVW(t: TestingT, name: String, fn: Callable, ref: Callable, ws: PackedInt64Array) -> void:
+static func testVW(t: TestingT, name: String, fn: Callable, ref: Callable, ws: PackedInt64Array) -> void:
 	t.Error("TODO")
 #	const (
 #		magic0 = 0x123450
@@ -183,7 +156,7 @@ func testVW(t: TestingT, name: String, fn: Callable, ref: Callable, ws: PackedIn
 #	}
 #}
 
-func testVU(t: TestingT, name: String, fn: Callable, ref: Callable, ys: PackedInt64Array) -> void:
+static func testVU(t: TestingT, name: String, fn: Callable, ref: Callable, ys: PackedInt64Array) -> void:
 	t.Error("TODO")
 #	wys := make([]Word, len(ys))
 #	for i, y := range ys {
@@ -195,7 +168,7 @@ func testVU(t: TestingT, name: String, fn: Callable, ref: Callable, ys: PackedIn
 #		wys)
 #}
 
-func testVWW(t: TestingT, name: String, fn: Callable, ref: Callable, ys: PackedInt64Array) -> void:
+static func testVWW(t: TestingT, name: String, fn: Callable, ref: Callable, ys: PackedInt64Array) -> void:
 	t.Error("TODO")
 #	const (
 #		magic0 = 0x123450
@@ -252,7 +225,7 @@ func testVWW(t: TestingT, name: String, fn: Callable, ref: Callable, ys: PackedI
 #	}
 #}
 
-func testVVU(t: TestingT, name: String, fn: Callable, ref: Callable, shifts: PackedInt64Array) -> void:
+static func testVVU(t: TestingT, name: String, fn: Callable, ref: Callable, shifts: PackedInt64Array) -> void:
 	t.Error("TODO")
 #	for size := range 100 {
 #		xx := make([]Word, 1+size+1)
@@ -306,7 +279,7 @@ func testVVU(t: TestingT, name: String, fn: Callable, ref: Callable, shifts: Pac
 #	}
 #}
 
-func testVVWW(t: TestingT, name: String, fn: Callable, ref: Callable, ms: PackedInt64Array, as_: PackedInt64Array) -> void:
+static func testVVWW(t: TestingT, name: String, fn: Callable, ref: Callable, ms: PackedInt64Array, as_: PackedInt64Array) -> void:
 	t.Error("TODO")
 #	for size := range 100 {
 #		zz := make([]Word, 1+size+1)
@@ -367,7 +340,7 @@ const magic1 := 0x543210
 
 ## setSlice sets x[1:len(x)-1] to orig, leaving magic values in x[0] and x[len(x)-1]
 ## so that we can tell if routines accidentally write before or after the data.
-func setSlice(x: PackedInt64Array, id: int, orig: PackedInt64Array) -> void:
+static func setSlice(x: PackedInt64Array, id: int, orig: PackedInt64Array) -> void:
 	x[0] = magic0 + id
 	for i in range(1, len(x) - 1):
 		x[i] = orig[i - 1]
@@ -375,7 +348,7 @@ func setSlice(x: PackedInt64Array, id: int, orig: PackedInt64Array) -> void:
 
 ## checkSlice checks that the magic values left by setSlices are still there.
 ## If orig != nil, it also checks that the actual data in x is unmodified since setSlice.
-func checkSlice(t: TestingT, name: String, val: String, x: PackedInt64Array, id: int, orig: PackedInt64Array) -> void:
+static func checkSlice(t: TestingT, name: String, val: String, x: PackedInt64Array, id: int, orig: PackedInt64Array) -> void:
 	if x[0] != magic0 + id:
 		t.Error("%s smashed %s[-1]" % [name, val])
 	if x[-1] != magic1 + id:
@@ -389,7 +362,7 @@ func checkSlice(t: TestingT, name: String, val: String, x: PackedInt64Array, id:
 ##   - all ^0
 ##   - all possible combinations of words
 ##   - ten random values
-func nats(words: PackedInt64Array, size: int) -> Callable:
+static func nats(words: PackedInt64Array, size: int) -> Callable:
 	return func(y: Callable) -> void:
 		var w: PackedInt64Array
 		w.resize(size)
@@ -601,15 +574,17 @@ const prodVWW: Array[Array] = [
 	[[-64, -1, -1, -1], [-1, -1, -1, -1], 128, 64, 127],
 ]
 
-func testFunVWW(t: TestingT, msg: String, f: Callable, a: Array) -> void:
+static func testFunVWW(t: TestingT, msg: String, f: Callable, a: Array) -> void:
 	var z := BigInt.new()
 	var zabs: PackedInt64Array
 	zabs.resize(len(a[0]))
 	z._abs = zabs
+	var x := BigInt.new()
+	x._abs = a[1]
 
-	var c: int = f.call(z, a[1], a[2], a[3])
+	var c: int = f.call(z, x, a[2], a[3])
 
-	if z._abs != a[0]:
+	if z._abs != PackedInt64Array(a[0]):
 		t.Error("%s%s\n\tgot z = %s; want %s" % [msg, a, z._abs, a[0]])
 
 	if c != a[4]:
@@ -618,25 +593,27 @@ func testFunVWW(t: TestingT, msg: String, f: Callable, a: Array) -> void:
 ## TODO(gri) mulAddVWW and divWVW are symmetric operations but
 ## their signature is not symmetric. Try to unify.
 
-func testFunWVW(t: TestingT, msg: String, f: Callable, a: Array) -> void:
+static func testFunWVW(t: TestingT, msg: String, f: Callable, a: Array) -> void:
 	var z := BigInt.new()
 	var zabs: PackedInt64Array
 	zabs.resize(len(a[0]))
 	z._abs = zabs
+	var x := BigInt.new()
+	x._abs = a[2]
 
-	var r: int = f.call(z, a[1], a[2], a[3])
-	if z._abs != a[0] or r != a[4]:
+	var r: int = f.call(z, a[1], x, a[3])
+	if z._abs != PackedInt64Array(a[0]) or r != a[4]:
 		t.Error("%s%s\nhave %s, %d\nwant %s, %d" % [msg, a, z, r, a[0], a[4]])
 
 func TestFunVWW(t: TestingT) -> void:
 	for a in prodVWW:
 		var arg := a
-		testFunVWW(t, "mulAddVWW_g", mulAddVWW_g, arg)
-		testFunVWW(t, "mulAddVWW", mulAddVWW, arg)
+		testFunVWW(t, "mulAddVWW_g", BigInt._mulAddVWW_g, arg)
+		testFunVWW(t, "mulAddVWW", BigInt._mulAddVWW, arg)
 
 		if a[2] != 0 and a[3] < a[2]:
 			arg = [a[1], a[4], a[0], a[2], a[3]]
-			testFunWVW(t, "divWVW", divWVW, arg)
+			testFunWVW(t, "divWVW", BigInt._divWVW, arg)
 
 #struct {
 #	x, y Word
@@ -699,7 +676,8 @@ func TestDivWW(t: TestingT) -> void:
 		var x1 := rndW(r)
 		var x0 := rndW(r)
 		var y := rndW(r)
-		if x1 >= y:
+
+		if u64ge(x1, y):
 			continue
 
 		var rec := BigInt._reciprocalWord(y)
@@ -717,22 +695,18 @@ const benchSizes: PackedInt64Array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 16, 32, 64,
 ## all benchmarks with a specific word size
 ## (go test -run=NONE '-bench=V/words=100$')
 ## even if different benchmarks have different numbers of other parameters.
-func bench(b0: TestingB, suffix: String, fn: Callable) -> void:
+static func bench(b0: TestingB, suffix: String, fn: Callable) -> void:
 	for n in benchSizes:
 		var r := rng()
-		var z: BigInt
-		var x: BigInt
-		var y: BigInt
+		var z := BigInt.new()
+		var x := BigInt.new()
+		var y := BigInt.new()
+		var zabs: PackedInt64Array
+		zabs.resize(n)
+		z._abs = zabs
+		x._abs = rndV(r, n)
+		y._abs = rndV(r, n)
 		b0.Run("words=%d%s" % [n, suffix], func(b: TestingB) -> void:
-			if z == null:
-				z = BigInt.new()
-				x = BigInt.new()
-				y = BigInt.new()
-				var zabs: PackedInt64Array
-				zabs.resize(n)
-				z._abs = zabs
-				x._abs = rndV(r, n)
-				y._abs = rndV(r, n)
 			b.ResetTimer()
 			b.SetBytes(n * 8)
 			for i in b.N:
@@ -766,7 +740,7 @@ static func copyVV(z: BigInt, x: BigInt, _y: BigInt) -> int:
 func BenchmarkArithVV(b: TestingB) -> void:
 	bench(b, "", benchVV(arithVV))
 
-func arithVV(z: BigInt, x: BigInt, y: BigInt) -> int:
+static func arithVV(z: BigInt, x: BigInt, y: BigInt) -> int:
 	var a := 0
 	var b := 0
 	var c := 0
@@ -789,14 +763,14 @@ func arithVV(z: BigInt, x: BigInt, y: BigInt) -> int:
 		h = 8
 		i = 9
 		j = 10
+	var s := 0
 	if len(zabs) < 10:
 		## We don't really care about the speed here, but
 		## do something so that the small word counts aren't all the same.
-		var s := 0
 		for zi in zabs:
 			s += zi
 		return s
-	var s := 0
+	@warning_ignore("integer_division")
 	for k in len(zabs) / 10:
 		s += a
 		s += b
@@ -811,32 +785,32 @@ func arithVV(z: BigInt, x: BigInt, y: BigInt) -> int:
 	return s
 
 func BenchmarkAddVV(b: TestingB) -> void:
-	bench(b, "/impl=asm", benchVV(addVV))
-	bench(b, "/impl=go", benchVV(addVV_g))
+	bench(b, "/impl=asm", benchVV(BigInt._addVV))
+	bench(b, "/impl=go", benchVV(BigInt._addVV_g))
 
 func BenchmarkSubVV(b: TestingB) -> void:
-	bench(b, "/impl=asm", benchVV(subVV))
-	bench(b, "/impl=go", benchVV(subVV_g))
+	bench(b, "/impl=asm", benchVV(BigInt._subVV))
+	bench(b, "/impl=go", benchVV(BigInt._subVV_g))
 
 static func benchVV(fn: Callable) -> Callable:
 	return func(z: BigInt, x: BigInt, y: BigInt) -> void:
 		fn.call(z, x, y)
 
 func BenchmarkAddVW(b: TestingB) -> void:
-	bench(b, "/data=random", benchVW(addVW, 123))
-	bench(b, "/data=carry", benchCarryVW(addVW, -1, 1))
-	bench(b, "/data=shortcut", benchShortVW(addVW, 123))
+	bench(b, "/data=random", benchVW(BigInt._addVW, 123))
+	bench(b, "/data=carry", benchCarryVW(BigInt._addVW, -1, 1))
+	bench(b, "/data=shortcut", benchShortVW(BigInt._addVW, 123))
 
 func BenchmarkSubVW(b: TestingB) -> void:
-	bench(b, "/data=random", benchVW(subVW, 123))
-	bench(b, "/data=carry", benchCarryVW(subVW, 0, 1))
-	bench(b, "/data=shortcut", benchShortVW(subVW, 123))
+	bench(b, "/data=random", benchVW(BigInt._subVW, 123))
+	bench(b, "/data=carry", benchCarryVW(BigInt._subVW, 0, 1))
+	bench(b, "/data=shortcut", benchShortVW(BigInt._subVW, 123))
 
-func benchVW(fn: Callable, w: int) -> Callable:
+static func benchVW(fn: Callable, w: int) -> Callable:
 	return func(z: BigInt, x: BigInt, _y: BigInt) -> void:
 		fn.call(z, x, w)
 
-func benchCarryVW(fn: Callable, xi: int, w: int) -> Callable:
+static func benchCarryVW(fn: Callable, xi: int, w: int) -> Callable:
 	return func(z: BigInt, x: BigInt, _y: BigInt) -> void:
 		## Fill x with xi the first time we are called with a given x.
 		## Otherwise x is random, so checking the first two elements is good enough.
@@ -847,42 +821,42 @@ func benchCarryVW(fn: Callable, xi: int, w: int) -> Callable:
 			x._abs = xabs
 		fn.call(z, x, w)
 
-func benchShortVW(fn: Callable, w: int) -> Callable:
+static func benchShortVW(fn: Callable, w: int) -> Callable:
 	## Note: calling fn with x not z, to benchmark in-place overwriting.
 	return func(_z: BigInt, x: BigInt, _y: BigInt) -> void:
 		fn.call(x, x, w)
 
 func BenchmarkLshVU(b: TestingB) -> void:
-	bench(b, "/impl=asm", benchVU(lshVU, 3))
-	bench(b, "/impl=go", benchVU(lshVU_g, 3))
+	bench(b, "/impl=asm", benchVU(BigInt._lshVU, 3))
+	bench(b, "/impl=go", benchVU(BigInt._lshVU_g, 3))
 
 func BenchmarkRshVU(b: TestingB) -> void:
-	bench(b, "/impl=asm", benchVU(rshVU, 3))
-	bench(b, "/impl=go", benchVU(rshVU_g, 3))
+	bench(b, "/impl=asm", benchVU(BigInt._rshVU, 3))
+	bench(b, "/impl=go", benchVU(BigInt._rshVU_g, 3))
 
-func benchVU(fn: Callable, s: int) -> Callable:
+static func benchVU(fn: Callable, s: int) -> Callable:
 	return func(z: BigInt, x: BigInt, _y: BigInt) -> void:
 		fn.call(z, x, s)
 
 func BenchmarkMulAddVWW(b: TestingB) -> void:
-	bench(b, "/impl=asm", benchVWW(mulAddVWW, 42, 100))
-	bench(b, "/impl=go", benchVWW(mulAddVWW_g, 42, 100))
+	bench(b, "/impl=asm", benchVWW(BigInt._mulAddVWW, 42, 100))
+	bench(b, "/impl=go", benchVWW(BigInt._mulAddVWW_g, 42, 100))
 
-func benchVWW(fn: Callable, w1: int, w2: int) -> Callable:
+static func benchVWW(fn: Callable, w1: int, w2: int) -> Callable:
 	return func(z: BigInt, x: BigInt, _y: BigInt) -> void:
 		fn.call(z, x, w1, w2)
 
 func BenchmarkAddMulVVWW(b: TestingB) -> void:
-	bench(b, "/impl=asm", benchVVWW(addMulVVWW, 42, 100))
-	bench(b, "/impl=go", benchVVWW(addMulVVWW_g, 42, 100))
+	bench(b, "/impl=asm", benchVVWW(BigInt._addMulVVWW, 42, 100))
+	bench(b, "/impl=go", benchVVWW(BigInt._addMulVVWW_g, 42, 100))
 
-func benchVVWW(fn: Callable, w1: int, w2: int) -> Callable:
+static func benchVVWW(fn: Callable, w1: int, w2: int) -> Callable:
 	return func(z: BigInt, x: BigInt, y: BigInt) -> void:
 		fn.call(z, x, y, w1, w2)
 
 func BenchmarkDivWVW(b: TestingB) -> void:
-	bench(b, "", benchWVW(divWVW, 100, 200))
+	bench(b, "", benchWVW(BigInt._divWVW, 100, 200))
 
-func benchWVW(fn: Callable, w1: int, w2: int) -> Callable:
+static func benchWVW(fn: Callable, w1: int, w2: int) -> Callable:
 	return func(z: BigInt, x: BigInt, _y: BigInt) -> void:
 		fn.call(z, w1, x, w2)

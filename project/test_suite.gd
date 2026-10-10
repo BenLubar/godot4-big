@@ -35,6 +35,8 @@ func run_example(name: String) -> TestingE:
 	e.name = name
 	e.expected_output = get(name + "_expected_output")
 	call(name, e)
+	if e.failed:
+		push_error("EXAMPLE FAIL %s\nwant: %s\ngot : %s" % [name, e.expected_output, e._output])
 	return e
 
 func run_benchmark(name: String) -> TestingB:

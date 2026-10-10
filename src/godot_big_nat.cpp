@@ -301,7 +301,7 @@ uint64_t BigNat::trailingZeroBits() const {
 		i++;
 	}
 	// x[i] != 0
-	return (i * 64) + std::countr_zero(uint(operator[](i)));
+	return (i * 64) + std::countr_zero(operator[](i));
 }
 
 // isPow2 returns i, true when x == 2**i and 0, false otherwise.
@@ -433,12 +433,11 @@ uint64_t BigNat::sticky(uint64_t p_i) const {
 	}
 
 	p_i %= 64;
-	BigWord mask = (UINT64_C(1) << p_i) - 1;
 	if (p_i == 0) {
-		mask = UINT64_MAX;
+		return 0;
 	}
 
-	return (operator[](j) & mask) != 0 ? 1 : 0;
+	return (operator[](j) << (64 - p_i)) != 0 ? 1 : 0;
 }
 
 void BigNat::and_(BigNat p_x, BigNat p_y) { // NOLINT(performance-unnecessary-value-param)

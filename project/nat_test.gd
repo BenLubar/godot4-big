@@ -382,26 +382,21 @@ static func rndNat1(r: RandomNumberGenerator, n: int) -> BigInt:
 		x.SetUint64(1)
 	return x
 
-#func benchmarkNatMul(b *testing.B, nwords int) {
-#	x := rndNat(nwords)
-#	y := rndNat(nwords)
-#	var z nat
-#	b.ResetTimer()
-#	b.ReportAllocs()
-#	for i := 0; i < b.N; i++ {
-#		z.mul(nil, x, y)
-#	}
-#}
-#
-#var mulBenchSizes = []int{10, 100, 1000, 10000, 100000}
-#
-#func BenchmarkNatMul(b *testing.B) {
-#	for _, n := range mulBenchSizes {
-#		b.Run(fmt.Sprintf("%d", n), func(b *testing.B) {
-#			benchmarkNatMul(b, n)
-#		})
-#	}
-#}
+static func benchmarkNatMul(b: TestingB, nwords: int) -> void:
+	var r := ArithTest.rng()
+	var x := rndNat(r, nwords)
+	var y := rndNat(r, nwords)
+	var z := BigInt.new()
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i in b.N:
+		z.Mul(x, y)
+
+const mulBenchSizes: PackedInt64Array = [10, 100, 1000, 10000, 100000]
+
+func BenchmarkNatMul(b0: TestingB) -> void:
+	for n in mulBenchSizes:
+		b0.Run(str(n), benchmarkNatMul.bind(n))
 
 func TestNLZ(t: TestingT) -> void:
 	t.Error("TODO")
@@ -466,35 +461,26 @@ func TestShiftRight(t: TestingT) -> void:
 #		}
 #	}
 #}
-#
-#func BenchmarkZeroShifts(b *testing.B) {
-#	x := rndNat(800)
-#
-#	b.Run("Lsh", func(b *testing.B) {
-#		for i := 0; i < b.N; i++ {
-#			var z nat
-#			z.lsh(x, 0)
-#		}
-#	})
-#	b.Run("LshSame", func(b *testing.B) {
-#		for i := 0; i < b.N; i++ {
-#			x.lsh(x, 0)
-#		}
-#	})
-#
-#	b.Run("Rsh", func(b *testing.B) {
-#		for i := 0; i < b.N; i++ {
-#			var z nat
-#			z.rsh(x, 0)
-#		}
-#	})
-#	b.Run("RshSame", func(b *testing.B) {
-#		for i := 0; i < b.N; i++ {
-#			x.rsh(x, 0)
-#		}
-#	})
-#}
-#
+
+func BenchmarkZeroShifts(b0: TestingB) -> void:
+	var r := ArithTest.rng()
+	var x := rndNat(r, 800)
+	var z := BigInt.new()
+
+	b0.Run("Lsh", func(b: TestingB) -> void:
+		for i in b.N:
+			z.Lsh(x, 0))
+	b0.Run("LshSame", func(b: TestingB) -> void:
+		for i in b.N:
+			x.Lsh(x, 0))
+
+	b0.Run("Rsh", func(b: TestingB) -> void:
+		for i in b.N:
+			z.Rsh(x, 0))
+	b0.Run("RshSame", func(b: TestingB) -> void:
+		for i in b.N:
+			x.Rsh(x, 0))
+
 #type modWTest struct {
 #	in       string
 #	dividend string
@@ -745,22 +731,15 @@ func TestFuzzExpMont(t: TestingT) -> void:
 			return false
 		return true)
 
-#func BenchmarkExp3Power(b *testing.B) {
-#	stk := getStack()
-#	defer stk.free()
-#
-#	const x = 3
-#	for _, y := range []Word{
-#		0x10, 0x40, 0x100, 0x400, 0x1000, 0x4000, 0x10000, 0x40000, 0x100000, 0x400000,
-#	} {
-#		b.Run(fmt.Sprintf("%#x", y), func(b *testing.B) {
-#			var z nat
-#			for i := 0; i < b.N; i++ {
-#				z.expWW(stk, x, y)
-#			}
-#		})
-#	}
-#}
+func BenchmarkExp3Power(b0: TestingB) -> void:
+	const xi := 3
+	for yi in [0x10, 0x40, 0x100, 0x400, 0x1000, 0x4000, 0x10000, 0x40000, 0x100000, 0x400000]:
+		b0.Run("0x%x"% [yi], func(b: TestingB) -> void:
+			var x := BigInt.NewInt(xi)
+			var y := BigInt.NewInt(yi)
+			var z := BigInt.new()
+			for i in b.N:
+				z.Exp(x, y))
 
 static func fibo(n: int) -> BigInt:
 	if n == 0:
@@ -980,7 +959,7 @@ func TestNatDiv(t: TestingT) -> void:
 			## choose a remainder c < b
 			var c := rndNat1(rand, len(b._abs))
 			var cabs := c._abs
-			if len(cabs) == len(b._abs) and cabs[-1] >= b._abs[-1]:
+			if len(cabs) == len(b._abs) and ArithTest.u64ge(cabs[-1], b._abs[-1]):
 				cabs[-1] = 0
 				while not cabs.is_empty() and cabs[-1] == 0:
 					cabs.remove_at(len(cabs) - 1)

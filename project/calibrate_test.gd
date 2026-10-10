@@ -26,7 +26,7 @@ func TestCalibrate(t0: TestingT) -> void:
 	t0.Run("KaratsubaSqr", computeKaratsubaSqrThreshold)
 	t0.Run("DivRecursive", computeDivRecursiveThreshold)
 
-func computeKaratsubaThreshold(t: TestingT) -> void:
+static func computeKaratsubaThreshold(t: TestingT) -> void:
 	t.Error("TODO")
 #	set := func(n int) { karatsubaThreshold = n }
 #	computeThreshold(t, "karatsuba", set, 0, 4, 200, benchMul, 200, 8, 400)
@@ -41,7 +41,7 @@ func computeKaratsubaThreshold(t: TestingT) -> void:
 #	}
 #}
 
-func computeBasicSqrThreshold(t: TestingT) -> void:
+static func computeBasicSqrThreshold(t: TestingT) -> void:
 	t.Error("TODO")
 #	setDuringTest(t, &karatsubaSqrThreshold, 1e9)
 #	set := func(n int) { basicSqrThreshold = n }
@@ -60,7 +60,7 @@ func computeBasicSqrThreshold(t: TestingT) -> void:
 #	}
 #}
 
-func computeKaratsubaSqrThreshold(t: TestingT) -> void:
+static func computeKaratsubaSqrThreshold(t: TestingT) -> void:
 	t.Error("TODO")
 #	set := func(n int) { karatsubaSqrThreshold = n }
 #	computeThreshold(t, "karatsubaSqr", set, 0, 4, 200, benchSqr, 200, 8, 400)
@@ -74,7 +74,7 @@ func computeKaratsubaSqrThreshold(t: TestingT) -> void:
 #	}
 #}
 
-func computeDivRecursiveThreshold(t: TestingT) -> void:
+static func computeDivRecursiveThreshold(t: TestingT) -> void:
 	t.Error("TODO")
 #	set := func(n int) { divRecursiveThreshold = n }
 #	computeThreshold(t, "divRecursive", set, 4, 4, 200, benchDiv, 200, 8, 400)

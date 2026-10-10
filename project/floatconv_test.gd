@@ -343,7 +343,7 @@ func TestFloat64Text(t: TestingT) -> void:
 			t.Error("%s: got %s; want %s" % [test, got, test[3]])
 
 ## actualPrec returns the number of actually used mantissa bits.
-func actualPrec(x: float) -> int:
+static func actualPrec(x: float) -> int:
 	var buf: PackedByteArray
 	buf.resize(8)
 	buf.encode_double(0, x)

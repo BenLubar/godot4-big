@@ -115,6 +115,7 @@ const ExampleFloat_Cmp_expected_output: PackedStringArray = [
 	"+Inf     0    1",
 	"+Inf   1.2    1",
 	"+Inf  +Inf    0",
+	"",
 ]
 
 const ModeName: Dictionary[BigFloat.RoundingMode, String] = {

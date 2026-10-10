@@ -122,6 +122,7 @@ Error BigNat::scan(godot::String &s, int64_t &base, bool fracOk, int64_t &fcount
 
 	// one char look-ahead
 	int64_t si = 0;
+	fcount = 0;
 
 	// Determine actual base.
 	char prefix = 0;
@@ -381,8 +382,9 @@ PackedByteArray BigNat::itoa(bool p_neg, int64_t p_base) const {
 		// strip leading zeros
 		// (x != 0; thus s must contain at least one non-zero digit
 		// and the loop will terminate)
+		// PORT: if this is zero but not normalized, the loop will reach the end of the array
 		i = 0;
-		while (s[i] == '0') {
+		while (i < s.size() && s[i] == '0') {
 			i++;
 		}
 	}

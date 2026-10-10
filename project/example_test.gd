@@ -111,7 +111,7 @@ func Example_sqrt2(e: TestingE) -> void:
 	## Print the error between 2 and x*x.
 	t.Mul(x, x) ## t = x*x
 	t.Sub(two, t)
-	e.Output("error = %s" % [t.String(BigFloat.FORMAT_SCIENTIFIC)])
+	e.Output("error = %s" % [t.String(BigFloat.FORMAT_SCIENTIFIC, 6)])
 
 const Example_sqrt2_expected_output: PackedStringArray = [
 	"sqrt(2) = 1.41421356237309504880168872420969807856967187537695",

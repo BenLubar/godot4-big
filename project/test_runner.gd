@@ -163,17 +163,37 @@ func _on_test_finished(i: int) -> void:
 	if test.skipped:
 		test.tree_item.set_text(1, tr(&"SKIP"))
 		test.tree_item.set_custom_color(1, Color.CYAN)
-	elif test.test_result.failed:
-		test.tree_item.set_text(1, tr(&"FAIL"))
-		test.tree_item.set_custom_color(1, Color.RED)
-		if test.test_result.errors == PackedStringArray(["TODO"]):
-			test.tree_item.set_text(1, tr(&"TODO"))
-			test.tree_item.set_custom_color(1, Color.YELLOW)
 	else:
-		test.tree_item.set_text(1, tr(&"PASS"))
-		test.tree_item.set_custom_color(1, Color.GREEN)
+		_on_test_finished_recursive(test.tree_item, test.test_result)
 	_mutex.unlock()
 	# TODO
+
+func _on_test_finished_recursive(tree_item: TreeItem, result: TestingT) -> bool:
+	var passed := false
+	if result.skipped:
+		tree_item.set_text(1, tr(&"SKIP"))
+		tree_item.set_custom_color(1, Color.CYAN)
+	elif result.failed:
+		tree_item.set_text(1, tr(&"FAIL"))
+		tree_item.set_custom_color(1, Color.RED)
+		if result.errors == PackedStringArray(["TODO"]):
+			tree_item.set_text(1, tr(&"TODO"))
+			tree_item.set_custom_color(1, Color.YELLOW)
+	else:
+		passed = true
+		tree_item.set_text(1, "")
+		tree_item.clear_custom_color(1)
+
+	for sub_t in result.sub_tests:
+		var child := tree_item.create_child()
+		child.set_text(0, sub_t.name)
+		passed = _on_test_finished_recursive(child, sub_t) and passed
+
+	if passed:
+		tree_item.set_text(1, tr(&"PASS"))
+		tree_item.set_custom_color(1, Color.GREEN)
+
+	return passed
 
 func _on_example_finished(i: int) -> void:
 	var example := _queued_examples[i]
@@ -197,7 +217,29 @@ func _on_benchmark_finished(i: int) -> void:
 		benchmark.tree_item.set_text(1, tr(&"SKIP"))
 		benchmark.tree_item.set_custom_color(1, Color.CYAN)
 	else:
-		benchmark.tree_item.set_text(1, tr(&"%dns") % [benchmark.benchmark_result._total_time * 1000 / benchmark.benchmark_result.N])
-		benchmark.tree_item.clear_custom_color(1)
+		benchmark.tree_item = _on_benchmark_finished_recursive(benchmark.tree_item, benchmark.benchmark_result)
 	_mutex.unlock()
 	# TODO
+
+func _on_benchmark_finished_recursive(tree_item: TreeItem, result: TestingB) -> TreeItem:
+	if result.skipped:
+		tree_item.set_text(1, tr(&"SKIP"))
+		tree_item.set_custom_color(1, Color.CYAN)
+	elif not result.sub_benchmarks.is_empty():
+		var first := true
+		var prev := tree_item
+		for sub_b in result.sub_benchmarks:
+			var item := prev.get_parent().create_child()
+			item.set_text(0, sub_b.name)
+			item.move_after(prev)
+			if first:
+				prev.free()
+				first = false
+			prev = _on_benchmark_finished_recursive(item, sub_b)
+
+		tree_item = prev
+	else:
+		tree_item.set_text(1, tr_n(&"%fs (%d iteration)", &"%fs (%d iterations)", result.N) % [result._total_time * 0.000001 / result.N, result.N])
+		tree_item.clear_custom_color(1)
+
+	return tree_item

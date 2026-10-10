@@ -245,6 +245,77 @@ static void test_disable_error_printing_bind([[maybe_unused]] bool p_disable) {
 	WARN_PRINT("BigInt._disable_error_printing is not available on release builds");
 #endif
 }
+[[nodiscard]] static uint64_t addVV_bind(const Ref<BigInt> &r_z, const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
+	ERR_FAIL_NULL_V(*r_z, 0);
+	ERR_FAIL_NULL_V(*p_x, 0);
+	ERR_FAIL_NULL_V(*p_y, 0);
+	ERR_FAIL_COND_V(r_z->_abs.array.size() != p_x->_abs.array.size() || r_z->_abs.array.size() != p_y->_abs.array.size(), 0);
+	return BigNat::addVV(r_z->_abs.slice(), p_x->_abs.cslice(), p_y->_abs.cslice());
+}
+[[nodiscard]] static uint64_t subVV_bind(const Ref<BigInt> &r_z, const Ref<BigInt> &p_x, const Ref<BigInt> &p_y) {
+	ERR_FAIL_NULL_V(*r_z, 0);
+	ERR_FAIL_NULL_V(*p_x, 0);
+	ERR_FAIL_NULL_V(*p_y, 0);
+	ERR_FAIL_COND_V(r_z->_abs.array.size() != p_x->_abs.array.size() || r_z->_abs.array.size() != p_y->_abs.array.size(), 0);
+	return BigNat::subVV(r_z->_abs.slice(), p_x->_abs.cslice(), p_y->_abs.cslice());
+}
+[[nodiscard]] static uint64_t addVW_bind(const Ref<BigInt> &r_z, const Ref<BigInt> &p_x, uint64_t p_y) {
+	ERR_FAIL_NULL_V(*r_z, 0);
+	ERR_FAIL_NULL_V(*p_x, 0);
+	ERR_FAIL_COND_V(r_z->_abs.array.size() != p_x->_abs.array.size(), 0);
+	return BigNat::addVW(r_z->_abs.slice(), p_x->_abs.cslice(), p_y);
+}
+[[nodiscard]] static uint64_t addVW_ref_bind(const Ref<BigInt> &r_z, const Ref<BigInt> &p_x, uint64_t p_y) {
+	ERR_FAIL_NULL_V(*r_z, 0);
+	ERR_FAIL_NULL_V(*p_x, 0);
+	ERR_FAIL_COND_V(r_z->_abs.array.size() != p_x->_abs.array.size(), 0);
+	return BigNat::addVW_ref(r_z->_abs.slice(), p_x->_abs.cslice(), p_y);
+}
+[[nodiscard]] static uint64_t subVW_bind(const Ref<BigInt> &r_z, const Ref<BigInt> &p_x, uint64_t p_y) {
+	ERR_FAIL_NULL_V(*r_z, 0);
+	ERR_FAIL_NULL_V(*p_x, 0);
+	ERR_FAIL_COND_V(r_z->_abs.array.size() != p_x->_abs.array.size(), 0);
+	return BigNat::subVW(r_z->_abs.slice(), p_x->_abs.cslice(), p_y);
+}
+[[nodiscard]] static uint64_t subVW_ref_bind(const Ref<BigInt> &r_z, const Ref<BigInt> &p_x, uint64_t p_y) {
+	ERR_FAIL_NULL_V(*r_z, 0);
+	ERR_FAIL_NULL_V(*p_x, 0);
+	ERR_FAIL_COND_V(r_z->_abs.array.size() != p_x->_abs.array.size(), 0);
+	return BigNat::subVW_ref(r_z->_abs.slice(), p_x->_abs.cslice(), p_y);
+}
+[[nodiscard]] static uint64_t lshVU_bind(const Ref<BigInt> &r_z, const Ref<BigInt> &p_x, uint64_t p_s) {
+	ERR_FAIL_NULL_V(*r_z, 0);
+	ERR_FAIL_NULL_V(*p_x, 0);
+	ERR_FAIL_UNSIGNED_INDEX_V(p_s, 64, 0);
+	ERR_FAIL_COND_V(r_z->_abs.array.size() != p_x->_abs.array.size(), 0);
+	return BigNat::lshVU(r_z->_abs.slice(), p_x->_abs.cslice(), p_s);
+}
+[[nodiscard]] static uint64_t rshVU_bind(const Ref<BigInt> &r_z, const Ref<BigInt> &p_x, uint64_t p_s) {
+	ERR_FAIL_NULL_V(*r_z, 0);
+	ERR_FAIL_NULL_V(*p_x, 0);
+	ERR_FAIL_UNSIGNED_INDEX_V(p_s, 64, 0);
+	ERR_FAIL_COND_V(r_z->_abs.array.size() != p_x->_abs.array.size(), 0);
+	return BigNat::rshVU(r_z->_abs.slice(), p_x->_abs.cslice(), p_s);
+}
+[[nodiscard]] static uint64_t mulAddVWW_bind(const Ref<BigInt> &r_z, const Ref<BigInt> &p_x, uint64_t p_y, uint64_t p_a) {
+	ERR_FAIL_NULL_V(*r_z, 0);
+	ERR_FAIL_NULL_V(*p_x, 0);
+	ERR_FAIL_COND_V(r_z->_abs.array.size() != p_x->_abs.array.size(), 0);
+	return BigNat::mulAddVWW(r_z->_abs.slice(), p_x->_abs.cslice(), p_y, p_a);
+}
+[[nodiscard]] static uint64_t addMulVVWW_bind(const Ref<BigInt> &r_z, const Ref<BigInt> &p_x, const Ref<BigInt> &p_y, uint64_t p_m, uint64_t p_a) {
+	ERR_FAIL_NULL_V(*r_z, 0);
+	ERR_FAIL_NULL_V(*p_x, 0);
+	ERR_FAIL_NULL_V(*p_y, 0);
+	ERR_FAIL_COND_V(r_z->_abs.array.size() != p_x->_abs.array.size() || r_z->_abs.array.size() != p_y->_abs.array.size(), 0);
+	return BigNat::addMulVVWW(r_z->_abs.slice(), p_x->_abs.cslice(), p_y->_abs.cslice(), p_m, p_a);
+}
+[[nodiscard]] static uint64_t divWVW_bind(const Ref<BigInt> &r_z, uint64_t p_xn, const Ref<BigInt> &p_x, uint64_t p_y) {
+	ERR_FAIL_NULL_V(*r_z, 0);
+	ERR_FAIL_NULL_V(*p_x, 0);
+	ERR_FAIL_COND_V(r_z->_abs.array.size() != p_x->_abs.array.size(), 0);
+	return BigNat::divWVW(r_z->_abs.slice(), p_xn, p_x->_abs.cslice(), p_y);
+}
 
 void BigInt::_bind_methods() {
 	// serialization (Resource)
@@ -361,6 +432,23 @@ void BigInt::_bind_methods() {
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_div", "div_recursive_threshold", "u", "v"), &BigNat::test_div_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_override_leaf_size", "leaf_size"), &BigNat::test_override_leaf_size_bind);
 	ClassDB::bind_static_method(get_class_static(), D_METHOD("_test_disable_error_printing", "disable"), &test_disable_error_printing_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_addVV", "z", "x", "y"), &addVV_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_addVV_g", "z", "x", "y"), &addVV_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_subVV", "z", "x", "y"), &subVV_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_subVV_g", "z", "x", "y"), &subVV_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_addVW", "z", "x", "y"), &addVW_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_addVW_ref", "z", "x", "y"), &addVW_ref_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_subVW", "z", "x", "y"), &subVW_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_subVW_ref", "z", "x", "y"), &subVW_ref_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_lshVU", "z", "x", "s"), &lshVU_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_lshVU_g", "z", "x", "s"), &lshVU_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_rshVU", "z", "x", "s"), &rshVU_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_rshVU_g", "z", "x", "s"), &rshVU_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_mulAddVWW", "z", "x", "y", "a"), &mulAddVWW_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_mulAddVWW_g", "z", "x", "y", "a"), &mulAddVWW_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_addMulVVWW", "z", "x", "y", "m", "a"), &addMulVVWW_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_addMulVVWW_g", "z", "x", "y", "m", "a"), &addMulVVWW_bind);
+	ClassDB::bind_static_method(get_class_static(), D_METHOD("_divWVW", "z", "xn", "x", "y"), &divWVW_bind);
 }
 
 void BigInt::_set_neg(bool p_neg) {

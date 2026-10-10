@@ -118,10 +118,18 @@ Error BigFloat::_scan(godot::String &s, int64_t &base) {
 	p->SetPrec(Prec() + 64); // use more bits for p -- TODO(gri) what is the right number?
 	if (exp5 < 0) {
 		p->_pow5(static_cast<uint64_t>(-exp5));
-		_uquo(this, *p);
+		if (unlikely(p->_form == FORM_INF)) {
+			_form = FORM_ZERO;
+		} else {
+			_uquo(this, *p);
+		}
 	} else {
 		p->_pow5(static_cast<uint64_t>(+exp5));
-		_umul(this, *p);
+		if (unlikely(p->_form == FORM_INF)) {
+			_form = FORM_INF;
+		} else {
+			_umul(this, *p);
+		}
 	}
 
 	return OK;

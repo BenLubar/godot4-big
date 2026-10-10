@@ -16,7 +16,7 @@ extends TestSuite
 ##
 ##	   1          if   n mod 3 != 1
 ##	(n-1)/3 * 2   if   n mod 3 == 1
-func recur(n: int, lim: int) -> BigRat:
+static func recur(n: int, lim: int) -> BigRat:
 	var term := BigRat.new()
 	if n % 3 != 1:
 		term.SetInt64(1)
