@@ -8,6 +8,7 @@
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 
+#include <climits>
 #include <functional>
 
 // A Word represents a single digit of a multi-precision unsigned integer.
@@ -354,10 +355,10 @@ void BigNat::bits_Div(BigWord p_hi, BigWord p_lo, BigWord p_y, BigWord &r_quo, B
 }
 #else
 constexpr void BigNat::bits_Add(BigWord p_x, BigWord p_y, BigWord p_carry, BigWord &r_out, BigWord &r_carryout) noexcept {
-#if __WORDSIZE == 64 && __has_builtin(__builtin_addcl)
+#if LONG_WIDTH == 64 && __has_builtin(__builtin_addcl)
 	static_assert(sizeof(BigWord) == sizeof(unsigned long));
 	r_out = __builtin_addcl(p_x, p_y, p_carry, &r_carryout);
-#elif __WORDSIZE == 32 && __has_builtin(__builtin_addcll)
+#elif LLONG_WIDTH == 64 && __has_builtin(__builtin_addcll)
 	static_assert(sizeof(BigWord) == sizeof(unsigned long long));
 	r_out = __builtin_addcll(p_x, p_y, p_carry, &r_carryout);
 #else
@@ -369,10 +370,10 @@ constexpr void BigNat::bits_Add(BigWord p_x, BigWord p_y, BigWord p_carry, BigWo
 #endif
 }
 constexpr void BigNat::bits_Sub(BigWord p_x, BigWord p_y, BigWord p_borrow, BigWord &r_out, BigWord &r_borrowout) noexcept {
-#if __WORDSIZE == 64 && __has_builtin(__builtin_subcl)
+#if LONG_WIDTH == 64 && __has_builtin(__builtin_subcl)
 	static_assert(sizeof(BigWord) == sizeof(unsigned long));
 	r_out = __builtin_subcl(p_x, p_y, p_borrow, &r_borrowout);
-#elif __WORDSIZE == 32 && __has_builtin(__builtin_subcll)
+#elif LLONG_WIDTH == 64 && __has_builtin(__builtin_subcll)
 	static_assert(sizeof(BigWord) == sizeof(unsigned long long));
 	r_out = __builtin_subcll(p_x, p_y, p_borrow, &r_borrowout);
 #else

@@ -281,10 +281,10 @@ Error BigNat::scanExponent(godot::String &s, bool base2ok, bool sepOk, int64_t &
 	// Godot doesn't have an integer parsing function with error checking, so let's use libc:
 	digits.append('\0');
 	errno = 0;
-#if __WORDSIZE == 64
+#if LONG_WIDTH == 64
 	static_assert(sizeof(int64_t) == sizeof(long));
 	exp = std::strtol(reinterpret_cast<const char *>(digits.ptr()), nullptr, 10);
-#elif __WORDSIZE == 32
+#elif LLONG_WIDTH == 64
 	static_assert(sizeof(int64_t) == sizeof(long long));
 	exp = std::strtoll(reinterpret_cast<const char *>(digits.ptr()), nullptr, 10);
 #else
