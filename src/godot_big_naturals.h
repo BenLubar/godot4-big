@@ -8,7 +8,7 @@
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 
-#include <climits>
+#include <climits> // IWYU pragma: keep
 #include <functional>
 
 // A Word represents a single digit of a multi-precision unsigned integer.
@@ -355,13 +355,14 @@ void BigNat::bits_Div(BigWord p_hi, BigWord p_lo, BigWord p_y, BigWord &r_quo, B
 }
 #else
 constexpr void BigNat::bits_Add(BigWord p_x, BigWord p_y, BigWord p_carry, BigWord &r_out, BigWord &r_carryout) noexcept {
-#if LONG_WIDTH == 64 && __has_builtin(__builtin_addcl)
+#if (LONG_WIDTH == 64 || LONG_MAX == INT64_MAX) && __has_builtin(__builtin_addcl)
 	static_assert(sizeof(BigWord) == sizeof(unsigned long));
 	r_out = __builtin_addcl(p_x, p_y, p_carry, &r_carryout);
-#elif LLONG_WIDTH == 64 && __has_builtin(__builtin_addcll)
+#elif (LLONG_WIDTH == 64 || LLONG_MAX == INT64_MAX) && __has_builtin(__builtin_addcll)
 	static_assert(sizeof(BigWord) == sizeof(unsigned long long));
 	r_out = __builtin_addcll(p_x, p_y, p_carry, &r_carryout);
 #else
+#warning no builtin implementation for bits_Add
 	r_out = p_x + p_y + p_carry;
 	// The sum will overflow if both top bits are set (x & y) or if one of them
 	// is (x | y), and a carry from the lower place happened. If such a carry
@@ -377,6 +378,7 @@ constexpr void BigNat::bits_Sub(BigWord p_x, BigWord p_y, BigWord p_borrow, BigW
 	static_assert(sizeof(BigWord) == sizeof(unsigned long long));
 	r_out = __builtin_subcll(p_x, p_y, p_borrow, &r_borrowout);
 #else
+#warning no builtin implementation for bits_Sub
 	r_out = p_x - p_y - p_borrow;
 	// The difference will underflow if the top bit of x is not set and the top
 	// bit of y is set (^x & y) or if they are the same (^(x ^ y)) and a borrow
