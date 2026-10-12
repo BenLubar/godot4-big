@@ -1,12 +1,14 @@
 #pragma once
 
 #include <godot_cpp/core/defs.hpp>
-#include <godot_cpp/templates/local_vector.hpp>
-#include <godot_cpp/templates/span.hpp>
+
 #include <godot_cpp/variant/packed_byte_array.hpp>
 #include <godot_cpp/variant/packed_int64_array.hpp>
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
+
+#include <godot_cpp/templates/local_vector.hpp>
+#include <godot_cpp/templates/span.hpp>
 
 #include <climits> // IWYU pragma: keep
 #include <functional>
@@ -371,10 +373,10 @@ constexpr void BigNat::bits_Add(BigWord p_x, BigWord p_y, BigWord p_carry, BigWo
 #endif
 }
 constexpr void BigNat::bits_Sub(BigWord p_x, BigWord p_y, BigWord p_borrow, BigWord &r_out, BigWord &r_borrowout) noexcept {
-#if LONG_WIDTH == 64 && __has_builtin(__builtin_subcl)
+#if (LONG_WIDTH == 64 || LONG_MAX == INT64_MAX) && __has_builtin(__builtin_subcl)
 	static_assert(sizeof(BigWord) == sizeof(unsigned long));
 	r_out = __builtin_subcl(p_x, p_y, p_borrow, &r_borrowout);
-#elif LLONG_WIDTH == 64 && __has_builtin(__builtin_subcll)
+#elif (LLONG_WIDTH == 64 || LLONG_MAX == INT64_MAX) && __has_builtin(__builtin_subcll)
 	static_assert(sizeof(BigWord) == sizeof(unsigned long long));
 	r_out = __builtin_subcll(p_x, p_y, p_borrow, &r_borrowout);
 #else
