@@ -356,6 +356,13 @@ void BigNat::bits_Div(BigWord p_hi, BigWord p_lo, BigWord p_y, BigWord &r_quo, B
 	r_quo = _udiv128(p_hi, p_lo, p_y, &r_rem);
 }
 #else
+// The non-builtin implementations of these functions are ported from src/math/bits/bits.go in Go 1.27.1.
+// Original copyright notice follows:
+
+// Copyright 2017 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 constexpr void BigNat::bits_Add(BigWord p_x, BigWord p_y, BigWord p_carry, BigWord &r_out, BigWord &r_carryout) noexcept {
 #if (LONG_WIDTH == 64 || LONG_MAX == INT64_MAX) && __has_builtin(__builtin_addcl)
 	static_assert(sizeof(BigWord) == sizeof(unsigned long));
@@ -390,13 +397,76 @@ constexpr void BigNat::bits_Sub(BigWord p_x, BigWord p_y, BigWord p_borrow, BigW
 #endif
 }
 constexpr void BigNat::bits_Mul(BigWord p_x, BigWord p_y, BigWord &r_hi, BigWord &r_lo) noexcept {
+#ifdef __SIZEOF_INT128__
 	const unsigned __int128 product = static_cast<unsigned __int128>(p_x) * static_cast<unsigned __int128>(p_y);
 	r_hi = static_cast<BigWord>(product >> 64);
 	r_lo = static_cast<BigWord>(product);
+#else
+	constexpr BigWord mask32 = UINT32_MAX;
+	const BigWord x0 = p_x & mask32;
+	const BigWord x1 = p_x >> 32;
+	const BigWord y0 = p_y & mask32;
+	const BigWord y1 = p_y >> 32;
+	const BigWord w0 = x0 * y0;
+	const BigWord t = (x1 * y0) + (w0 >> 32);
+	BigWord w1 = t & mask32;
+	const BigWord w2 = t >> 32;
+	w1 += x0 * y1;
+
+	r_hi = (x1 * y1) + w2 + (w1 >> 32);
+	r_lo = p_x * p_y;
+#endif
 }
 constexpr void BigNat::bits_Div(BigWord p_hi, BigWord p_lo, BigWord p_y, BigWord &r_quo, BigWord &r_rem) noexcept {
+#ifdef __SIZEOF_INT128__
 	const unsigned __int128 x = (static_cast<unsigned __int128>(p_hi) << 64) | static_cast<unsigned __int128>(p_lo);
 	r_quo = static_cast<BigWord>(x / p_y);
 	r_rem = static_cast<BigWord>(x % p_y);
+#else
+	// If high part is zero, we can directly return the results.
+	if (p_hi == 0) {
+		r_quo = p_lo / p_y;
+		r_rem = p_lo % p_y;
+		return;
+	}
+
+	const BigWord s = std::countl_zero(p_y);
+	p_y <<= s;
+
+	constexpr BigWord two32 = UINT64_C(1) << 32;
+	constexpr BigWord mask32 = two32 - 1;
+
+	const BigWord yn1 = p_y >> 32;
+	const BigWord yn0 = p_y & mask32;
+	const BigWord un32 = (p_hi << s) | (s == 0 ? 0 : (p_lo >> (64 - s)));
+	const BigWord un10 = p_lo << s;
+	const BigWord un1 = un10 >> 32;
+	const BigWord un0 = un10 & mask32;
+	BigWord q1 = un32 / yn1;
+	BigWord rhat = un32 - (q1 * yn1);
+
+	while (q1 >= two32 || q1 * yn0 > (two32 * rhat) + un1) {
+		q1--;
+		rhat += yn1;
+		if (rhat >= two32) {
+			break;
+		}
+	}
+
+	const BigWord un21 = (un32 * two32) + un1 - (q1 * p_y);
+	BigWord q0 = un21 / yn1;
+	rhat = un21 - (q0 * yn1);
+
+	while (q0 >= two32 || q0 * yn0 > (two32 * rhat) + un0) {
+		q0--;
+		rhat += yn1;
+		if (rhat >= two32) {
+			break;
+		}
+	}
+
+	r_quo = (q1 * two32) + q0;
+	r_rem = ((un21 * two32) + un0 - (q0 * p_y)) >> s;
+#endif
 }
 #endif
